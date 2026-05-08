@@ -741,6 +741,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
       My Clients
     </div>
+    <div class="nav-divider"></div>
+    <div class="nav-group">System</div>
+    <div class="nav-item" id="nav-settings" onclick="go('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </div>
   </nav>
  
   <main>
@@ -1026,9 +1032,75 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         </div>
       </div>
     </div>
+
+    <!-- ══ SETTINGS PAGE ══ -->
+    <div class="page" id="page-settings">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Settings</div>
+          <div class="sec-sub">Manage client data and team configuration</div>
+        </div>
+      </div>
+
+      <!-- Data Management -->
+      <div class="panel">
+        <div class="panel-title"><span class="pt-dot" style="--c:var(--b)"></span>Data Management</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--s8);">Current dataset</div>
+            <div id="st-data-summary" style="font-size:12px;color:var(--s5);margin-top:2px;"></div>
+          </div>
+          <button onclick="stDownloadTemplate()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--b0);color:var(--b);border:1px solid var(--b1);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Template
+          </button>
+        </div>
+        <div style="border-top:1px solid var(--s1);padding-top:1rem;">
+          <div style="font-size:12px;font-weight:700;color:var(--s8);margin-bottom:3px;">Replace All Client Data</div>
+          <div style="font-size:11px;color:var(--s5);margin-bottom:.75rem;">Upload an Excel file to replace all existing records. Download the template above for the correct format.</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;color:var(--s7);border:1px solid var(--s2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><line x1="12" y1="3" x2="12" y2="15"/><polyline points="17 8 12 3 7 8"/></svg>
+              Choose File
+              <input type="file" id="st-file-input" accept=".xlsx" style="display:none;" onchange="stHandleFile(event)"/>
+            </label>
+            <span id="st-file-name" style="font-size:12px;color:var(--s4);">No file selected</span>
+          </div>
+          <div id="st-preview-area" style="display:none;margin-top:.75rem;background:var(--s0);border:1px solid var(--s2);border-radius:8px;padding:.75rem;">
+            <div id="st-preview-msg" style="font-size:12px;color:var(--s7);margin-bottom:.5rem;"></div>
+            <div id="st-preview-table" style="overflow-x:auto;margin-bottom:.75rem;max-height:220px;overflow-y:auto;"></div>
+            <button id="st-confirm-btn" onclick="stConfirmReplace()" style="display:none;align-items:center;gap:6px;padding:7px 16px;background:var(--o);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Replace records</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Configuration -->
+      <div class="panel">
+        <div class="panel-title"><span class="pt-dot" style="--c:var(--v)"></span>Team Configuration</div>
+        <div style="font-size:11px;color:var(--s5);margin-bottom:1rem;margin-top:-.5rem;">Update names here to replace dummy names across the entire app — login dropdown, client table, all views.</div>
+        <div style="font-size:12px;font-weight:700;color:var(--s8);margin-bottom:.5rem;">Implementers <span style="font-weight:400;color:var(--s4);">(5 slots)</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.1rem;">
+          <input id="st-impl-0" type="text" placeholder="Name 1" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-impl-1" type="text" placeholder="Name 2" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-impl-2" type="text" placeholder="Name 3" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-impl-3" type="text" placeholder="Name 4" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-impl-4" type="text" placeholder="Name 5" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--s8);margin-bottom:.5rem;">Project Managers <span style="font-weight:400;color:var(--s4);">(5 slots)</span></div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.1rem;">
+          <input id="st-pm-0" type="text" placeholder="PM 1" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-pm-1" type="text" placeholder="PM 2" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-pm-2" type="text" placeholder="PM 3" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-pm-3" type="text" placeholder="PM 4" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+          <input id="st-pm-4" type="text" placeholder="PM 5" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+        </div>
+        <button onclick="stSaveTeam()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Team Configuration</button>
+      </div>
+    </div>
+
   </main>
 </div>
- 
+
 <script>
 // ══════════════ DATA ══════════════
 var D=[
@@ -1086,8 +1158,14 @@ function fd(src,q,mon,st,res){
   });
 }
  
+var TEAM_CONFIG = {
+  implementers: ['Ana','Bea','Carl','Dana','Eli'],
+  pms: ['Marcus','Sofia','Javier','Isabel','Diego']
+};
+var ST_PREVIEW = null;
+
 function go(page){
-  ['dashboard','weekly','clients','impl'].forEach(function(p){
+  ['dashboard','weekly','clients','impl','settings'].forEach(function(p){
     var pg=document.getElementById('page-'+p);
     var ni=document.getElementById('nav-'+p);
     if(pg)pg.classList.remove('active');
@@ -1116,6 +1194,7 @@ function go(page){
   else if(page==='weekly')renderWeekly();
   else if(page==='clients'){clPg=1;renderClients();}
   else if(page==='impl')renderImpl();
+  else if(page==='settings')renderSettings();
 }
  
 function renderDashboard(){
@@ -3509,8 +3588,8 @@ function mfDownload(){
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
   manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients']},
-  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients']},
-  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients']}
+  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients','settings']},
+  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients','settings']}
 };
  
 function pickRole(el){
@@ -3522,6 +3601,148 @@ function pickRole(el){
   document.getElementById('login-error').classList.remove('show');
 }
  
+// ══════════════════════════════════════════════════════
+// SETTINGS PAGE
+// ══════════════════════════════════════════════════════
+function renderSettings(){
+  var months=[];
+  D.forEach(function(d){if(months.indexOf(d.month)<0)months.push(d.month);});
+  document.getElementById('st-data-summary').textContent=D.length+' record'+(D.length!==1?'s':'')+' across '+months.length+' month'+(months.length!==1?'s':'');
+  TEAM_CONFIG.implementers.forEach(function(n,i){var el=document.getElementById('st-impl-'+i);if(el)el.value=n;});
+  TEAM_CONFIG.pms.forEach(function(n,i){var el=document.getElementById('st-pm-'+i);if(el)el.value=n;});
+  ST_PREVIEW=null;
+  document.getElementById('st-preview-area').style.display='none';
+  document.getElementById('st-file-name').textContent='No file selected';
+  document.getElementById('st-file-input').value='';
+}
+
+function stDownloadTemplate(){
+  if(typeof XLSX==='undefined'){alert('SheetJS not loaded.');return;}
+  var wb=XLSX.utils.book_new();
+  var ovSheet=XLSX.utils.aoa_to_sheet([
+    ['#','Month','Client Name','Resource','Project Manager','Status','Service','Days','KOM','Simulation','Parallel Run','Live Run','Post Live'],
+    [1,'January','Example Client Co.','Ana','Marcus','Not yet started','Payroll Starter',15,0,0,0,0,0],
+    [2,'February','Another Corp Inc.','Bea','Sofia','Ongoing','PYO + HR',30,1,1,0,0,0]
+  ]);
+  ovSheet['!cols']=[{wch:5},{wch:12},{wch:38},{wch:12},{wch:18},{wch:18},{wch:28},{wch:8},{wch:8},{wch:14},{wch:14},{wch:12},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ovSheet,'Overview');
+  var aoSheet=XLSX.utils.aoa_to_sheet([
+    ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Salary Disbursement','Statutory Disbursement','Outsourced Timekeeping'],
+    [1,'Example Client Co.','Ana',0,0,0,0,0],
+    [2,'Another Corp Inc.','Bea',1,0,1,0,0]
+  ]);
+  aoSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:14},{wch:26},{wch:24},{wch:26},{wch:26}];
+  XLSX.utils.book_append_sheet(wb,aoSheet,'Add-on Services');
+  var mlSheet=XLSX.utils.aoa_to_sheet([
+    ['#','Client Name','Resource','KOM Date','Hand Over Date','Live Run Date','Churn Date','Billing Month','Month Completed'],
+    [1,'Example Client Co.','Ana','2026-01-15','2026-01-30','2026-02-15','','',''],
+    [2,'Another Corp Inc.','Bea','2026-02-10','','','','March','']
+  ]);
+  mlSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:16},{wch:18},{wch:16},{wch:14},{wch:18},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,mlSheet,'Milestone Dates');
+  XLSX.writeFile(wb,'PS_Data_Template.xlsx');
+}
+
+function stHandleFile(e){
+  var file=e.target.files[0];
+  if(!file)return;
+  document.getElementById('st-file-name').textContent=file.name;
+  if(typeof XLSX==='undefined'){alert('SheetJS not loaded.');return;}
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var wb=XLSX.read(ev.target.result,{type:'binary'});
+      var ovSheet=wb.Sheets['Overview'];
+      if(!ovSheet){
+        document.getElementById('st-preview-msg').textContent='No "Overview" sheet found. Please use the template.';
+        document.getElementById('st-preview-table').innerHTML='';
+        document.getElementById('st-confirm-btn').style.display='none';
+        document.getElementById('st-preview-area').style.display='block';
+        return;
+      }
+      var rows=XLSX.utils.sheet_to_json(ovSheet,{defval:''});
+      if(!rows.length){
+        document.getElementById('st-preview-msg').textContent='Overview sheet is empty.';
+        document.getElementById('st-preview-table').innerHTML='';
+        document.getElementById('st-confirm-btn').style.display='none';
+        document.getElementById('st-preview-area').style.display='block';
+        return;
+      }
+      var newD=[];
+      var newAddons={};
+      var newMilestones={};
+      rows.forEach(function(row){
+        var no=parseInt(row['#']||row['no']);
+        if(!no)return;
+        newD.push({no:no,month:row['Month']||'January',client:row['Client Name']||row['Client']||'',resource:row['Resource']||'',pm:row['Project Manager']||row['PM']||'',remarks:row['Status']||'Not yet started',service:row['Service']||'',days:parseInt(row['Days'])||0,komDate:'',handOver:'',liveRun:'',kom:parseInt(row['KOM'])||0,sim:parseInt(row['Simulation'])||0,par:parseInt(row['Parallel Run'])||0,live:parseInt(row['Live Run'])||0,post:parseInt(row['Post Live'])||0});
+      });
+      var aoSheet=wb.Sheets['Add-on Services'];
+      if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,sd:parseInt(row['Salary Disbursement'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0};});
+      var mlSheet=wb.Sheets['Milestone Dates'];
+      if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=row['KOM Date'];if(row['Hand Over Date'])d.handOver=row['Hand Over Date'];if(row['Live Run Date'])d.liveRun=row['Live Run Date'];}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=row['Churn Date'];if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
+      ST_PREVIEW={D:newD,addons:newAddons,milestones:newMilestones};
+      var preview=newD.slice(0,5);
+      var th=['#','Month','Client Name','Resource','PM','Status','Service'];
+      var html='<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:var(--s1);">'+th.map(function(h){return '<th style="padding:5px 8px;text-align:left;font-weight:700;color:var(--s5);border-bottom:1px solid var(--s2);">'+h+'</th>';}).join('')+'</tr></thead><tbody>';
+      preview.forEach(function(r){html+='<tr style="border-bottom:1px solid var(--s1);">'+ [r.no,r.month,r.client,r.resource,r.pm,r.remarks,r.service].map(function(v){return '<td style="padding:5px 8px;color:var(--s8);">'+v+'</td>';}).join('')+'</tr>';});
+      html+='</tbody></table>';
+      document.getElementById('st-preview-msg').innerHTML='<b>'+newD.length+' record'+(newD.length!==1?'s':'')+' ready to load'+(newD.length>5?' (showing first 5 below)':'')+'.</b>';
+      document.getElementById('st-preview-table').innerHTML=html;
+      document.getElementById('st-confirm-btn').textContent='Replace '+D.length+' existing records with '+newD.length+' new records';
+      document.getElementById('st-confirm-btn').style.display='inline-flex';
+      document.getElementById('st-preview-area').style.display='block';
+    }catch(err){
+      console.error('Settings import error',err);
+      document.getElementById('st-preview-msg').textContent='Error reading file: '+err.message;
+      document.getElementById('st-preview-table').innerHTML='';
+      document.getElementById('st-confirm-btn').style.display='none';
+      document.getElementById('st-preview-area').style.display='block';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function stConfirmReplace(){
+  if(!ST_PREVIEW)return;
+  D.length=0;
+  ST_PREVIEW.D.forEach(function(r){D.push(r);});
+  D.forEach(function(d){d.remarks=deriveRemarks(d);});
+  Object.keys(CL_ADDONS).forEach(function(k){delete CL_ADDONS[k];});
+  Object.assign(CL_ADDONS,ST_PREVIEW.addons);
+  Object.keys(CL_MILESTONES).forEach(function(k){delete CL_MILESTONES[k];});
+  Object.assign(CL_MILESTONES,ST_PREVIEW.milestones);
+  Object.keys(CL_AFTERHO).forEach(function(k){delete CL_AFTERHO[k];});
+  ST_PREVIEW=null;
+  document.getElementById('st-preview-area').style.display='none';
+  document.getElementById('st-file-input').value='';
+  document.getElementById('st-file-name').textContent='No file selected';
+  var months=[];D.forEach(function(d){if(months.indexOf(d.month)<0)months.push(d.month);});
+  document.getElementById('st-data-summary').textContent=D.length+' record'+(D.length!==1?'s':'')+' across '+months.length+' month'+(months.length!==1?'s':'');
+  showImportToast('success',D.length+' records loaded. Go to All Clients to review.');
+}
+
+function stSaveTeam(){
+  var newImpl=[],newPms=[];
+  for(var i=0;i<5;i++){
+    newImpl.push((document.getElementById('st-impl-'+i).value||'').trim()||TEAM_CONFIG.implementers[i]||'');
+    newPms.push((document.getElementById('st-pm-'+i).value||'').trim()||TEAM_CONFIG.pms[i]||'');
+  }
+  TEAM_CONFIG.implementers=newImpl;
+  TEAM_CONFIG.pms=newPms;
+  var colors=['#16a34a','#2563eb','#7c3aed','#ea580c','#9d174d'];
+  Object.keys(RC).forEach(function(k){delete RC[k];});
+  newImpl.forEach(function(n,i){if(n)RC[n]=colors[i]||'#64748b';});
+  var implSel=document.getElementById('login-impl-name');
+  if(implSel){implSel.innerHTML='<option value="">Select implementer…</option>'+newImpl.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var aImpl=document.getElementById('acm-impl');
+  if(aImpl){aImpl.innerHTML=newImpl.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var crSel=document.getElementById('cr');
+  if(crSel){crSel.innerHTML='<option value="">All resources</option>'+newImpl.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var aPm=document.getElementById('acm-pm');
+  if(aPm){aPm.innerHTML='<option value="">— Select —</option>'+newPms.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  showImportToast('success','Team configuration saved.');
+}
+
 function doLogin(){
   var roleEl=document.querySelector('.role-card.selected');
   if(!roleEl){showLoginError('Please select a role.');return;}
@@ -3544,7 +3765,7 @@ function startApp(){
   document.getElementById('hdr-avatar').textContent=CURRENT_NAME.charAt(0).toUpperCase();
   document.getElementById('hdr-avatar').style.background=cfg.avatarBg;
   document.getElementById('hdr-uname').textContent=CURRENT_NAME;
-  ['dashboard','weekly','clients','impl','my-clients'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
+  ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-header').style.display='flex';
   document.getElementById('app-body').style.display='flex';
