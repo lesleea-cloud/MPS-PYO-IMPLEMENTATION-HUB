@@ -534,6 +534,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div class="rc-desc">My projects</div>
         </div>
       </div>
+      <div class="lf-group" id="user-select-group" style="display:none;">
+        <label class="lf-label">Select your account</label>
+        <select class="lf-select" id="login-user-select">
+          <option value="">— Choose your account —</option>
+        </select>
+      </div>
       <div class="lf-group" id="impl-select-group" style="display:none;">
         <label class="lf-label">Select your name</label>
         <select class="lf-select" id="login-impl-name">
@@ -3630,9 +3636,19 @@ function pickRole(el){
   document.querySelectorAll('.role-card').forEach(function(c){c.classList.remove('selected');});
   el.classList.add('selected');
   var role=el.getAttribute('data-role');
-  document.getElementById('impl-select-group').style.display=role==='implementer'?'block':'none';
-  document.getElementById('name-input-group').style.display=role==='implementer'?'none':'block';
   document.getElementById('login-error').classList.remove('show');
+  var roleUsers=USERS.filter(function(u){return u.role===role;});
+  if(roleUsers.length>0){
+    var sel=document.getElementById('login-user-select');
+    sel.innerHTML='<option value="">— Choose your account —</option>'+roleUsers.map(function(u){return '<option value="'+u.username+'">'+u.username+'</option>';}).join('');
+    document.getElementById('user-select-group').style.display='block';
+    document.getElementById('impl-select-group').style.display='none';
+    document.getElementById('name-input-group').style.display='none';
+  } else {
+    document.getElementById('user-select-group').style.display='none';
+    document.getElementById('impl-select-group').style.display=role==='implementer'?'block':'none';
+    document.getElementById('name-input-group').style.display=role==='implementer'?'none':'block';
+  }
 }
  
 // ══════════════════════════════════════════════════════
@@ -3849,8 +3865,16 @@ function doLogin(){
   if(!roleEl){showLoginError('Please select a role.');return;}
   var role=roleEl.getAttribute('data-role');
   var name='';
-  if(role==='implementer'){name=document.getElementById('login-impl-name').value;if(!name){showLoginError('Please select your name.');return;}}
-  else{name=(document.getElementById('login-name').value||'').trim();if(!name){showLoginError('Please enter your name.');return;}}
+  if(document.getElementById('user-select-group').style.display!=='none'){
+    name=document.getElementById('login-user-select').value;
+    if(!name){showLoginError('Please select your account.');return;}
+  } else if(role==='implementer'){
+    name=document.getElementById('login-impl-name').value;
+    if(!name){showLoginError('Please select your name.');return;}
+  } else {
+    name=(document.getElementById('login-name').value||'').trim();
+    if(!name){showLoginError('Please enter your name.');return;}
+  }
   document.getElementById('login-error').classList.remove('show');
   CURRENT_ROLE=role;CURRENT_NAME=name;
   IMPL_USER=(role==='implementer')?name:IMPL_USER;
@@ -3878,8 +3902,17 @@ function doSignOut(){
   document.querySelector('.role-card[data-role="manager"]').classList.add('selected');
   document.getElementById('login-name').value='';
   document.getElementById('login-impl-name').value='';
+  document.getElementById('login-user-select').value='';
+  document.getElementById('user-select-group').style.display='none';
   document.getElementById('impl-select-group').style.display='none';
-  document.getElementById('name-input-group').style.display='block';
+  // Default to manager role — show user dropdown if manager users exist, else text input
+  var mgrUsers=USERS.filter(function(u){return u.role==='manager';});
+  document.getElementById('name-input-group').style.display=mgrUsers.length?'none':'block';
+  if(mgrUsers.length){
+    var sel=document.getElementById('login-user-select');
+    sel.innerHTML='<option value="">— Choose your account —</option>'+mgrUsers.map(function(u){return '<option value="'+u.username+'">'+u.username+'</option>';}).join('');
+    document.getElementById('user-select-group').style.display='block';
+  }
   document.getElementById('login-error').classList.remove('show');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app-header').style.display='none';
