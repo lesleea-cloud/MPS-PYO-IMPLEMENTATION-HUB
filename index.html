@@ -1043,7 +1043,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       </div>
 
       <!-- Data Management -->
-      <div class="panel">
+      <div class="panel" id="st-panel-data">
         <div class="panel-title"><span class="pt-dot" style="--c:var(--b)"></span>Data Management</div>
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">
           <div>
@@ -1075,7 +1075,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       </div>
 
       <!-- Team Configuration -->
-      <div class="panel">
+      <div class="panel" id="st-panel-team">
         <div class="panel-title"><span class="pt-dot" style="--c:var(--v)"></span>Team Configuration</div>
         <div style="font-size:11px;color:var(--s5);margin-bottom:1rem;margin-top:-.5rem;">Update names here to replace dummy names across the entire app — login dropdown, client table, all views.</div>
         <div style="font-size:12px;font-weight:700;color:var(--s8);margin-bottom:.5rem;">Implementers <span style="font-weight:400;color:var(--s4);">(5 slots)</span></div>
@@ -1095,6 +1095,39 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <input id="st-pm-4" type="text" placeholder="PM 5" style="padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
         </div>
         <button onclick="stSaveTeam()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Team Configuration</button>
+      </div>
+
+      <!-- User Management (Admin only) -->
+      <div class="panel" id="st-panel-users">
+        <div class="panel-title"><span class="pt-dot" style="--c:var(--r)"></span>User Management</div>
+        <div id="st-users-list" style="margin-bottom:1rem;"></div>
+        <div style="border-top:1px solid var(--s1);padding-top:1rem;">
+          <div style="font-size:12px;font-weight:700;color:var(--s8);margin-bottom:.75rem;">Add New User</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;align-items:end;">
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Username</div>
+              <input id="st-user-name" type="text" placeholder="e.g. jdelacruz" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Email</div>
+              <input id="st-user-email" type="email" placeholder="e.g. j@sprout.ph" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Password</div>
+              <input id="st-user-pass" type="text" placeholder="Password" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;"/>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Role</div>
+              <select id="st-user-role" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;">
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+                <option value="implementer">Implementer</option>
+              </select>
+            </div>
+            <button onclick="stAddUser()" style="padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">Add User</button>
+          </div>
+          <div id="st-user-error" style="display:none;margin-top:8px;font-size:11px;color:var(--r);font-weight:600;"></div>
+        </div>
       </div>
     </div>
 
@@ -1163,6 +1196,7 @@ var TEAM_CONFIG = {
   pms: ['Marcus','Sofia','Javier','Isabel','Diego']
 };
 var ST_PREVIEW = null;
+var USERS = (function(){try{return JSON.parse(localStorage.getItem('pyo_users')||'[]');}catch(e){return [];}})();
 
 function go(page){
   ['dashboard','weekly','clients','impl','settings'].forEach(function(p){
@@ -3588,8 +3622,8 @@ function mfDownload(){
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
   manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients']},
-  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients','settings']},
-  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients','settings']}
+  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients']},
+  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients']}
 };
  
 function pickRole(el){
@@ -3605,15 +3639,82 @@ function pickRole(el){
 // SETTINGS PAGE
 // ══════════════════════════════════════════════════════
 function renderSettings(){
-  var months=[];
-  D.forEach(function(d){if(months.indexOf(d.month)<0)months.push(d.month);});
-  document.getElementById('st-data-summary').textContent=D.length+' record'+(D.length!==1?'s':'')+' across '+months.length+' month'+(months.length!==1?'s':'');
-  TEAM_CONFIG.implementers.forEach(function(n,i){var el=document.getElementById('st-impl-'+i);if(el)el.value=n;});
-  TEAM_CONFIG.pms.forEach(function(n,i){var el=document.getElementById('st-pm-'+i);if(el)el.value=n;});
-  ST_PREVIEW=null;
-  document.getElementById('st-preview-area').style.display='none';
-  document.getElementById('st-file-name').textContent='No file selected';
-  document.getElementById('st-file-input').value='';
+  var isAdmin=CURRENT_ROLE==='admin';
+  var isImpl=CURRENT_ROLE==='implementer';
+  var isMgr=CURRENT_ROLE==='manager';
+
+  // Show/hide panels by role
+  document.getElementById('st-panel-data').style.display=(isAdmin||isImpl)?'':'none';
+  document.getElementById('st-panel-team').style.display=isMgr?'':'none';
+  document.getElementById('st-panel-users').style.display=isAdmin?'':'none';
+
+  if(isAdmin||isImpl){
+    var months=[];
+    D.forEach(function(d){if(months.indexOf(d.month)<0)months.push(d.month);});
+    document.getElementById('st-data-summary').textContent=D.length+' record'+(D.length!==1?'s':'')+' across '+months.length+' month'+(months.length!==1?'s':'');
+    ST_PREVIEW=null;
+    document.getElementById('st-preview-area').style.display='none';
+    document.getElementById('st-file-name').textContent='No file selected';
+    document.getElementById('st-file-input').value='';
+  }
+
+  if(isMgr){
+    TEAM_CONFIG.implementers.forEach(function(n,i){var el=document.getElementById('st-impl-'+i);if(el)el.value=n;});
+    TEAM_CONFIG.pms.forEach(function(n,i){var el=document.getElementById('st-pm-'+i);if(el)el.value=n;});
+  }
+
+  if(isAdmin) stRenderUsers();
+}
+
+function stRenderUsers(){
+  var el=document.getElementById('st-users-list');
+  if(!el)return;
+  if(!USERS.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--s4);padding:.5rem 0;">No users added yet.</div>';
+    return;
+  }
+  var roleLabel={manager:'Manager',admin:'Admin',implementer:'Implementer'};
+  var rolePill={manager:'background:rgba(234,88,12,.12);color:#c2410c;',admin:'background:rgba(37,99,235,.12);color:#1d4ed8;',implementer:'background:rgba(22,163,74,.12);color:#15803d;'};
+  var html='<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    +'<thead><tr style="background:var(--s1);">'
+    +['#','Username','Email','Password','Role',''].map(function(h){return '<th style="padding:6px 10px;text-align:left;font-weight:700;color:var(--s5);border-bottom:1px solid var(--s2);">'+h+'</th>';}).join('')
+    +'</tr></thead><tbody>';
+  USERS.forEach(function(u,i){
+    html+='<tr style="border-bottom:1px solid var(--s1);">'
+      +'<td style="padding:6px 10px;color:var(--s5);">'+(i+1)+'</td>'
+      +'<td style="padding:6px 10px;font-weight:600;color:var(--s8);">'+u.username+'</td>'
+      +'<td style="padding:6px 10px;color:var(--s7);">'+u.email+'</td>'
+      +'<td style="padding:6px 10px;font-family:var(--mono);color:var(--s6);">'+u.password+'</td>'
+      +'<td style="padding:6px 10px;"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;'+(rolePill[u.role]||'')+'">'+( roleLabel[u.role]||u.role)+'</span></td>'
+      +'<td style="padding:6px 10px;"><button onclick="stDeleteUser('+i+')" style="padding:3px 10px;font-size:11px;font-weight:600;border:1px solid var(--r1);background:var(--r0);color:var(--r);border-radius:6px;cursor:pointer;font-family:var(--font);">Remove</button></td>'
+      +'</tr>';
+  });
+  el.innerHTML=html+'</tbody></table>';
+}
+
+function stAddUser(){
+  var name=(document.getElementById('st-user-name').value||'').trim();
+  var email=(document.getElementById('st-user-email').value||'').trim();
+  var pass=(document.getElementById('st-user-pass').value||'').trim();
+  var role=document.getElementById('st-user-role').value;
+  var errEl=document.getElementById('st-user-error');
+  if(!name||!email||!pass){errEl.textContent='Username, email and password are all required.';errEl.style.display='block';return;}
+  if(USERS.find(function(u){return u.username.toLowerCase()===name.toLowerCase();})){errEl.textContent='Username "'+name+'" already exists.';errEl.style.display='block';return;}
+  errEl.style.display='none';
+  USERS.push({username:name,email:email,password:pass,role:role});
+  localStorage.setItem('pyo_users',JSON.stringify(USERS));
+  document.getElementById('st-user-name').value='';
+  document.getElementById('st-user-email').value='';
+  document.getElementById('st-user-pass').value='';
+  stRenderUsers();
+  showImportToast('success','User "'+name+'" added.');
+}
+
+function stDeleteUser(idx){
+  if(!confirm('Remove user "'+USERS[idx].username+'"?'))return;
+  USERS.splice(idx,1);
+  localStorage.setItem('pyo_users',JSON.stringify(USERS));
+  stRenderUsers();
 }
 
 function stDownloadTemplate(){
