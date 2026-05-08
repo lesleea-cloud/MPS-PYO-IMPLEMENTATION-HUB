@@ -536,9 +536,19 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       </div>
       <div class="lf-group" id="user-select-group" style="display:none;">
         <label class="lf-label">Select your account</label>
-        <select class="lf-select" id="login-user-select">
+        <select class="lf-select" id="login-user-select" onchange="toggleUserCreds()">
           <option value="">— Choose your account —</option>
         </select>
+      </div>
+      <div id="user-creds-group" style="display:none;">
+        <div class="lf-group" style="margin-bottom:.75rem;">
+          <label class="lf-label">Email</label>
+          <input class="lf-input" id="login-user-email" type="email" placeholder="Enter your email" autocomplete="off"/>
+        </div>
+        <div class="lf-group">
+          <label class="lf-label">Password</label>
+          <input class="lf-input" id="login-user-pass" type="password" placeholder="Enter your password"/>
+        </div>
       </div>
       <div class="lf-group" id="impl-select-group" style="display:none;">
         <label class="lf-label">Select your name</label>
@@ -3632,6 +3642,14 @@ var ROLE_CONFIG={
   implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients']}
 };
  
+function toggleUserCreds(){
+  var val=document.getElementById('login-user-select').value;
+  document.getElementById('user-creds-group').style.display=val?'block':'none';
+  document.getElementById('login-user-email').value='';
+  document.getElementById('login-user-pass').value='';
+  document.getElementById('login-error').classList.remove('show');
+}
+
 function pickRole(el){
   document.querySelectorAll('.role-card').forEach(function(c){c.classList.remove('selected');});
   el.classList.add('selected');
@@ -3868,6 +3886,13 @@ function doLogin(){
   if(document.getElementById('user-select-group').style.display!=='none'){
     name=document.getElementById('login-user-select').value;
     if(!name){showLoginError('Please select your account.');return;}
+    var enteredEmail=(document.getElementById('login-user-email').value||'').trim();
+    var enteredPass=(document.getElementById('login-user-pass').value||'').trim();
+    if(!enteredEmail||!enteredPass){showLoginError('Please enter your email and password.');return;}
+    var matchedUser=USERS.find(function(u){return u.username===name;});
+    if(!matchedUser||matchedUser.email!==enteredEmail||matchedUser.password!==enteredPass){
+      showLoginError('Incorrect email or password.');return;
+    }
   } else if(role==='implementer'){
     name=document.getElementById('login-impl-name').value;
     if(!name){showLoginError('Please select your name.');return;}
@@ -3903,6 +3928,9 @@ function doSignOut(){
   document.getElementById('login-name').value='';
   document.getElementById('login-impl-name').value='';
   document.getElementById('login-user-select').value='';
+  document.getElementById('login-user-email').value='';
+  document.getElementById('login-user-pass').value='';
+  document.getElementById('user-creds-group').style.display='none';
   document.getElementById('user-select-group').style.display='none';
   document.getElementById('impl-select-group').style.display='none';
   // Default to manager role — show user dropdown if manager users exist, else text input
