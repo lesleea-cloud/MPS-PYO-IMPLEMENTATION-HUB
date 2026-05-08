@@ -1152,38 +1152,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 <script>
 // ══════════════ DATA ══════════════
-var D=[
-  {no:1,month:"January",client:"Nexvera Solutions",resource:"Ana",pm:"Marcus",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-01-14",handOver:"2026-01-29",liveRun:"2026-02-15",kom:1,sim:1,par:0,live:1,post:0},
-  {no:2,month:"January",client:"Orbis Tech Philippines",resource:"Ana",pm:"Sofia",remarks:"Ongoing",service:"PYO + HR + Sprout Gov",days:150,komDate:"2026-01-14",handOver:"2026-04-13",liveRun:"",kom:1,sim:1,par:1,live:0,post:0},
-  {no:3,month:"January",client:"Dalcom Philippines LLC",resource:"Bea",pm:"Marcus",remarks:"Live",service:"PYO + HR + Sprout Gov",days:60,komDate:"2026-01-19",handOver:"2026-03-19",liveRun:"2026-04-10",kom:1,sim:1,par:1,live:0,post:0},
-  {no:4,month:"January",client:"Everleaf Food Corporation",resource:"Carl",pm:"Javier",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-01-28",handOver:"2026-02-26",liveRun:"2026-03-15",kom:1,sim:1,par:1,live:1,post:0},
-  {no:5,month:"January",client:"Pinnacle Tech Services OPC",resource:"Dana",pm:"Marcus",remarks:"Not yet started",service:"Sprout Gov",days:30,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:6,month:"January",client:"Westfield Sugar Philippines Inc.",resource:"Carl",pm:"Javier",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-01-23",handOver:"2026-02-06",liveRun:"2026-02-15",kom:1,sim:1,par:1,live:1,post:0},
-  {no:7,month:"January",client:"Luminae Aesthetic Clinic",resource:"Bea",pm:"Marcus",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-01-28",handOver:"2026-02-12",liveRun:"2026-04-15",kom:1,sim:1,par:0,live:0,post:0},
-  {no:8,month:"January",client:"KubEats",resource:"Carl",pm:"Isabel",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-02-19",handOver:"2026-03-06",liveRun:"2026-03-15",kom:1,sim:1,par:1,live:1,post:0},
-  {no:9,month:"January",client:"Q&M Consulting OPC / Ardent Consult",resource:"Dana",pm:"Marcus",remarks:"Ongoing",service:"Sprout Gov",days:30,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:10,month:"January",client:"Expera Philippines Corporation",resource:"Carl",pm:"Javier",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-02-05",handOver:"2026-02-20",liveRun:"2026-03-28",kom:1,sim:1,par:1,live:1,post:0},
-  {no:11,month:"January",client:"Apex Select Foods International Inc.",resource:"Bea",pm:"Isabel",remarks:"Ongoing",service:"PYO",days:60,komDate:"2026-02-11",handOver:"",liveRun:"2026-04-15",kom:1,sim:1,par:1,live:0,post:0},
-  {no:12,month:"January",client:"Delvex Corporation",resource:"Ana",pm:"Javier",remarks:"Ongoing",service:"PYO",days:60,komDate:"2026-02-05",handOver:"2026-03-20",liveRun:"",kom:1,sim:1,par:1,live:0,post:0},
-  {no:13,month:"February",client:"Nexlink Worldwide Philippines Inc.",resource:"Eli",pm:"Marcus",remarks:"Not yet started",service:"Statutory Disbursement",days:30,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:14,month:"February",client:"Global Connect VSTS Inc.",resource:"Carl",pm:"Sofia",remarks:"Churned",service:"Payroll Starter",days:15,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:15,month:"February",client:"InBrand Media Philippines Inc.",resource:"Carl",pm:"Isabel",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-02-20",handOver:"2026-03-06",liveRun:"2026-03-15",kom:1,sim:1,par:1,live:1,post:0},
-  {no:16,month:"February",client:"Crosslink Generosity Foundation Philippines",resource:"Bea",pm:"Javier",remarks:"Not yet started",service:"PYO",days:30,komDate:"2026-03-25",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:17,month:"February",client:"Halcyon Workforce and Resourcing Solutions",resource:"Ana",pm:"Isabel",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-02-24",handOver:"2026-03-11",liveRun:"2026-04-18",kom:1,sim:1,par:0,live:0,post:0},
-  {no:18,month:"February",client:"Sabi Nabi Sushi Bar",resource:"Carl",pm:"Sofia",remarks:"Live",service:"Payroll Starter",days:15,komDate:"2026-02-24",handOver:"2026-03-09",liveRun:"2026-03-20",kom:1,sim:1,par:1,live:1,post:0},
-  {no:19,month:"February",client:"Renova Optima Center for Wellness",resource:"Ana",pm:"Isabel",remarks:"Ongoing",service:"PYO + HR",days:30,komDate:"2026-02-26",handOver:"2026-03-27",liveRun:"",kom:1,sim:1,par:1,live:0,post:0},
-  {no:20,month:"February",client:"Benchmark Outsource Services",resource:"Bea",pm:"Javier",remarks:"Ongoing",service:"PYO + HR + Sprout Gov",days:30,komDate:"2026-03-02",handOver:"",liveRun:"2026-04-15",kom:1,sim:1,par:1,live:0,post:0},
-  {no:21,month:"February",client:"Alterwind Holdings",resource:"Dana",pm:"",remarks:"Not yet started",service:"Sprout Gov",days:0,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:22,month:"February",client:"Baylink Center",resource:"Ana",pm:"Javier",remarks:"Ongoing",service:"PYO + HR + Sprout Gov",days:60,komDate:"2026-03-19",handOver:"",liveRun:"",kom:1,sim:1,par:0,live:0,post:0},
-  {no:23,month:"March",client:"RACK NET-SEC Inc.",resource:"Ana",pm:"Marcus",remarks:"Not yet started",service:"PYO + HR + Sprout Gov",days:30,komDate:"2026-03-26",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:24,month:"March",client:"Nexlink Voice",resource:"Dana",pm:"Javier",remarks:"Not yet started",service:"Sprout Gov",days:0,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:25,month:"March",client:"FiberCore Philippines Inc (Phase 2)",resource:"Ana",pm:"Diego",remarks:"Ongoing",service:"PYO + HR",days:0,komDate:"",handOver:"",liveRun:"",kom:1,sim:1,par:0,live:0,post:0},
-  {no:26,month:"March",client:"Abuela Consultancy Services Corporation",resource:"Bea",pm:"Marcus",remarks:"Ongoing",service:"Payroll Starter",days:15,komDate:"2026-03-19",handOver:"",liveRun:"2026-05-15",kom:1,sim:0,par:0,live:0,post:0},
-  {no:27,month:"March",client:"Uplux Global Inc.",resource:"Carl",pm:"Isabel",remarks:"Ongoing",service:"Payroll Starter",days:15,komDate:"2026-03-16",handOver:"",liveRun:"",kom:1,sim:0,par:1,live:0,post:0},
-  {no:28,month:"March",client:"Qualix Health",resource:"Bea",pm:"Isabel",remarks:"Not yet started",service:"Payroll Starter",days:15,komDate:"2026-03-29",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0},
-  {no:29,month:"March",client:"MBVX 24-7 Inc",resource:"Carl",pm:"Javier",remarks:"Ongoing",service:"PYO + HR",days:60,komDate:"2026-03-19",handOver:"",liveRun:"",kom:1,sim:0,par:0,live:0,post:0},
-  {no:30,month:"March",client:"Altercare Home Health + Care Inc",resource:"Carl",pm:"Marcus",remarks:"Not yet started",service:"Payroll Starter",days:15,komDate:"",handOver:"",liveRun:"",kom:0,sim:0,par:0,live:0,post:0}
-];
+var D=[];
  
 var TODAY=new Date();TODAY.setHours(0,0,0,0);
 var PS=10, clPg=1;
