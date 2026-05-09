@@ -770,7 +770,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     <div class="page" id="page-dashboard">
       <div class="sec-hdr">
         <div>
-          <div class="sec-title">Implementation Overview</div>
+          <div class="sec-title" id="dash-greeting">Implementation Overview</div>
           <div class="sec-sub">2026 Year-to-Date &nbsp;·&nbsp; All projects across all implementers</div>
         </div>
         <div class="sec-kpi" id="last-updated">As of Mar 30, 2026</div>
@@ -816,7 +816,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     <div class="page" id="page-weekly">
       <div class="sec-hdr">
         <div>
-          <div class="sec-title">Weekly Status Update</div>
+          <div class="sec-title" id="weekly-greeting">Weekly Status Update</div>
           <div class="sec-sub">Week of March 23 – March 30, 2026</div>
         </div>
       </div>
@@ -1217,6 +1217,7 @@ function go(page){
 }
  
 function renderDashboard(){
+  document.getElementById('dash-greeting').textContent='Hi '+CURRENT_NAME+'!';
   var live=D.filter(function(d){return d.remarks==='Live';}).length;
   var on=D.filter(function(d){return d.remarks==='Ongoing';}).length;
   var nys=D.filter(function(d){return d.remarks==='Not yet started';}).length;
@@ -1269,6 +1270,7 @@ function renderDashboard(){
 }
  
 function renderWeekly(){
+  document.getElementById('weekly-greeting').textContent='Hi '+CURRENT_NAME+'!';
   var sk=['Live','Ongoing','Not yet started','Churned'];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var rl=['Ana','Bea','Carl','Dana','Eli'];
