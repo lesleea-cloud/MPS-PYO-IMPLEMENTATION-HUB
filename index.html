@@ -2652,11 +2652,8 @@ function renderImpl(){
   /* Project list */
   implRenderProjects();
 
-  /* Auto-select first ongoing project */
-  if(!SELECTED_PROJECT){
-    var first=myD.find(function(d){return d.remarks==='Ongoing';})||myD[0];
-    if(first)selProject(first.no);
-  }
+  /* Auto-select first project on every load */
+  if(myD.length)selProject(myD[0].no);
 }
 
 function implRenderAttention(myD){
