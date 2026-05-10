@@ -1089,7 +1089,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </div>
         </div>
         <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--s1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-          <div style="font-size:11px;color:var(--s4);line-height:1.5;">After uploading data, click <b style="color:var(--s6);">Save to file</b> and replace the deployed <code style="background:var(--s1);padding:1px 5px;border-radius:4px;font-family:var(--mono);">index.html</code> — data will survive all future enhancements.</div>
+          <div style="font-size:11px;color:var(--s4);line-height:1.5;">After uploading data, click <b style="color:var(--s6);">Save to file</b>. If GitHub is configured, changes commit automatically and all users see the update on next load. Otherwise, replace the deployed <code style="background:var(--s1);padding:1px 5px;border-radius:4px;font-family:var(--mono);">index.html</code> manually.</div>
           <button onclick="stSaveDataToFile()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--s9);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;flex-shrink:0;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Save to file
@@ -1152,11 +1152,44 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div id="st-user-error" style="display:none;margin-top:8px;font-size:11px;color:var(--r);font-weight:600;"></div>
         </div>
         <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--s1);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-          <div style="font-size:11px;color:var(--s4);line-height:1.5;">After adding or removing users, click <b style="color:var(--s6);">Save to file</b> and replace the deployed <code style="background:var(--s1);padding:1px 5px;border-radius:4px;font-family:var(--mono);">index.html</code> to make changes permanent.</div>
+          <div style="font-size:11px;color:var(--s4);line-height:1.5;">After adding or removing users, click <b style="color:var(--s6);">Save to file</b>. If GitHub is configured, the updated file commits automatically. Otherwise, replace the deployed <code style="background:var(--s1);padding:1px 5px;border-radius:4px;font-family:var(--mono);">index.html</code> manually.</div>
           <button onclick="stSaveUsersToFile()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--s9);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;flex-shrink:0;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Save to file
           </button>
+        </div>
+      </div>
+
+      <!-- GitHub Auto-Commit (Admin + Manager) -->
+      <div class="panel" id="st-panel-github" style="display:none;">
+        <div class="panel-title"><span class="pt-dot" style="--c:#24292f"></span>GitHub Auto-Commit</div>
+        <div style="font-size:11px;color:var(--s5);margin-bottom:1rem;margin-top:-.5rem;">When configured, <b style="color:var(--s6);">Save to file</b> commits directly to your GitHub repo — all users see the update on next page load. Leave blank to fall back to local download.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:.75rem;">
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Personal Access Token</div>
+            <input id="gh-token" type="password" placeholder="ghp_xxxxxxxxxxxx" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--mono);color:var(--s8);background:#fff;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Repository Owner</div>
+            <input id="gh-owner" type="text" placeholder="e.g. sprout-ph" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Repository Name</div>
+            <input id="gh-repo" type="text" placeholder="e.g. pyo-hub" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">File Path in Repo</div>
+            <input id="gh-path" type="text" placeholder="index.html" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;box-sizing:border-box;">
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Branch</div>
+            <input id="gh-branch" type="text" placeholder="main" style="width:100%;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button onclick="saveGitHubConfig()" style="padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Config</button>
+          <button onclick="clearGitHubConfig()" style="padding:7px 16px;background:#fff;color:var(--r);border:1px solid var(--r1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">Clear</button>
+          <span style="font-size:11px;color:var(--s4);">Token is stored in your browser only — never shared with other users.</span>
         </div>
       </div>
     </div>
@@ -1171,6 +1204,7 @@ var D_DEFAULT=/*D_DATA*/[{"no":1,"month":"January","client":"Brandfox Digital","
 var ADDONS_DEFAULT=/*ADDONS_DATA*/{"1":{"sg":0,"ba":0,"sd":0,"std":0,"otk":0},"2":{"sg":0,"ba":0,"sd":0,"std":0,"otk":0}}/*END_ADDONS_DATA*/;
 var MILESTONES_DEFAULT=/*MILESTONES_DATA*/{"1":{"billingMonth":"February"},"2":{"billingMonth":"April"},"3":{"billingMonth":"April"},"4":{"billingMonth":"March"},"6":{"billingMonth":"February"},"8":{"billingMonth":"March"},"10":{"billingMonth":"March"},"11":{"billingMonth":"April"},"12":{"billingMonth":"April"},"15":{"billingMonth":"March"},"16":{"billingMonth":"May"},"17":{"billingMonth":"April"},"18":{"billingMonth":"March"},"20":{"billingMonth":"April"},"26":{"billingMonth":"May"},"27":{"billingMonth":"April"},"28":{"billingMonth":"May"},"33":{"billingMonth":"June"},"34":{"billingMonth":"July"}}/*END_MILESTONES_DATA*/;
 var AFTERHO_DEFAULT=/*AFTERHO_DATA*/{"1":{"csm":"Myka Batara","processor":"Tiara"},"2":{"csm":"","processor":"Jaysel"},"3":{"csm":"Jerry San Pedro","processor":"Rez-ann"},"4":{"csm":"","processor":""},"5":{"csm":"","processor":""},"6":{"csm":"Myka Batara","processor":""},"7":{"csm":"","processor":""},"8":{"csm":"","processor":""},"9":{"csm":"","processor":""},"10":{"csm":"","processor":""},"11":{"csm":"","processor":"Frances"},"12":{"csm":"Jerome Portera","processor":"Maj"},"13":{"csm":"","processor":""},"14":{"csm":"","processor":""},"15":{"csm":"","processor":""},"16":{"csm":"","processor":""},"17":{"csm":"Myka Batara","processor":"Renz"},"18":{"csm":"Myka Batara","processor":""},"19":{"csm":"Demsy Charles","processor":"Tiara"},"20":{"csm":"","processor":"Jacob"},"21":{"csm":"","processor":""},"22":{"csm":"","processor":""},"23":{"csm":"Matthew Abellanda","processor":""},"24":{"csm":"","processor":""},"25":{"csm":"Ma. Rexelle Estacio","processor":"Shaina"},"26":{"csm":"","processor":""},"27":{"csm":"","processor":""},"28":{"csm":"Myka Batara","processor":""},"29":{"csm":"","processor":""},"30":{"csm":"","processor":""},"31":{"csm":"","processor":""},"32":{"csm":"","processor":""},"33":{"csm":"","processor":""},"34":{"csm":"","processor":""},"35":{"csm":"","processor":""},"36":{"csm":"","processor":""}}/*END_AFTERHO_DATA*/;
+var DATA_VERSION=/*DATA_VER*/0/*END_DATA_VER*/;
 
 var TODAY=new Date();TODAY.setHours(0,0,0,0);
 var PS=10, clPg=1;
@@ -1560,14 +1594,42 @@ var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
 
-// Restore baked-in data on load (runs only when D_DEFAULT has records)
+// Restore data on load — prefer version-matched localStorage, otherwise use baked defaults
 (function(){
   if(!D_DEFAULT.length)return;
+  try{
+    var savedVer=localStorage.getItem('pyo_data_ver');
+    if(DATA_VERSION>0&&savedVer&&parseInt(savedVer)===DATA_VERSION){
+      var sd=localStorage.getItem('pyo_data');
+      if(sd){
+        JSON.parse(sd).forEach(function(r){D.push(r);});
+        var sa=localStorage.getItem('pyo_addons');
+        var sm=localStorage.getItem('pyo_milestones');
+        var sah=localStorage.getItem('pyo_afterho');
+        if(sa)Object.assign(CL_ADDONS,JSON.parse(sa));
+        if(sm)Object.assign(CL_MILESTONES,JSON.parse(sm));
+        if(sah)Object.assign(CL_AFTERHO,JSON.parse(sah));
+        return;
+      }
+    }
+  }catch(e){}
+  // No matching localStorage — clear stale entries and load baked defaults
+  ['pyo_data','pyo_addons','pyo_milestones','pyo_afterho','pyo_data_ver'].forEach(function(k){localStorage.removeItem(k);});
   D_DEFAULT.forEach(function(r){D.push(Object.assign({},r));});
   Object.keys(ADDONS_DEFAULT).forEach(function(k){CL_ADDONS[k]=Object.assign({},ADDONS_DEFAULT[k]);});
   Object.keys(MILESTONES_DEFAULT).forEach(function(k){CL_MILESTONES[k]=Object.assign({},MILESTONES_DEFAULT[k]);});
   Object.keys(AFTERHO_DEFAULT).forEach(function(k){CL_AFTERHO[k]=Object.assign({},AFTERHO_DEFAULT[k]);});
 })();
+
+function autoSave(){
+  try{
+    localStorage.setItem('pyo_data',JSON.stringify(D));
+    localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));
+    localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));
+    localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));
+    if(DATA_VERSION>0)localStorage.setItem('pyo_data_ver',String(DATA_VERSION));
+  }catch(e){}
+}
 
 function rChip(r){var base=r.split('/')[0].trim();return '<span class="res-chip r'+base+'">'+r+'</span>';}
 
@@ -1637,20 +1699,22 @@ function clCbox(no,field,val){
     var cur=CL_ADDONS[no][field]||0;
     CL_ADDONS[no][field]=cur===0?1:cur===1?-1:0;
   }
+  autoSave();
   renderClients();
 }
 
-function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.month=val;renderClients();}
-function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.service=val;renderClients();}
-function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.days=parseInt(val)||0;renderClients();}
-function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.remarks=val;renderClients();}
-function ahUpdateField(no,field,val){if(!CL_AFTERHO[no])CL_AFTERHO[no]={};CL_AFTERHO[no][field]=val;}
+function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.month=val;autoSave();renderClients();}
+function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.service=val;autoSave();renderClients();}
+function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.days=parseInt(val)||0;autoSave();renderClients();}
+function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.remarks=val;autoSave();renderClients();}
+function ahUpdateField(no,field,val){if(!CL_AFTERHO[no])CL_AFTERHO[no]={};CL_AFTERHO[no][field]=val;autoSave();}
 function clDeleteRow(no){
   var idx=D.findIndex(function(x){return x.no===no;});
   if(idx>=0){
     if(!confirm('Remove "'+D[idx].client+'" from the list?'))return;
     D.splice(idx,1);
   }
+  autoSave();
   renderClients();
 }
 function clAddRow(){openAddClientModal();}
@@ -1703,6 +1767,7 @@ function submitAddClient(){
     otk:document.getElementById('acm-otk').checked?1:0
   };
   if(addons.sg||addons.ba||addons.sd||addons.std||addons.otk)CL_ADDONS[newNo]=addons;
+  autoSave();
   closeAddClientModal();
   clPg=1;
   renderClients();
@@ -1789,12 +1854,14 @@ function mlEndEdit(id,no,field,src){
   lbl.innerHTML=display;
   inp.style.display='none';
   lbl.style.display='inline-block';
+  autoSave();
   if(val&&flash){flash.style.opacity='1';setTimeout(function(){flash.style.opacity='0';},1500);}
 }
 
 function mlUpdateMonth(no,field,val){
   if(!CL_MILESTONES[no])CL_MILESTONES[no]={};
   CL_MILESTONES[no][field]=val;
+  autoSave();
 }
 
 function mlStartMonthEdit(id){
@@ -1814,6 +1881,7 @@ function mlEndMonthEdit(id,no,field){
   var val=sel.value;
   if(!CL_MILESTONES[no])CL_MILESTONES[no]={};
   CL_MILESTONES[no][field]=val;
+  autoSave();
   var display=val?('<span style="font-size:11px;color:var(--s7);">'+val+'</span>'):'<span style="color:var(--s3)">—</span>';
   lbl.innerHTML=display;
   setTimeout(function(){
@@ -2059,13 +2127,15 @@ function showImportToast(type,msg){
   var fill=document.getElementById('dl-progress-fill');
   var icon=document.querySelector('#dl-toast .dl-toast-icon');
   if(!toast)return;
-  var isOk=type==='success';
-  if(icon){icon.style.background=isOk?'var(--g0)':'var(--r0)';}
-  if(icon){var svg=icon.querySelector('svg');if(svg)svg.setAttribute('stroke',isOk?'var(--g)':'var(--r)');}
-  title.textContent=isOk?'✅ '+msg:'❌ '+msg;
+  var isOk=type==='success';var isInfo=type==='info';
+  var clr=isOk?'var(--g)':isInfo?'var(--b)':'var(--r)';
+  var clr0=isOk?'var(--g0)':isInfo?'var(--b0)':'var(--r0)';
+  if(icon){icon.style.background=clr0;}
+  if(icon){var svg=icon.querySelector('svg');if(svg)svg.setAttribute('stroke',clr);}
+  title.textContent=(isOk?'✅ ':isInfo?'ℹ️ ':'❌ ')+msg;
   fname.textContent='';
   fill.style.width='100%';
-  fill.style.background=isOk?'var(--g)':'var(--r)';
+  fill.style.background=clr;
   toast.classList.add('show');
   setTimeout(function(){
     toast.classList.remove('show');
@@ -3746,6 +3816,7 @@ function renderSettings(){
   document.getElementById('st-panel-data').style.display=(isAdmin||isImpl)?'':'none';
   document.getElementById('st-panel-team').style.display=isMgr?'':'none';
   document.getElementById('st-panel-users').style.display=isAdmin?'':'none';
+  document.getElementById('st-panel-github').style.display=(isAdmin||isMgr)?'':'none';
 
   if(isAdmin||isImpl){
     var months=[];
@@ -3763,6 +3834,18 @@ function renderSettings(){
   }
 
   if(isAdmin) stRenderUsers();
+
+  if(isAdmin||isMgr){
+    var ghCfg=getGitHubConfig();
+    if(ghCfg){
+      var el;
+      el=document.getElementById('gh-token');if(el)el.value=ghCfg.token||'';
+      el=document.getElementById('gh-owner');if(el)el.value=ghCfg.owner||'';
+      el=document.getElementById('gh-repo');if(el)el.value=ghCfg.repo||'';
+      el=document.getElementById('gh-path');if(el)el.value=ghCfg.path||'';
+      el=document.getElementById('gh-branch');if(el)el.value=ghCfg.branch||'';
+    }
+  }
 }
 
 function stRenderUsers(){
@@ -3923,6 +4006,7 @@ function stConfirmReplace(){
   Object.assign(CL_MILESTONES,ST_PREVIEW.milestones);
   Object.keys(CL_AFTERHO).forEach(function(k){delete CL_AFTERHO[k];});
   Object.assign(CL_AFTERHO,ST_PREVIEW.afterho||{});
+  autoSave();
   ST_PREVIEW=null;
   document.getElementById('st-preview-area').style.display='none';
   document.getElementById('st-file-input').value='';
@@ -3954,32 +4038,93 @@ function stSaveTeam(){
   showImportToast('success','Team configuration saved.');
 }
 
-function stSaveUsersToFile(){
-  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
-  html=html.replace(/\/\*USERS_DATA\*\/[\s\S]*?\/\*END_USERS_DATA\*\//,'/*USERS_DATA*/'+JSON.stringify(USERS)+'/*END_USERS_DATA*/');
+function stDownloadHTML(html){
   var blob=new Blob([html],{type:'text/html;charset=utf-8'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a');
   a.href=url;a.download='index.html';
   document.body.appendChild(a);a.click();
   setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-  showImportToast('success','Downloaded. Replace your deployed index.html with this file.');
+}
+
+function getGitHubConfig(){
+  try{var s=localStorage.getItem('pyo_gh_config');if(s)return JSON.parse(s);}catch(e){}
+  return null;
+}
+
+function saveGitHubConfig(){
+  var token=(document.getElementById('gh-token').value||'').trim();
+  var owner=(document.getElementById('gh-owner').value||'').trim();
+  var repo=(document.getElementById('gh-repo').value||'').trim();
+  var path=(document.getElementById('gh-path').value||'').trim()||'index.html';
+  var branch=(document.getElementById('gh-branch').value||'').trim()||'main';
+  if(!token||!owner||!repo){showImportToast('error','Token, owner, and repo are required.');return;}
+  localStorage.setItem('pyo_gh_config',JSON.stringify({token:token,owner:owner,repo:repo,path:path,branch:branch}));
+  showImportToast('success','GitHub config saved.');
+}
+
+function clearGitHubConfig(){
+  localStorage.removeItem('pyo_gh_config');
+  ['gh-token','gh-owner','gh-repo','gh-path','gh-branch'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  showImportToast('success','GitHub config cleared.');
+}
+
+function commitToGitHub(cfg,html,message,onSuccess,onError){
+  var apiBase='https://api.github.com/repos/'+cfg.owner+'/'+cfg.repo+'/contents/'+cfg.path;
+  var headers={'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+  fetch(apiBase+'?ref='+cfg.branch,{headers:headers})
+    .then(function(r){return r.json();})
+    .then(function(info){
+      var sha=info.sha||null;
+      var bytes=new TextEncoder().encode(html);
+      var binary='';bytes.forEach(function(b){binary+=String.fromCharCode(b);});
+      var body={message:message,content:btoa(binary),branch:cfg.branch};
+      if(sha)body.sha=sha;
+      return fetch(apiBase,{method:'PUT',headers:headers,body:JSON.stringify(body)});
+    })
+    .then(function(r){
+      if(r.ok){onSuccess();}
+      else{r.json().then(function(j){onError(j.message||'GitHub error '+r.status);}).catch(function(){onError('GitHub error '+r.status);});}
+    })
+    .catch(function(e){onError(e.message||'Network error');});
+}
+
+function stSaveUsersToFile(){
+  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  html=html.replace(/\/\*USERS_DATA\*\/[\s\S]*?\/\*END_USERS_DATA\*\//,'/*USERS_DATA*/'+JSON.stringify(USERS)+'/*END_USERS_DATA*/');
+  var cfg=getGitHubConfig();
+  if(cfg){
+    showImportToast('info','Committing users to GitHub…');
+    commitToGitHub(cfg,html,'chore: update users '+new Date().toISOString(),
+      function(){showImportToast('success','Users committed to GitHub. Changes live on next page load.');},
+      function(err){showImportToast('error','GitHub failed: '+err+' — downloading locally.');stDownloadHTML(html);}
+    );
+  } else {
+    stDownloadHTML(html);
+    showImportToast('success','Downloaded. Replace your deployed index.html with this file.');
+  }
 }
 
 function stSaveDataToFile(){
   if(!D.length){showImportToast('error','No data loaded yet. Upload data first.');return;}
+  var newVer=Date.now();
   var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
   html=html.replace(/\/\*D_DATA\*\/[\s\S]*?\/\*END_D_DATA\*\//,'/*D_DATA*/'+JSON.stringify(D)+'/*END_D_DATA*/');
   html=html.replace(/\/\*ADDONS_DATA\*\/[\s\S]*?\/\*END_ADDONS_DATA\*\//,'/*ADDONS_DATA*/'+JSON.stringify(CL_ADDONS)+'/*END_ADDONS_DATA*/');
   html=html.replace(/\/\*MILESTONES_DATA\*\/[\s\S]*?\/\*END_MILESTONES_DATA\*\//,'/*MILESTONES_DATA*/'+JSON.stringify(CL_MILESTONES)+'/*END_MILESTONES_DATA*/');
   html=html.replace(/\/\*AFTERHO_DATA\*\/[\s\S]*?\/\*END_AFTERHO_DATA\*\//,'/*AFTERHO_DATA*/'+JSON.stringify(CL_AFTERHO)+'/*END_AFTERHO_DATA*/');
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='index.html';
-  document.body.appendChild(a);a.click();
-  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},100);
-  showImportToast('success',D.length+' records baked in. Replace index.html with this file.');
+  html=html.replace(/\/\*DATA_VER\*\/[\s\S]*?\/\*END_DATA_VER\*\//,'/*DATA_VER*/'+newVer+'/*END_DATA_VER*/');
+  var cfg=getGitHubConfig();
+  if(cfg){
+    showImportToast('info','Committing to GitHub…');
+    commitToGitHub(cfg,html,'chore: bake data '+new Date(newVer).toISOString(),
+      function(){DATA_VERSION=newVer;autoSave();showImportToast('success',D.length+' records committed to GitHub. All users see the update on next load.');},
+      function(err){showImportToast('error','GitHub failed: '+err+' — downloading locally.');stDownloadHTML(html);}
+    );
+  } else {
+    stDownloadHTML(html);
+    showImportToast('success',D.length+' records baked in. Replace index.html with this file.');
+  }
 }
 
 function doLogin(){
