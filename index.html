@@ -4250,114 +4250,87 @@ function renderMfPreview(rows,cols){
   document.getElementById('mf-preview').style.display='block';
 }
  
-function mfDownload(){
+async function mfDownload(){
   var rows=MF.allRows;
   var cols=MF.outCols||MF_COLUMNS;
   if(!rows||!rows.length){mfSetStatus('⚠️ Generate the masterfile first.','error');return;}
   if(!MF.out){mfSetStatus('⚠️ Output template missing — please re-upload.','error');return;}
- 
-  // Strategy: read the output template binary, then use SheetJS to inject data rows
-  // starting at row 5 (after banner, headers, hint, sample rows),
-  // preserving all existing styling via template cloning.
-  var reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      var XLSX=window.XLSX;
-      if(!XLSX)throw new Error('SheetJS not loaded');
- 
-      // Read the template as-is (preserves all styles, merges, widths)
-      var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellStyles:true,cellDates:false});
-      var ws=wb.Sheets[wb.SheetNames[0]];
- 
-      // Determine which row to start writing data (find first empty row after row 4)
-      // Row 1=banner, Row 2=headers, Row 3=hint, Row 4=sample → data starts at row 5
-      var dataStartRow=5;
- 
-      // Get header row (row 2) to build col-index map
-      var range=XLSX.utils.decode_range(ws['!ref']||'A1:AV4');
-      var headerRow=2; // 1-based
-      var colMap={};  // colName -> col index (0-based)
-      for(var c=range.s.c;c<=range.e.c;c++){
-        var addr=XLSX.utils.encode_cell({r:headerRow-1,c:c});
-        var cell=ws[addr];
-        if(cell&&cell.v!==undefined){
-          var key=String(cell.v).replace(/[\r\n\t]+/g,' ').trim();
-          colMap[key]=c;
-        }
-      }
- 
-      // Capture per-column styles from the sample row (row 4, index 3)
-      // before clearing — these get stamped onto every new data row
-      var colStyleMap={};
-      for(var cs=range.s.c;cs<=range.e.c;cs++){
-        var sAddr=XLSX.utils.encode_cell({r:3,c:cs});
-        var sCell=ws[sAddr];
-        if(sCell&&sCell.s)colStyleMap[cs]=sCell.s;
-      }
-
-      // Clear any existing data rows (keep rows 1-4 intact)
-      var maxR=range.e.r;
-      for(var r=dataStartRow-1;r<=maxR;r++){
-        for(var c2=range.s.c;c2<=range.e.c;c2++){
-          var a=XLSX.utils.encode_cell({r:r,c:c2});
-          delete ws[a];
-        }
-      }
-
-      // Write employee data rows starting at row 5
-      var newMaxR=dataStartRow-1+rows.length-1;
-      rows.forEach(function(row,ri){
-        var sheetRow=dataStartRow+ri; // 1-based
-        // First pass: write a styled empty cell for every column so rows carry formatting
-        for(var cf=range.s.c;cf<=range.e.c;cf++){
-          var blankAddr=XLSX.utils.encode_cell({r:sheetRow-1,c:cf});
-          var blankCell={t:'s',v:'',w:''};
-          if(colStyleMap[cf])blankCell.s=colStyleMap[cf];
-          ws[blankAddr]=blankCell;
-        }
-        cols.forEach(function(col){
-          var colNorm=col.replace(/[\r\n\t]+/g,' ').replace(/\*$/,'').trim();
-          // Find matching column index
-          var ci=colMap[col];
-          if(ci===undefined){
-            // Try normalized
-            for(var k in colMap){
-              var kn=k.replace(/\*$/,'').trim();
-              if(kn===colNorm){ci=colMap[k];break;}
-            }
-          }
-          if(ci===undefined)return;
-          var v=row[col];
-          var addr2=XLSX.utils.encode_cell({r:sheetRow-1,c:ci});
-          var cellObj={t:'s',v:v===undefined||v===null?'':String(v),w:v===undefined||v===null?'':String(v)};
-          if(colStyleMap[ci])cellObj.s=colStyleMap[ci];
-          ws[addr2]=cellObj;
-        });
-      });
- 
-      // Update sheet range
-      if(newMaxR>=dataStartRow-1){
-        range.e.r=newMaxR;
-        ws['!ref']=XLSX.utils.encode_range(range);
-      }
- 
-      // Generate filename from source file name
-      var cn=(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
-      var now=new Date();
-      var ts=(now.getMonth()+1+'').padStart(2,'0')+(now.getDate()+'').padStart(2,'0')+(now.getFullYear()+'').slice(2)
-           +'_'+(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');
-      var filename=cn+'_PayrollPie_ADD_'+ts+'.xlsx';
- 
-      XLSX.writeFile(wb,filename,{bookSST:false,type:'binary'});
-      mfSetStatus('✅ <strong>'+filename+'</strong> downloaded with full template formatting!','success');
-    }catch(err){
-      mfSetStatus('❌ '+err.message,'error');
+  mfSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Preparing download…</span>','loading');
+  try{
+    var JSZip=window.JSZip;
+    if(!JSZip)throw new Error('JSZip not loaded');
+    var buf=await new Promise(function(res,rej){
+      var r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=rej;r.readAsArrayBuffer(MF.out);
+    });
+    var xlWb=XLSX.read(new Uint8Array(buf),{type:'array'});
+    var xlWs=xlWb.Sheets[xlWb.SheetNames[0]];
+    var xlRange=XLSX.utils.decode_range(xlWs['!ref']||'A1:AV4');
+    var colMap={};
+    for(var c=xlRange.s.c;c<=xlRange.e.c;c++){
+      var hCell=xlWs[XLSX.utils.encode_cell({r:1,c:c})];
+      if(hCell&&hCell.v!==undefined)colMap[String(hCell.v).replace(/[\r\n\t]+/g,' ').trim()]=c;
     }
-  };
-  reader.onerror=function(){mfSetStatus('❌ Failed to read output template.','error');};
-  reader.readAsArrayBuffer(MF.out);
+    var zip=await JSZip.loadAsync(buf);
+    var sheetXmlPath='xl/worksheets/sheet1.xml';
+    var relsFile=zip.file('xl/_rels/workbook.xml.rels');
+    if(relsFile){
+      var relsXml=await relsFile.async('string');
+      var rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
+      if(!rm)rm=relsXml.match(/Target="(worksheets\/[^"]+)"/);
+      if(rm)sheetXmlPath='xl/'+(rm[1].replace(/^\//,''));
+    }
+    var sheetXml=await zip.file(sheetXmlPath).async('string');
+    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
+    zip.file(sheetXmlPath,newSheetXml);
+    var cn=(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
+    var now=new Date();
+    var ts=(now.getMonth()+1+'').padStart(2,'0')+(now.getDate()+'').padStart(2,'0')+(now.getFullYear()+'').slice(2)
+         +'_'+(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');
+    var filename=cn+'_PayrollPie_ADD_'+ts+'.xlsx';
+    var out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+    var blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    mfSetStatus('✅ <strong>'+filename+'</strong> downloaded — full template formatting preserved.','success');
+  }catch(err){mfSetStatus('❌ '+err.message,'error');}
 }
- 
+
+function mfInjectRows(sheetXml,rows,cols,colMap){
+  var clean=sheetXml.replace(/<row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/row>/g,function(m,n){
+    return parseInt(n)>=5?'':m;
+  });
+  var newRows='';
+  rows.forEach(function(rowData,ri){
+    var rn=ri+5;
+    var cells='';
+    cols.forEach(function(col){
+      var ci=colMap[col];
+      if(ci===undefined){
+        var norm=col.replace(/[\r\n\t]+/g,' ').replace(/\*$/,'').trim();
+        for(var k in colMap){if(k.replace(/\*$/,'').trim()===norm){ci=colMap[k];break;}}
+      }
+      if(ci===undefined)return;
+      var v=rowData[col];
+      if(v===undefined||v===null||v==='')return;
+      cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
+    });
+    if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
+  });
+  return clean.replace('</sheetData>',newRows+'</sheetData>');
+}
+
+function mfColLetter(n){
+  var s='';n+=1;
+  while(n>0){var r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26);}
+  return s;
+}
+
+function mfEscXml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
   manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients']},
