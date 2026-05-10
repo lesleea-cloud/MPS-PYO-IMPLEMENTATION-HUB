@@ -303,6 +303,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .btn-tab-export{font-size:11px;font-weight:600;padding:5px 13px;border-radius:7px;cursor:pointer;font-family:var(--font);border:1px solid var(--b1);background:var(--b0);color:var(--b);display:inline-flex;align-items:center;gap:5px;}
 .btn-tab-export:hover{background:var(--b1);}
 .cl-cb-locked{cursor:not-allowed!important;opacity:.55;pointer-events:none;}
+.cl-cb-na{cursor:not-allowed;background:var(--s1);border-color:var(--s2);opacity:.4;pointer-events:none;}
 /* Download toast */
 .dl-toast{position:fixed;bottom:24px;right:24px;background:#fff;border-radius:12px;box-shadow:var(--shm);padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:999;min-width:280px;border:1px solid var(--s2);transform:translateY(80px);opacity:0;transition:transform .25s ease,opacity .25s ease;pointer-events:none;}
 .dl-toast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
@@ -1181,7 +1182,12 @@ var CURRENT_NAME='';
 var SC={Live:'#16a34a',Ongoing:'#2563eb','Not yet started':'#ea580c',Churned:'#dc2626','On-Hold':'#64748b','For Turnover':'#7c3aed','On-Hold Back to Sales':'#92400e'};
 var RC={Ana:'#16a34a',Bea:'#2563eb',Carl:'#7c3aed',Dana:'#ea580c',Eli:'#9d174d'};
  
-function pct(d){return Math.round([d.kom,d.sim,d.par,d.live,d.post].filter(function(v){return v===1;}).length/5*100);}
+function pct(d){
+  if(d.service==='Payroll Starter'){
+    return Math.round([d.kom,d.sim,d.live].filter(function(v){return v===1;}).length/3*100);
+  }
+  return Math.round([d.kom,d.sim,d.par,d.live,d.post].filter(function(v){return v===1;}).length/5*100);
+}
 function bdg(s){var m={Live:'bL',Ongoing:'bO','Not yet started':'bN',Churned:'bC','On-Hold':'bH','For Turnover':'bFT','On-Hold Back to Sales':'bOBS'};return '<span class="badge '+(m[s]||'bN')+'">'+s+'</span>';}
 function chip(r){var b=r.split('/')[0].trim();return '<span class="chip c'+b+'">'+r+'</span>';}
 function pbar(p){return '<div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:'+p+'%"></div></div><span class="pgm-pct">'+p+'%</span></div>';}
@@ -1622,6 +1628,7 @@ function clCbox(no,field,val){
   if(field==='kom'||field==='sim'||field==='par'||field==='live'||field==='post'){
     var d=D.find(function(x){return x.no===no;});
     if(d){
+      if(d.service==='Payroll Starter'&&(field==='par'||field==='post'))return;
       d[field]=d[field]?0:1;
       d.remarks=deriveRemarks(d);
     }
@@ -1701,7 +1708,10 @@ function submitAddClient(){
   renderClients();
 }
 
-function clPhaseBox(no,field,val){
+function clPhaseBox(no,field,val,service){
+  if(service==='Payroll Starter'&&(field==='par'||field==='post')){
+    return '<div class="cl-cb cl-cb-na" title="Not applicable for Payroll Starter"></div>';
+  }
   var cls='cl-cb'+(val?' chk':'');
   return '<div class="'+cls+'" onclick="clCbox('+no+',\''+field+'\','+val+')" title="Click to toggle">'+(val?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</div>';
 }
@@ -2123,11 +2133,11 @@ function renderClients(){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'kom',d.kom)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'sim',d.sim)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'live',d.live)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'kom',d.kom,d.service)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'sim',d.sim,d.service)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par,d.service)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'live',d.live,d.service)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post,d.service)+'</td>'+
       '</tr>';
     }).join('');
   } else if(CL_TAB==='addons'){
