@@ -4286,6 +4286,15 @@ function mfDownload(){
         }
       }
  
+      // Capture per-column styles from the sample row (row 4, index 3)
+      // before clearing — these get stamped onto every new data row
+      var colStyleMap={};
+      for(var cs=range.s.c;cs<=range.e.c;cs++){
+        var sAddr=XLSX.utils.encode_cell({r:3,c:cs});
+        var sCell=ws[sAddr];
+        if(sCell&&sCell.s)colStyleMap[cs]=sCell.s;
+      }
+
       // Clear any existing data rows (keep rows 1-4 intact)
       var maxR=range.e.r;
       for(var r=dataStartRow-1;r<=maxR;r++){
@@ -4294,11 +4303,18 @@ function mfDownload(){
           delete ws[a];
         }
       }
- 
+
       // Write employee data rows starting at row 5
       var newMaxR=dataStartRow-1+rows.length-1;
       rows.forEach(function(row,ri){
         var sheetRow=dataStartRow+ri; // 1-based
+        // First pass: write a styled empty cell for every column so rows carry formatting
+        for(var cf=range.s.c;cf<=range.e.c;cf++){
+          var blankAddr=XLSX.utils.encode_cell({r:sheetRow-1,c:cf});
+          var blankCell={t:'s',v:'',w:''};
+          if(colStyleMap[cf])blankCell.s=colStyleMap[cf];
+          ws[blankAddr]=blankCell;
+        }
         cols.forEach(function(col){
           var colNorm=col.replace(/[\r\n\t]+/g,' ').replace(/\*$/,'').trim();
           // Find matching column index
@@ -4312,9 +4328,10 @@ function mfDownload(){
           }
           if(ci===undefined)return;
           var v=row[col];
-          if(v===undefined||v===null||v==='')return; // leave blank cells empty
           var addr2=XLSX.utils.encode_cell({r:sheetRow-1,c:ci});
-          ws[addr2]={t:'s',v:String(v),w:String(v)};
+          var cellObj={t:'s',v:v===undefined||v===null?'':String(v),w:v===undefined||v===null?'':String(v)};
+          if(colStyleMap[ci])cellObj.s=colStyleMap[ci];
+          ws[addr2]=cellObj;
         });
       });
  
