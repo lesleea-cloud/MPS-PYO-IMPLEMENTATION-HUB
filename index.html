@@ -4120,14 +4120,13 @@ async function mfGenerate(){
       if(!ln)continue;
  
       var g=mfGet;
-      var normEmpStatus=mfNormStatus(g(row,srcHeaders,['Employment Status','Emp Status']));
-      if(normEmpStatus==='Inactive')continue;
       var hireRaw=g(row,srcHeaders,['Hire Date','Date Hired','Start Date']);
       var hireFmt=mfFmtDate(hireRaw);
 
       // Build the mapped output object keyed by exact output column name
       var mapped={};
 
+      // Status — always ADD for new employees
       mapped['Status']='ADD';
  
       // Employee ID
@@ -4155,7 +4154,8 @@ async function mfGenerate(){
  
       // Employment
       mapped['Hire Date (mm/dd/yyyy)*']=hireFmt;
-      mapped['Employment Status*']=normEmpStatus;
+      var rawStatus=g(row,srcHeaders,['Employment Status','Emp Status']);
+      mapped['Employment Status*']=mfNormStatus(rawStatus);
       mapped['Status Date (mm/dd/yyyy)*']=hireFmt;
       mapped['ROHQ (Yes/No)']='No';
  
@@ -4186,6 +4186,7 @@ async function mfGenerate(){
       // Previous employer
       mapped['Previous Employer Non-Tax 13th Month']='';
       mapped['Previous Employer Non-Tax Salaries']='';
+      mapped['Previous Employer Taxable Salaries']='';
       mapped['Previous Employer Tax Withheld']='';
       mapped['Previous Employer Government Deductions']='';
       mapped['Previous Employer De Minimis']='';
@@ -4255,106 +4256,90 @@ async function mfDownload(){
   var cols=MF.outCols||MF_COLUMNS;
   if(!rows||!rows.length){mfSetStatus('⚠️ Generate the masterfile first.','error');return;}
   if(!MF.out){mfSetStatus('⚠️ Output template missing — please re-upload.','error');return;}
-  if(!window.JSZip)throw new Error('JSZip not loaded');
   mfSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Preparing download…</span>','loading');
   try{
+    var JSZip=window.JSZip;
+    if(!JSZip)throw new Error('JSZip not loaded');
     var buf=await new Promise(function(res,rej){
       var r=new FileReader();r.onload=function(e){res(e.target.result);};r.onerror=rej;r.readAsArrayBuffer(MF.out);
     });
-
-    // ── Step 1: use XLSX.js to read column positions from the template ──
     var xlWb=XLSX.read(new Uint8Array(buf),{type:'array'});
     var xlWs=xlWb.Sheets[xlWb.SheetNames[0]];
+    var xlRange=XLSX.utils.decode_range(xlWs['!ref']||'A1:AV4');
     var xlRaw=XLSX.utils.sheet_to_json(xlWs,{header:1,defval:''});
     var hdrIdx=1;
     for(var hi=0;hi<Math.min(xlRaw.length,5);hi++){
-      var hrow=xlRaw[hi].map(function(c){return String(c).replace(/[\r\n\t]+/g,' ').trim();});
-      if(hrow.indexOf('Status')>=0&&hrow.some(function(c){return c.indexOf('Employee ID')>=0;})){hdrIdx=hi;break;}
+      var hrow=xlRaw[hi].map(function(hc){return String(hc).replace(/[\r\n\t]+/g,' ').trim();});
+      if(hrow.indexOf('Status')>=0&&hrow.some(function(hc){return hc.indexOf('Employee ID')>=0;})){hdrIdx=hi;break;}
     }
     var colMap={};
-    var hdrRow=xlRaw[hdrIdx]||[];
-    for(var c=0;c<hdrRow.length;c++){
-      var cv=String(hdrRow[c]||'').replace(/[\r\n\t]+/g,' ').trim();
-      if(cv)colMap[cv]=c;
+    for(var c=xlRange.s.c;c<=xlRange.e.c;c++){
+      var hCell=xlWs[XLSX.utils.encode_cell({r:hdrIdx,c:c})];
+      if(hCell&&hCell.v!==undefined)colMap[String(hCell.v).replace(/[\r\n\t]+/g,' ').trim()]=c;
     }
-    if(!Object.keys(colMap).length)throw new Error('Could not read column headers from the output template. Check that it has a row containing "Status" and "Employee ID".');
-
-    // ── Step 2: open the same buffer as a ZIP to preserve 100% template formatting ──
     var zip=await JSZip.loadAsync(buf);
-    var sheetPath='xl/worksheets/sheet1.xml';
+    var sheetXmlPath='xl/worksheets/sheet1.xml';
     var relsFile=zip.file('xl/_rels/workbook.xml.rels');
     if(relsFile){
       var relsXml=await relsFile.async('string');
       var rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
       if(!rm)rm=relsXml.match(/Target="(worksheets\/[^"]+)"/);
-      if(rm)sheetPath='xl/'+rm[1].replace(/^\//,'');
+      if(rm)sheetXmlPath='xl/'+(rm[1].replace(/^\//,''));
     }
-    var sheetXml=await zip.file(sheetPath).async('string');
-
-    // ── Step 3: detect namespace prefix from the root element ──
-    // e.g. xmlns:x="...spreadsheetml..." → p='x:'   |   xmlns="...spreadsheetml..." → p=''
-    var nsM=sheetXml.match(/\bxmlns(?::([a-zA-Z0-9]+))?="http:\/\/schemas\.openxmlformats\.org\/spreadsheetml/);
-    var p=nsM&&nsM[1]?nsM[1]+':':'';
-
-    // ── Step 4: strip existing data rows (r >= dataStart) then inject new ones ──
-    var dataStart=Math.max(hdrIdx+2,5); // 1-based row number where data begins
-    var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
-      return parseInt(n)>=dataStart?'':m;
-    });
-
-    var newRowsXml='';
-    rows.forEach(function(rowData,ri){
-      var rn=dataStart+ri;
-      var cells='';
-      cols.forEach(function(col){
-        var ci=colMap[col];
-        if(ci===undefined){
-          var norm=col.replace(/[\r\n\t]+/g,' ').replace(/\*$/,'').trim();
-          for(var k in colMap){if(k.replace(/\*$/,'').trim()===norm){ci=colMap[k];break;}}
-        }
-        if(ci===undefined)return;
-        var v=rowData[col];
-        if(v===undefined||v===null||v==='')return;
-        var addr=XLSX.utils.encode_cell({r:rn-1,c:ci}); // encode_cell is 0-based
-        cells+='<'+p+'c r="'+addr+'" t="inlineStr"><'+p+'is><'+p+'t>'+mfEscXml(String(v))+'</'+p+'t></'+p+'is></'+p+'c>';
-      });
-      if(cells)newRowsXml+='<'+p+'row r="'+rn+'">'+cells+'</'+p+'row>';
-    });
-
-    // Insert rows before the closing sheetData tag (handles namespace + self-closing)
-    var newSheetXml;
-    var sdClose=clean.match(/<\/[a-zA-Z]*:?sheetData>/);
-    if(sdClose){
-      var ct=sdClose[0];
-      newSheetXml=clean.replace(ct,function(){return newRowsXml+ct;});
-    } else {
-      var sdSelf=clean.match(/<(?:([a-zA-Z]+):)?sheetData\s*\/>/);
-      if(sdSelf){
-        var sp2=sdSelf[1]?sdSelf[1]+':':'';
-        newSheetXml=clean.replace(sdSelf[0],function(){return '<'+sp2+'sheetData>'+newRowsXml+'</'+sp2+'sheetData>';});
-      } else {
-        newSheetXml=clean;
-      }
-    }
-
-    zip.file(sheetPath,newSheetXml);
-    var out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+    var sheetXml=await zip.file(sheetXmlPath).async('string');
+    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
+    zip.file(sheetXmlPath,newSheetXml);
     var cn=(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
     var now=new Date();
     var ts=(now.getMonth()+1+'').padStart(2,'0')+(now.getDate()+'').padStart(2,'0')+(now.getFullYear()+'').slice(2)
          +'_'+(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');
     var filename=cn+'_PayrollPie_ADD_'+ts+'.xlsx';
+    var out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
     var blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');a.href=url;a.download=filename;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    mfSetStatus('✅ <strong>'+filename+'</strong> downloaded — <strong>'+rows.length+'</strong> employee'+(rows.length!==1?'s':'')+' exported. Header formatting preserved.','success');
+    mfSetStatus('✅ <strong>'+filename+'</strong> downloaded — full template formatting preserved.','success');
   }catch(err){mfSetStatus('❌ '+err.message,'error');}
 }
 
+function mfInjectRows(sheetXml,rows,cols,colMap){
+  // Strip rows r >= 5 — handles namespace prefixes like <x:row>
+  var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
+    return parseInt(n)>=5?'':m;
+  });
+  var newRows='';
+  rows.forEach(function(rowData,ri){
+    var rn=ri+5;
+    var cells='';
+    cols.forEach(function(col){
+      var ci=colMap[col];
+      if(ci===undefined){
+        var norm=col.replace(/[\r\n\t]+/g,' ').replace(/\*$/,'').trim();
+        for(var k in colMap){if(k.replace(/\*$/,'').trim()===norm){ci=colMap[k];break;}}
+      }
+      if(ci===undefined)return;
+      var v=rowData[col];
+      if(v===undefined||v===null||v==='')return;
+      cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
+    });
+    if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
+  });
+  // Replace closing sheetData tag — handles namespace prefixes like </x:sheetData>
+  var sdClose=clean.match(/<\/[a-zA-Z]*:?sheetData>/);
+  if(!sdClose)return clean;
+  return clean.replace(sdClose[0],newRows+sdClose[0]);
+}
+
+function mfColLetter(n){
+  var s='';n+=1;
+  while(n>0){var r=(n-1)%26;s=String.fromCharCode(65+r)+s;n=Math.floor((n-1)/26);}
+  return s;
+}
+
 function mfEscXml(s){
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ══════════════ LOGIN ══════════════
