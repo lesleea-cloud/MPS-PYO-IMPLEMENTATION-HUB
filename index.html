@@ -790,17 +790,11 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Project Manager <span style="color:var(--r)">*</span></div>
-          <select id="acm-pm" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-            <option value="">— Select PM —</option>
-            <option>Marcus</option><option>Sofia</option><option>Javier</option><option>Isabel</option><option>Diego</option>
-          </select>
+          <input id="acm-pm" type="text" placeholder="e.g. Marcus" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">HR-I</div>
-          <select id="acm-hri" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-            <option value="">— Select HR-I —</option>
-            <option>Ana</option><option>Bea</option><option>Carl</option><option>Dana</option><option>Eli</option>
-          </select>
+          <input id="acm-hri" type="text" placeholder="e.g. Ana" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
         </div>
       </div>
       <div>
@@ -1920,8 +1914,8 @@ function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d
 function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.service=val;autoSave();renderClients();}
 function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.days=parseInt(val)||0;autoSave();renderClients();}
 function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.remarks=val;autoSave();renderClients();}
-function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.pm=val;autoSave();renderClients();}
-function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.hri=val;autoSave();renderClients();}
+function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.pm=val;autoSave();}
+function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.hri=val;autoSave();}
 function ahUpdateField(no,field,val){if(!CL_AFTERHO[no])CL_AFTERHO[no]={};CL_AFTERHO[no][field]=val;autoSave();}
 function clDeleteRow(no){
   var idx=D.findIndex(function(x){return x.no===no;});
@@ -2450,8 +2444,8 @@ function renderClients(){
         '<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>'+
         '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd">'+rChip(d.resource)+'</td>'+
-        (function(){var pmOpts=TEAM_CONFIG.pms.filter(Boolean).map(function(p){return '<option'+(d.pm===p?' selected':'')+'>'+p+'</option>';}).join('');return '<td class="ctd"><select class="cl-pm-sel" onchange="clUpdatePm('+d.no+',this.value)"><option value="">—</option>'+pmOpts+'</select></td>';})()+
-        (function(){var hriOpts=TEAM_CONFIG.implementers.filter(Boolean).map(function(p){return '<option'+(d.hri===p?' selected':'')+'>'+p+'</option>';}).join('');return '<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+hriOpts+'</select></td>';})()+
+        '<td class="ctd"><input type="text" value="'+(d.pm||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdatePm('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>'+
+        '<td class="ctd"><input type="text" value="'+(d.hri||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdateHrI('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>'+
         '<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>'+
         '<td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc('+d.no+',this.value)">'+svcOpts+'</select></td>'+
         (function(){var daysOpts=[0,15,30,60,90,120,150];var canEdit=(CURRENT_ROLE==='manager'||CURRENT_ROLE==='admin');if(!canEdit){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+( d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+ 
