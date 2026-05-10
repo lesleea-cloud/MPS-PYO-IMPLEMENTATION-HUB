@@ -687,7 +687,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         </div>
         <div class="lf-group">
           <label class="lf-label">Password</label>
-          <input class="lf-input" id="login-user-pass" type="password" placeholder="Enter your password">
+          <input class="lf-input" id="login-user-pass" type="password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin();">
         </div>
       </div>
       <div class="lf-group" id="impl-select-group" style="display:none;">
