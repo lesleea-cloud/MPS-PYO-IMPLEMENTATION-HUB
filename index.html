@@ -441,6 +441,9 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .btn-tab-export:hover{background:var(--b1);}
 .cl-cb-locked{cursor:not-allowed!important;opacity:.55;pointer-events:none;}
 .cl-cb-na{cursor:not-allowed;background:var(--s1);border-color:var(--s2);opacity:.4;pointer-events:none;}
+.ph-cell{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.ph-date{font-size:10px;font-family:var(--mono);color:var(--s4);cursor:pointer;}
+.ph-date:hover{color:var(--g3);}
 /* Download toast */
 .dl-toast{position:fixed;bottom:24px;right:24px;background:#fff;border-radius:12px;box-shadow:var(--shm);padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:999;min-width:280px;border:1px solid var(--s2);transform:translateY(80px);opacity:0;transition:transform .25s ease,opacity .25s ease;pointer-events:none;}
 .dl-toast.show{transform:translateY(0);opacity:1;pointer-events:auto;}
@@ -1740,15 +1743,15 @@ function tabTriggerDownload(fname){
     XLSX.utils.book_append_sheet(wb, aoSheet, 'Add-on Services');
 
     // Sheet 3: Milestone Dates
-    var mlHeaders = ['#','Client Name','Resource','KOM Date','Hand Over Date','Live Run Date','Churn Date','Billing Month','Month Completed'];
+    var mlHeaders = ['#','Client Name','Resource','KOM Date','Simulation Date','Parallel Run Date','Hand Over Date','Live Run Date','Churn Date','Billing Month','Month Completed'];
     var mlRows = [mlHeaders];
     exportData.forEach(function(d){
       var m = CL_MILESTONES[d.no]||{};
-      mlRows.push([d.no, d.client, d.resource, d.komDate, d.handOver, d.liveRun,
+      mlRows.push([d.no, d.client, d.resource, d.komDate, d.simDate||'', d.parDate||'', d.handOver, d.liveRun,
         m.churnDate||'', m.billingMonth||'', m.monthCompleted||'']);
     });
     var mlSheet = XLSX.utils.aoa_to_sheet(mlRows);
-    setColWidths(mlSheet, [5, 38, 12, 16, 18, 16, 14, 18, 20]);
+    setColWidths(mlSheet, [5, 38, 12, 16, 18, 20, 18, 16, 14, 18, 20]);
     XLSX.utils.book_append_sheet(wb, mlSheet, 'Milestone Dates');
 
     // Sheet 4: After Hand Over
@@ -1942,7 +1945,7 @@ function submitAddClient(){
   var maxNo=D.reduce(function(m,d){return Math.max(m,d.no);},0);
   var newNo=maxNo+1;
   var days=parseInt(document.getElementById('acm-days').value)||0;
-  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,remarks:'Not yet started',service:service,days:days,komDate:'',handOver:'',liveRun:'',kom:0,sim:0,par:0,live:0,post:0});
+  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,par:0,live:0,post:0});
   // Save add-on services
   var addons={
     sg: document.getElementById('acm-sg').checked?1:0,
@@ -1958,12 +1961,44 @@ function submitAddClient(){
   renderClients();
 }
 
-function clPhaseBox(no,field,val,service){
+function clPhaseBox(no,field,val,service,dateVal){
+  var svgChk='<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var dateHtml='';
+  if(field!=='post'){
+    var dId='phd-'+no+'-'+field;
+    var dDisp=dateVal?('<span style="font-family:var(--mono);font-size:10px;color:var(--s5);">'+dateVal+'</span>'):'<span style="color:var(--s3)">—</span>';
+    dateHtml='<div id="'+dId+'" class="ph-date" data-val="'+(dateVal||'')+'" onclick="phDateEdit('+no+',\''+field+'\')" title="Click to set date">'+dDisp+'</div>';
+  }
   if(service==='Payroll Starter'&&(field==='par'||field==='post')){
-    return '<div class="cl-cb cl-cb-na" title="Not applicable for Payroll Starter"></div>';
+    return '<div class="ph-cell"><div class="cl-cb cl-cb-na" title="Not applicable for Payroll Starter"></div>'+dateHtml+'</div>';
   }
   var cls='cl-cb'+(val?' chk':'');
-  return '<div class="'+cls+'" onclick="clCbox('+no+',\''+field+'\','+val+')" title="Click to toggle">'+(val?'<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</div>';
+  var cbHtml='<div class="'+cls+'" onclick="clCbox('+no+',\''+field+'\','+val+')" title="Click to toggle">'+(val?svgChk:'')+'</div>';
+  return '<div class="ph-cell">'+cbHtml+dateHtml+'</div>';
+}
+
+function phDateEdit(no,field){
+  var dId='phd-'+no+'-'+field;
+  var cell=document.getElementById(dId);
+  if(!cell)return;
+  var curVal=cell.getAttribute('data-val')||'';
+  var iso=mlToISO(curVal);
+  cell.innerHTML='<input type="date" value="'+iso+'" style="width:90px;font-size:10px;padding:1px 3px;border:1px solid var(--g3);border-radius:4px;outline:none;font-family:var(--mono);" onblur="phDateSave('+no+',\''+field+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur();" onclick="event.stopPropagation();">';
+  var inp=cell.querySelector('input');
+  if(inp)inp.focus();
+}
+
+function phDateSave(no,field,isoVal){
+  var dId='phd-'+no+'-'+field;
+  var cell=document.getElementById(dId);
+  var val=mlFromISO(isoVal);
+  var fieldMap={kom:'komDate',sim:'simDate',par:'parDate',live:'liveRun'};
+  var dataField=fieldMap[field];
+  if(dataField){var rec=D.find(function(x){return x.no===no;});if(rec){rec[dataField]=val;autoSave();}}
+  if(cell){
+    cell.setAttribute('data-val',val);
+    cell.innerHTML=val?('<span style="font-family:var(--mono);font-size:10px;color:var(--s5);">'+val+'</span>'):'<span style="color:var(--s3)">—</span>';
+  }
 }
 
 function clAddonBox(no,field,val){
@@ -2212,7 +2247,7 @@ function handleImport(e){
               remarks:row['Status']||'Not yet started',
               service:row['Service']||'',
               days:parseInt(row['Days'])||0,
-              komDate:'',handOver:'',liveRun:'',
+              komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',
               kom:parseInt(row['KOM'])||0,
               sim:parseInt(row['Simulation'])||0,
               par:parseInt(row['Parallel Run'])||0,
@@ -2265,6 +2300,8 @@ function handleImport(e){
           var d=D.find(function(x){return x.no===no;});
           if(d){
             if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);
+            if(row['Simulation Date'])d.simDate=parseImportDate(row['Simulation Date']);
+            if(row['Parallel Run Date'])d.parDate=parseImportDate(row['Parallel Run Date']);
             if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);
             if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);
           }
@@ -2388,11 +2425,11 @@ function renderClients(){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'kom',d.kom,d.service)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'sim',d.sim,d.service)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par,d.service)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'live',d.live,d.service)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post,d.service)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'kom',d.kom,d.service,d.komDate||'')+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'sim',d.sim,d.service,d.simDate||'')+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par,d.service,d.parDate||'')+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'live',d.live,d.service,d.liveRun||'')+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post,d.service,'')+'</td>'+
       '</tr>';
     }).join('');
   } else if(CL_TAB==='addons'){
@@ -4451,11 +4488,11 @@ function stDownloadTemplate(){
   aoSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:14},{wch:26},{wch:24},{wch:26},{wch:26}];
   XLSX.utils.book_append_sheet(wb,aoSheet,'Add-on Services');
   var mlSheet=XLSX.utils.aoa_to_sheet([
-    ['#','Client Name','Resource','KOM Date','Hand Over Date','Live Run Date','Churn Date','Billing Month','Month Completed'],
-    [1,'Example Client Co.','Ana','2026-01-15','2026-01-30','2026-02-15','','',''],
-    [2,'Another Corp Inc.','Bea','2026-02-10','','','','March','']
+    ['#','Client Name','Resource','KOM Date','Simulation Date','Parallel Run Date','Hand Over Date','Live Run Date','Churn Date','Billing Month','Month Completed'],
+    [1,'Example Client Co.','Ana','2026-01-15','2026-01-30','','2026-02-10','2026-02-15','','',''],
+    [2,'Another Corp Inc.','Bea','2026-02-10','','','','','','March','']
   ]);
-  mlSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:16},{wch:18},{wch:16},{wch:14},{wch:18},{wch:20}];
+  mlSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:16},{wch:18},{wch:20},{wch:18},{wch:16},{wch:14},{wch:18},{wch:20}];
   XLSX.utils.book_append_sheet(wb,mlSheet,'Milestone Dates');
   var ahTplSheet=XLSX.utils.aoa_to_sheet([
     ['#','Client Name','Resource','CSM','Processor'],
@@ -4498,12 +4535,12 @@ function stHandleFile(e){
       rows.forEach(function(row){
         var no=parseInt(row['#']||row['no']);
         if(!no)return;
-        newD.push({no:no,month:row['Month']||'January',client:row['Client Name']||row['Client']||'',resource:row['Resource']||'',pm:row['Project Manager']||row['PM']||'',remarks:row['Status']||'Not yet started',service:row['Service']||'',days:parseInt(row['Days'])||0,komDate:'',handOver:'',liveRun:'',kom:parseInt(row['KOM'])||0,sim:parseInt(row['Simulation'])||0,par:parseInt(row['Parallel Run'])||0,live:parseInt(row['Live Run'])||0,post:parseInt(row['Post Live'])||0});
+        newD.push({no:no,month:row['Month']||'January',client:row['Client Name']||row['Client']||'',resource:row['Resource']||'',pm:row['Project Manager']||row['PM']||'',remarks:row['Status']||'Not yet started',service:row['Service']||'',days:parseInt(row['Days'])||0,komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',kom:parseInt(row['KOM'])||0,sim:parseInt(row['Simulation'])||0,par:parseInt(row['Parallel Run'])||0,live:parseInt(row['Live Run'])||0,post:parseInt(row['Post Live'])||0});
       });
       var aoSheet=wb.Sheets['Add-on Services'];
       if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,sd:parseInt(row['Salary Disbursement'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0};});
       var mlSheet=wb.Sheets['Milestone Dates'];
-      if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=parseImportDate(row['Churn Date']);if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
+      if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);if(row['Simulation Date'])d.simDate=parseImportDate(row['Simulation Date']);if(row['Parallel Run Date'])d.parDate=parseImportDate(row['Parallel Run Date']);if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=parseImportDate(row['Churn Date']);if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
       var newAfterho={};
       var ahSheet=wb.Sheets['After Hand Over'];
       if(ahSheet)XLSX.utils.sheet_to_json(ahSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAfterho[no]={csm:row['CSM']||'',processor:row['Processor']||''};});
