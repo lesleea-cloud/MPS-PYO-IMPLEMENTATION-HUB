@@ -328,15 +328,20 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-attn-body::-webkit-scrollbar-track{background:var(--s1);}
 .impl-attn-body::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
 .impl-attn-body::-webkit-scrollbar-thumb:hover{background:var(--s4);}
-.impl-attn-sublbl{font-size:9px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;margin-top:5px;}
-.impl-attn-sublbl:first-child{margin-top:0;}
-.impl-attn-row{display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .1s;border-radius:4px;}
+.impl-attn-row{display:flex;align-items:flex-start;gap:7px;padding:7px 0;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .1s;}
 .impl-attn-row:last-child{border-bottom:none;}
-.impl-attn-row:hover{background:var(--s0);}
-.impl-attn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.impl-attn-row:hover{background:var(--s0);border-radius:6px;padding-left:4px;}
+.impl-attn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
 .impl-attn-txt{font-size:11px;font-weight:600;color:var(--s8);}
-.impl-attn-sub{font-size:10px;color:var(--s4);}
-.impl-attn-badge{font-size:10px;padding:1px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;font-weight:600;margin-left:auto;}
+.impl-attn-sub{font-size:10px;color:var(--s4);margin-top:1px;}
+.impl-attn-date{font-size:10px;color:var(--s4);font-family:var(--mono);margin-top:1px;}
+.impl-attn-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.impl-attn-badge{font-size:10px;padding:2px 8px;border-radius:8px;white-space:nowrap;font-weight:600;}
+.impl-attn-phase{font-size:9px;padding:1px 6px;border-radius:8px;background:var(--s1);color:var(--s4);white-space:nowrap;}
+.impl-attn-days{font-size:10px;font-weight:600;font-family:var(--mono);}
+.impl-attn-legend{display:flex;flex-wrap:wrap;gap:8px;padding:.5rem .85rem;background:var(--s0);border-top:1px solid var(--s1);flex-shrink:0;}
+.impl-attn-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--s4);}
+.impl-attn-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 
 /* Selected project panel */
 .impl-sel-panel{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
@@ -1190,11 +1195,20 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
           <!-- Needs Attention panel -->
           <div class="impl-attn-panel">
-            <div class="impl-panel-hdr">
-              <span style="width:6px;height:6px;border-radius:50%;background:var(--o);display:inline-block;"></span>
-              Needs attention
+            <div class="impl-panel-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--o);display:inline-block;"></span>
+                Needs attention
+              </div>
+              <span id="impl-attn-count" style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--r1);color:#991b1b;font-weight:600;display:none;"></span>
             </div>
             <div class="impl-attn-body" id="impl-attn-body"></div>
+            <div class="impl-attn-legend" id="impl-attn-legend" style="display:none;">
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#dc2626;"></div>Overdue</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#ea580c;"></div>Due within 7 days</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#f59e0b;"></div>Due within 14 days</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#2563eb;"></div>Next phase unscheduled</div>
+            </div>
           </div>
 
           <!-- Selected Project panel -->
@@ -2610,28 +2624,177 @@ function renderImpl(){
 
 function implRenderAttention(myD){
   if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
-  var overdue=[];
-  var upcoming=[];
+  var alerts=[];
+
   myD.forEach(function(d){
-    if(d.remarks==='Live')return; // Live clients don't need attention
-    if(d.remarks==='Not yet started'&&!d.komDate){
-      overdue.push({no:d.no,name:d.client,sub:'Kickoff not scheduled',color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});
-    } else if(d.liveRun){
-      var lr=new Date(d.liveRun);var diff=Math.round((lr-TODAY)/(1000*60*60*24));
-      if(diff>=0&&diff<=14){upcoming.push({no:d.no,name:d.client,sub:'Go-live in '+diff+' day'+(diff===1?'':'s')+' · '+d.liveRun,color:'#f59e0b',badge:'Soon',badgeCls:'background:#fef9c3;color:#854d0e'});}
-      else if(diff<0){overdue.push({no:d.no,name:d.client,sub:'Live run was '+d.liveRun,color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});}
+    /* Skip fully completed clients (all 5 phases done) */
+    if(d.kom===1&&d.sim===1&&d.par===1&&d.live===1&&d.post===1)return;
+    /* Skip churned */
+    if(d.remarks==='Churned')return;
+
+    /* ── OVERDUE: live run date has passed but live phase not done ── */
+    if(d.liveRun&&d.live!==1){
+      var lr=new Date(d.liveRun);
+      var diffLR=Math.round((lr-TODAY)/(1000*60*60*24));
+      if(diffLR<0){
+        alerts.push({
+          no:d.no,priority:0,
+          color:'#dc2626',
+          name:d.client,
+          sub:'Live run date passed — not yet marked done',
+          dateLabel:'Live run was',
+          dateVal:d.liveRun,
+          dateColor:'#dc2626',
+          badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b',
+          phase:'Live run',
+          daysLabel:Math.abs(diffLR)+'d past',daysColor:'#dc2626'
+        });
+        return;
+      }
+    }
+
+    /* ── OVERDUE: KOM done but simulation not started and 15+ days idle ── */
+    if(d.kom===1&&d.sim!==1&&d.komDate){
+      var komD=new Date(d.komDate);
+      var idleDays=Math.round((TODAY-komD)/(1000*60*60*24));
+      if(idleDays>=15){
+        alerts.push({
+          no:d.no,priority:1,
+          color:'#dc2626',
+          name:d.client,
+          sub:'KOM done — Simulation not started · '+idleDays+' days idle',
+          dateLabel:'KOM was',
+          dateVal:d.komDate,
+          dateColor:'#dc2626',
+          badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b',
+          phase:'Simulation',
+          daysLabel:idleDays+'d idle',daysColor:'#dc2626'
+        });
+        return;
+      }
+    }
+
+    /* ── OVERDUE: simulation done but parallel run 15+ days idle ── */
+    /* Uses d.simDate once that field is added to the schema; no-ops until then */
+    if(d.sim===1&&d.par!==1&&d.simDate){
+      var simRef=new Date(d.simDate);
+      var parIdle=Math.round((TODAY-simRef)/(1000*60*60*24));
+      if(parIdle>=15){
+        alerts.push({
+          no:d.no,priority:2,
+          color:'#dc2626',
+          name:d.client,
+          sub:'Simulation done — Parallel run not started · '+parIdle+' days idle',
+          dateLabel:'',dateVal:'',dateColor:'',
+          badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b',
+          phase:'Parallel run',
+          daysLabel:parIdle+'d idle',daysColor:'#dc2626'
+        });
+        return;
+      }
+    }
+
+    /* ── UPCOMING: live run within 7 days (orange) ── */
+    if(d.liveRun&&d.live!==1){
+      var lrU=new Date(d.liveRun);
+      var diffU=Math.round((lrU-TODAY)/(1000*60*60*24));
+      if(diffU>=0&&diffU<=7){
+        alerts.push({
+          no:d.no,priority:3,
+          color:'#ea580c',
+          name:d.client,
+          sub:d.par===1?'Parallel run done · Go-live approaching':'Parallel run not started · Live run soon',
+          dateLabel:'Live run',dateVal:d.liveRun,dateColor:'',
+          badge:diffU+' day'+(diffU===1?'':'s'),badgeCls:'background:#fed7aa;color:#9a3412',
+          phase:'Live run',
+          daysLabel:'',daysColor:''
+        });
+        return;
+      }
+      /* ── UPCOMING: live run within 8–14 days (yellow) ── */
+      if(diffU>=8&&diffU<=14){
+        alerts.push({
+          no:d.no,priority:4,
+          color:'#f59e0b',
+          name:d.client,
+          sub:'Go-live in '+diffU+' days',
+          dateLabel:'Live run',dateVal:d.liveRun,dateColor:'',
+          badge:diffU+' days',badgeCls:'background:#fef9c3;color:#854d0e',
+          phase:'Live run',
+          daysLabel:'',daysColor:''
+        });
+        return;
+      }
+    }
+
+    /* ── UPCOMING: simulation not yet scheduled (blue nudge) ── */
+    if(d.kom===1&&d.sim!==1&&!d.liveRun){
+      alerts.push({
+        no:d.no,priority:5,
+        color:'#2563eb',
+        name:d.client,
+        sub:'KOM done · Simulation not yet scheduled',
+        dateLabel:'Hand over target',dateVal:d.handOver||'TBD',dateColor:'',
+        badge:'Schedule',badgeCls:'background:#dbeafe;color:#1d4ed8',
+        phase:'Simulation',
+        daysLabel:'',daysColor:''
+      });
+    }
+
+    /* ── UPCOMING: parallel run not yet scheduled (blue nudge) ── */
+    if(d.sim===1&&d.par!==1&&!d.liveRun){
+      alerts.push({
+        no:d.no,priority:6,
+        color:'#2563eb',
+        name:d.client,
+        sub:'Simulation done · Parallel run not yet scheduled',
+        dateLabel:'Hand over target',dateVal:d.handOver||'TBD',dateColor:'',
+        badge:'Schedule',badgeCls:'background:#dbeafe;color:#1d4ed8',
+        phase:'Parallel run',
+        daysLabel:'',daysColor:''
+      });
     }
   });
-  var html='';
-  var row=function(item){return '<div class="impl-attn-row" onclick="selProject('+item.no+')">'
-    +'<div class="impl-attn-dot" style="background:'+item.color+';"></div>'
-    +'<div style="flex:1;min-width:0;"><div class="impl-attn-txt">'+item.name+'</div><div class="impl-attn-sub">'+item.sub+'</div></div>'
-    +'<span class="impl-attn-badge" style="'+item.badgeCls+'">'+item.badge+'</span>'
-    +'</div>';};
-  if(overdue.length){html+='<div class="impl-attn-sublbl">Overdue</div>'+overdue.map(row).join('');}
-  if(upcoming.length){html+='<div class="impl-attn-sublbl">Upcoming</div>'+upcoming.map(row).join('');}
-  if(!html)html='<div style="font-size:11px;color:var(--s4);padding:.5rem 0;">No pending items — all clear.</div>';
+
+  /* Sort by priority */
+  alerts.sort(function(a,b){return a.priority-b.priority;});
+
+  /* Build row HTML */
+  var row=function(item){
+    var dateRow=item.dateVal?('<div class="impl-attn-date">'+item.dateLabel+(item.dateLabel?': ':'')+
+      '<span style="font-weight:500;'+(item.dateColor?'color:'+item.dateColor+';':'')+'">'
+      +item.dateVal+'</span></div>'):'';
+    var daysSpan=item.daysLabel?('<span class="impl-attn-days" style="color:'+item.daysColor+';">'+item.daysLabel+'</span>'):'';
+    return '<div class="impl-attn-row" onclick="selProject('+item.no+')">'
+      +'<div class="impl-attn-dot" style="background:'+item.color+';"></div>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div class="impl-attn-txt">'+item.name+'</div>'
+      +'<div class="impl-attn-sub">'+item.sub+'</div>'
+      +dateRow
+      +'</div>'
+      +'<div class="impl-attn-right">'
+      +'<span class="impl-attn-badge" style="'+item.badgeCls+'">'+item.badge+'</span>'
+      +'<span class="impl-attn-phase">'+item.phase+'</span>'
+      +daysSpan
+      +'</div>'
+      +'</div>';
+  };
+
+  var html=alerts.map(row).join('');
+  if(!html)html='<div style="font-size:11px;color:var(--s4);padding:.75rem 0;text-align:center;">All projects on track — no alerts.</div>';
+
   document.getElementById('impl-attn-body').innerHTML=html;
+
+  /* Update count badge */
+  var countEl=document.getElementById('impl-attn-count');
+  if(countEl){
+    if(alerts.length){countEl.textContent=alerts.length+' alert'+(alerts.length===1?'':'s');countEl.style.display='';}
+    else{countEl.style.display='none';}
+  }
+
+  /* Show legend only when there are alerts */
+  var legendEl=document.getElementById('impl-attn-legend');
+  if(legendEl)legendEl.style.display=alerts.length?'flex':'none';
 }
 
 function selProject(no){
