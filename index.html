@@ -3830,6 +3830,13 @@ function stDownloadTemplate(){
   ]);
   mlSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:16},{wch:18},{wch:16},{wch:14},{wch:18},{wch:20}];
   XLSX.utils.book_append_sheet(wb,mlSheet,'Milestone Dates');
+  var ahTplSheet=XLSX.utils.aoa_to_sheet([
+    ['#','Client Name','Resource','CSM','Processor'],
+    [1,'Example Client Co.','Ana','Juan dela Cruz','Maria Santos'],
+    [2,'Another Corp Inc.','Bea','','']
+  ]);
+  ahTplSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:22},{wch:22}];
+  XLSX.utils.book_append_sheet(wb,ahTplSheet,'After Hand Over');
   XLSX.writeFile(wb,'PS_Data_Template.xlsx');
 }
 
