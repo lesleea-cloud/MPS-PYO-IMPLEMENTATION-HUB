@@ -247,7 +247,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .view-btn:hover{background:var(--s8);}
 
 /* ══ NEW IMPLEMENTER DASHBOARD ══ */
-#page-impl{height:calc(100vh - 52px);overflow:hidden;flex-direction:column;gap:0;padding:0;}
+#page-impl{height:calc(100vh - 52px);overflow:hidden;display:flex;flex-direction:column;gap:0;padding:0;}
 .impl-topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem .5rem;flex-shrink:0;background:var(--bg);}
 .impl-greeting{font-size:18px;font-weight:700;color:var(--s9);letter-spacing:-.02em;}
 .impl-greeting span{color:var(--g);}
@@ -1432,6 +1432,8 @@ function go(page){
     var ni=document.getElementById('nav-'+p);
     if(pg)pg.classList.remove('active');
     if(ni)ni.classList.remove('on');
+    // Inline style beats ID-selector specificity — force impl hidden when not active
+    if(p==='impl'&&pg)pg.style.display='none';
   });
   var myClientsNav=document.getElementById('nav-my-clients');
   if(myClientsNav)myClientsNav.classList.remove('on');
@@ -1439,6 +1441,8 @@ function go(page){
   var ni=document.getElementById('nav-'+page);
   if(pg)pg.classList.add('active');
   if(ni)ni.classList.add('on');
+  // Restore flex display when impl is the active page
+  if(page==='impl'&&pg)pg.style.display='flex';
   if(page==='clients'&&CURRENT_ROLE==='implementer'){
     if(ni)ni.classList.remove('on');
     if(myClientsNav)myClientsNav.classList.add('on');
