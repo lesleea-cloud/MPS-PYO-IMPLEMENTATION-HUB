@@ -267,12 +267,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-kpi-sub{font-size:10px;color:var(--s4);margin-top:1px;}
 
 /* Main columns */
-.impl-body{display:flex;gap:0;flex:1;min-height:0;overflow:hidden;}
-.impl-left{display:flex;flex-direction:column;gap:0;flex:1;min-width:0;border-right:1px solid var(--s2);overflow:hidden;}
-.impl-right{display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden;}
+.impl-body{display:flex;gap:10px;flex:1;min-height:0;overflow:hidden;padding:10px;background:var(--bg);}
+.impl-left{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;overflow:hidden;}
+.impl-right{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;overflow:hidden;}
 
 /* My Projects panel */
-.impl-panel{background:#fff;display:flex;flex-direction:column;overflow:hidden;}
+.impl-panel{background:#fff;display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
 .impl-panel-hdr{font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;padding:.7rem 1rem .4rem;display:flex;align-items:center;gap:5px;flex-shrink:0;border-bottom:1px solid var(--s1);}
 .impl-panel-hdr .pt-dot{width:6px;height:6px;border-radius:50%;}
 
@@ -305,7 +305,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-pbadge{font-size:10px;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;font-weight:600;}
 
 /* Project status module panel */
-.impl-mod-panel{flex-shrink:0;border-top:1px solid var(--s2);}
+.impl-mod-panel{flex-shrink:0;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
 .impl-mod-body{padding:.6rem 1rem;}
 .impl-mod-date{font-size:10px;color:var(--s4);margin-bottom:.5rem;display:flex;align-items:center;gap:4px;}
 .impl-mod-cols{display:flex;gap:1rem;}
@@ -322,7 +322,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-mod-div{width:1px;background:var(--s1);}
 
 /* Needs attention panel */
-.impl-attn-panel{border-bottom:1px solid var(--s2);flex-shrink:0;max-height:42%;display:flex;flex-direction:column;min-height:0;}
+.impl-attn-panel{flex-shrink:0;max-height:42%;display:flex;flex-direction:column;min-height:0;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
 .impl-attn-body{padding:.5rem .85rem;overflow-y:auto;flex:1;min-height:0;}
 .impl-attn-body::-webkit-scrollbar{width:6px;}
 .impl-attn-body::-webkit-scrollbar-track{background:var(--s1);}
@@ -339,7 +339,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-attn-badge{font-size:10px;padding:1px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;font-weight:600;margin-left:auto;}
 
 /* Selected project panel */
-.impl-sel-panel{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.impl-sel-panel{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
 .impl-sel-fixed{flex-shrink:0;padding:.65rem .85rem .5rem;}
 .impl-sel-client-row{display:flex;align-items:center;gap:9px;margin-bottom:.5rem;}
 .impl-sel-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
