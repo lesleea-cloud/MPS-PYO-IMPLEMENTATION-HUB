@@ -63,7 +63,7 @@ nav{width:190px;flex-shrink:0;background:#fff;border-right:1px solid var(--s2);d
  
 /* ══ MAIN ══ */
 main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.1rem;}
-#page-impl{height:calc(100vh - 52px - 3rem);overflow:hidden;display:flex;flex-direction:column;gap:.6rem;}
+/* #page-impl override moved to new implementer dashboard styles below */
  
 /* ══ PAGES ══ */
 .page{display:none;flex-direction:column;gap:1.1rem;}
@@ -245,6 +245,130 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .flash-footer{padding-top:.8rem;border-top:1px solid var(--s1);margin-top:.75rem;display:flex;justify-content:flex-end;}
 .view-btn{padding:7px 22px;border-radius:8px;background:var(--s9);color:#fff;border:none;font-size:12px;font-weight:600;font-family:var(--font);cursor:pointer;}
 .view-btn:hover{background:var(--s8);}
+
+/* ══ NEW IMPLEMENTER DASHBOARD ══ */
+#page-impl{height:calc(100vh - 52px);overflow:hidden;display:flex;flex-direction:column;gap:0;padding:0;}
+.impl-topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem .5rem;flex-shrink:0;background:var(--bg);}
+.impl-greeting{font-size:18px;font-weight:700;color:var(--s9);letter-spacing:-.02em;}
+.impl-greeting span{color:var(--g);}
+.impl-search-wrap{position:relative;width:220px;}
+.impl-search-input{width:100%;padding:8px 14px 8px 34px;border-radius:20px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;box-shadow:var(--sh);}
+.impl-search-input:focus{border-color:var(--g);}
+.impl-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--s4);}
+.impl-search-icon svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+.impl-srch-results{display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;background:#fff;border-radius:10px;border:1px solid var(--s2);box-shadow:var(--shm);z-index:50;max-height:220px;overflow-y:auto;}
+
+/* KPI inline bar */
+.impl-kpi-bar{display:flex;align-items:center;background:#fff;border-top:1px solid var(--s2);border-bottom:1px solid var(--s2);padding:0 1.25rem;flex-shrink:0;}
+.impl-kpi-seg{flex:1;display:flex;flex-direction:column;padding:.55rem .8rem;}
+.impl-kpi-div{width:1px;height:32px;background:var(--s1);}
+.impl-kpi-lbl{font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.impl-kpi-val{font-size:20px;font-weight:700;line-height:1;font-family:var(--mono);}
+.impl-kpi-sub{font-size:10px;color:var(--s4);margin-top:1px;}
+
+/* Main columns */
+.impl-body{display:flex;gap:0;flex:1;min-height:0;overflow:hidden;}
+.impl-left{display:flex;flex-direction:column;gap:0;flex:1.2;min-width:0;border-right:1px solid var(--s2);overflow:hidden;}
+.impl-right{display:flex;flex-direction:column;width:280px;flex-shrink:0;overflow:hidden;}
+
+/* My Projects panel */
+.impl-panel{background:#fff;display:flex;flex-direction:column;overflow:hidden;}
+.impl-panel-hdr{font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;padding:.7rem 1rem .4rem;display:flex;align-items:center;gap:5px;flex-shrink:0;border-bottom:1px solid var(--s1);}
+.impl-panel-hdr .pt-dot{width:6px;height:6px;border-radius:50%;}
+
+/* Filter pills */
+.impl-filter-row{display:flex;align-items:center;gap:5px;padding:.5rem 1rem;flex-wrap:wrap;flex-shrink:0;border-bottom:1px solid var(--s1);}
+.impl-fp{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--s2);color:var(--s5);background:#fff;cursor:pointer;transition:all .1s;white-space:nowrap;}
+.impl-fp:hover{background:var(--s0);}
+.impl-fp.on{background:var(--g0);color:var(--g4);border-color:var(--g2);font-weight:700;}
+.impl-sort-btn{font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--s2);color:var(--s4);background:var(--s0);cursor:pointer;display:flex;align-items:center;gap:3px;margin-left:auto;white-space:nowrap;}
+.impl-sort-btn svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;}
+
+/* Project rows */
+.impl-proj-list{flex:1;overflow-y:auto;padding:.3rem .5rem;}
+.impl-proj-list::-webkit-scrollbar{width:4px;}
+.impl-proj-list::-webkit-scrollbar-thumb{background:var(--s2);border-radius:2px;}
+.impl-prow{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;border-left:3px solid transparent;cursor:pointer;transition:background .1s;}
+.impl-prow:hover{background:var(--s0);}
+.impl-prow.sel{background:var(--g0);border-left-color:var(--g);}
+.impl-prow.sel .impl-pname{color:var(--g4);}
+.impl-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0;}
+.impl-pinfo{flex:1;min-width:0;}
+.impl-pname{font-size:12px;font-weight:600;color:var(--s9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.impl-psub{font-size:10px;color:var(--s4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.impl-prog-wrap{display:flex;align-items:center;gap:5px;margin-top:3px;}
+.impl-prog{flex:1;height:3px;background:var(--s1);border-radius:2px;overflow:hidden;}
+.impl-pf{height:100%;border-radius:2px;}
+.impl-ppct{font-size:10px;color:var(--s5);font-family:var(--mono);width:26px;text-align:right;flex-shrink:0;}
+.impl-pbadge{font-size:10px;padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;font-weight:600;}
+
+/* Project status module panel */
+.impl-mod-panel{flex-shrink:0;border-top:1px solid var(--s2);}
+.impl-mod-body{padding:.6rem 1rem;}
+.impl-mod-date{font-size:10px;color:var(--s4);margin-bottom:.5rem;display:flex;align-items:center;gap:4px;}
+.impl-mod-cols{display:flex;gap:1rem;}
+.impl-mod-col{flex:1;}
+.impl-mod-name{font-size:11px;font-weight:700;color:var(--s7);margin-bottom:.3rem;display:flex;align-items:center;justify-content:space-between;}
+.impl-mod-pill{font-size:10px;padding:1px 7px;border-radius:10px;font-weight:600;}
+.impl-sbar{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.impl-sbar:last-child{margin-bottom:0;}
+.impl-sbar-lbl{font-size:10px;color:var(--s5);width:64px;flex-shrink:0;}
+.impl-sbar-track{flex:1;height:14px;background:var(--s1);border-radius:3px;overflow:hidden;}
+.impl-sbar-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px;}
+.impl-sbar-fill span{font-size:10px;font-weight:700;color:#fff;}
+.impl-sbar-zero{font-size:10px;color:var(--s3);padding-left:6px;}
+.impl-mod-div{width:1px;background:var(--s1);}
+
+/* Needs attention panel */
+.impl-attn-panel{border-bottom:1px solid var(--s2);}
+.impl-attn-body{padding:.5rem .85rem;}
+.impl-attn-sublbl{font-size:9px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;margin-top:5px;}
+.impl-attn-sublbl:first-child{margin-top:0;}
+.impl-attn-row{display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .1s;border-radius:4px;}
+.impl-attn-row:last-child{border-bottom:none;}
+.impl-attn-row:hover{background:var(--s0);}
+.impl-attn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.impl-attn-txt{font-size:11px;font-weight:600;color:var(--s8);}
+.impl-attn-sub{font-size:10px;color:var(--s4);}
+.impl-attn-badge{font-size:10px;padding:1px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;font-weight:600;margin-left:auto;}
+
+/* Selected project panel */
+.impl-sel-panel{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.impl-sel-fixed{flex-shrink:0;padding:.65rem .85rem .5rem;}
+.impl-sel-client-row{display:flex;align-items:center;gap:9px;margin-bottom:.5rem;}
+.impl-sel-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.impl-sel-name{font-size:13px;font-weight:700;color:var(--s9);flex:1;min-width:0;line-height:1.3;}
+.impl-sel-sub{font-size:10px;color:var(--s4);margin-top:1px;}
+.impl-big-prog-row{display:flex;align-items:center;gap:8px;margin-bottom:0;}
+.impl-big-prog-track{flex:1;height:6px;background:var(--s1);border-radius:3px;overflow:hidden;}
+.impl-big-prog-fill{height:100%;border-radius:3px;}
+.impl-big-pct{font-size:15px;font-weight:700;font-family:var(--mono);}
+.impl-sel-divider{height:1px;background:var(--s1);margin:.5rem .85rem;}
+
+/* Scrollable detail area */
+.impl-sel-scroll{flex:1;overflow-y:auto;padding:0 .85rem .85rem;}
+.impl-sel-scroll::-webkit-scrollbar{width:4px;}
+.impl-sel-scroll::-webkit-scrollbar-thumb{background:var(--s2);border-radius:2px;}
+.impl-sec-hdr{font-size:9px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 4px;border-bottom:1px solid var(--s1);margin-bottom:2px;display:flex;align-items:center;gap:4px;}
+.impl-sec-hdr:first-child{padding-top:0;}
+.impl-sec-dot{width:5px;height:5px;border-radius:50%;}
+.impl-dr{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--s1);}
+.impl-dr:last-child{border-bottom:none;}
+.impl-dk{font-size:11px;color:var(--s5);}
+.impl-dv{font-size:11px;font-weight:600;color:var(--s8);text-align:right;}
+.impl-dv.none{color:var(--s3);font-weight:400;}
+.impl-phase-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--s1);}
+.impl-phase-row:last-child{border-bottom:none;}
+.impl-phase-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.impl-phase-name{font-size:11px;color:var(--s6);flex:1;}
+.impl-phase-status{font-size:11px;font-weight:600;}
+@keyframes implFadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+.impl-fade{animation:implFadeIn .18s ease;}
+
+/* Sidebar admin tool button */
+.nav-admin-btn{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;margin:2px 8px;border:1px solid var(--s2);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:var(--s5);background:#fff;font-family:var(--font);transition:all .12s;}
+.nav-admin-btn:hover{background:var(--s0);color:var(--s8);}
+.nav-admin-btn svg{width:10px;height:10px;fill:none;stroke:var(--s4);stroke-width:2;stroke-linecap:round;flex-shrink:0;}
  
 /* ══ MODAL ══ */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;}
@@ -759,6 +883,28 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">System</div>
+    <div style="position:relative;" id="nav-admin-tool-wrap">
+      <button class="nav-admin-btn" id="nav-admin-tool-btn" onclick="toggleAdminMenu(event)" style="display:none;">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <svg style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.25l-3 1a1 1 0 01-1.25-1.25l1-3a1 1 0 01.25-.4l8-8a1 1 0 011.4 0z"/><path d="M15 7l2 2"/></svg>
+          Admin Tool
+        </span>
+        <svg viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5"></path></svg>
+      </button>
+      <div id="admin-tool-menu" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--s2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:230px;overflow:hidden;">
+        <div style="padding:4px;">
+          <div style="font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px 4px;">Administration Tools</div>
+          <button onclick="event.stopPropagation();pickTool('masterfile')" class="atm-item">📋 &nbsp;Masterfile Creator</button>
+          <button onclick="event.stopPropagation();pickTool('variance')" class="atm-item">📊 &nbsp;Phase 3 Variance Analysis Bot</button>
+          <button onclick="event.stopPropagation();pickTool('mom')" class="atm-item">📝 &nbsp;MOM Generator</button>
+          <button onclick="event.stopPropagation();pickTool('crf')" class="atm-item">📄 &nbsp;Copy Database CRF Generator (Live Accounts)</button>
+          <button onclick="event.stopPropagation();pickTool('sla')" class="atm-item">⚖️ &nbsp;SLA Generator</button>
+          <button onclick="event.stopPropagation();pickTool('payroll-cal')" class="atm-item">📅 &nbsp;Payroll Calendar Generator</button>
+          <button onclick="event.stopPropagation();pickTool('payroll-acc')" class="atm-item">🏦 &nbsp;Payroll Account Creator</button>
+          <button onclick="event.stopPropagation();pickTool('payroll-repli')" class="atm-item">🔁 &nbsp;Payroll Repli Account Creator</button>
+        </div>
+      </div>
+    </div>
     <div class="nav-item on" id="nav-settings" onclick="go('settings')" style="display: flex;">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
       Settings
@@ -979,73 +1125,87 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
  
     <!-- ══ IMPLEMENTER DASHBOARD ══ -->
     <div class="page" id="page-impl">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;flex-shrink:0;">
-        <div>
-          <div style="font-size:22px;font-weight:700;color:var(--s9);letter-spacing:-.02em;">Hi, <span id="impl-name" style="color:var(--g)">Implementer</span>! 👋</div>
-        </div>
-        <div style="position:relative;" id="admin-tool-wrap">
-          <button onclick="toggleAdminMenu(event)" style="display:flex;align-items:center;gap:8px;background:var(--s9);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.85);font-family:var(--font);font-size:12px;font-weight:600;padding:9px 14px;border-radius:10px;cursor:pointer;min-width:210px;justify-content:space-between;letter-spacing:.01em;">
-            <span>🛠️ &nbsp;Administration Tool</span>
-            <svg style="width:11px;height:11px;fill:none;stroke:rgba(255,255,255,.5);stroke-width:2;stroke-linecap:round;flex-shrink:0;" viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5"></path></svg>
-          </button>
-          <div id="admin-tool-menu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--s2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:230px;overflow:hidden;">
-            <div style="padding:4px;">
-              <div style="font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px 4px;">Administration Tools</div>
-              <button onclick="event.stopPropagation();pickTool('masterfile')" class="atm-item">📋 &nbsp;Masterfile Creator</button>
-              <button onclick="event.stopPropagation();pickTool('variance')" class="atm-item">📊 &nbsp;Phase 3 Variance Analysis Bot</button>
-              <button onclick="event.stopPropagation();pickTool('mom')" class="atm-item">📝 &nbsp;MOM Generator</button>
-              <button onclick="event.stopPropagation();pickTool('crf')" class="atm-item">📄 &nbsp;Copy Database CRF Generator (Live Accounts)</button>
-              <button onclick="event.stopPropagation();pickTool('sla')" class="atm-item">⚖️ &nbsp;SLA Generator</button>
-              <button onclick="event.stopPropagation();pickTool('payroll-cal')" class="atm-item">📅 &nbsp;Payroll Calendar Generator</button>
-              <button onclick="event.stopPropagation();pickTool('payroll-acc')" class="atm-item">🏦 &nbsp;Payroll Account Creator</button>
-              <button onclick="event.stopPropagation();pickTool('payroll-repli')" class="atm-item">🔁 &nbsp;Payroll Repli Account Creator</button>
-            </div>
-          </div>
+      <!-- Top bar: greeting + search -->
+      <div class="impl-topbar">
+        <div class="impl-greeting">Hi, <span id="impl-name">Implementer</span></div>
+        <div class="impl-search-wrap">
+          <div class="impl-search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+          <input class="impl-search-input" id="impl-search" type="text" placeholder="Search projects..." oninput="implSearch()" onfocus="showSR()" onblur="hideSR()">
+          <div class="impl-srch-results" id="srch-results"></div>
         </div>
       </div>
- 
-      <div id="impl-kpis" style="display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0;min-height:0;"></div>
- 
-      <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:12px;flex:1;min-height:0;overflow:hidden;">
-        <div style="display:flex;flex-direction:column;gap:12px;min-height:0;">
-          <div class="panel" style="flex-shrink:0;max-height:260px;overflow-y:auto;">
-            <div class="panel-title"><span class="pt-dot" style="--c:var(--b)"></span>Project Status for <span id="impl-status-week"></span></div>
-            <div id="impl-status-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+
+      <!-- KPI inline bar -->
+      <div class="impl-kpi-bar" id="impl-kpis"></div>
+
+      <!-- Main body -->
+      <div class="impl-body">
+
+        <!-- LEFT COLUMN -->
+        <div class="impl-left">
+
+          <!-- My Projects panel -->
+          <div class="impl-panel" style="flex:1;min-height:0;">
+            <div class="impl-panel-hdr">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
+              My projects
+            </div>
+            <div class="impl-filter-row">
+              <span class="impl-fp on" onclick="implFilter(this,'all')">All</span>
+              <span class="impl-fp" onclick="implFilter(this,'live')">Live</span>
+              <span class="impl-fp" onclick="implFilter(this,'ongoing')">Ongoing</span>
+              <span class="impl-fp" onclick="implFilter(this,'nys')">Not started</span>
+              <span class="impl-fp" onclick="implFilter(this,'pyo')">PYO</span>
+              <span class="impl-fp" onclick="implFilter(this,'starter')">Payroll Starter</span>
+              <button class="impl-sort-btn" id="impl-sort-btn" onclick="implToggleSort(this)">
+                <svg viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2" stroke-linecap="round"></path></svg>
+                Sort: Go-live
+              </button>
+            </div>
+            <div class="impl-proj-list" id="impl-proj-list"></div>
           </div>
-          <div class="panel" style="flex:1;display:flex;flex-direction:column;min-height:100px;overflow:hidden;">
-            <div class="panel-title" style="flex-shrink:0;"><span class="pt-dot" style="--c:var(--g)"></span>My Projects</div>
-            <div id="impl-proj-list" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px;padding-bottom:8px;"></div>
+
+          <!-- Project Status by Module panel -->
+          <div class="impl-mod-panel">
+            <div class="impl-panel-hdr">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--b);display:inline-block;"></span>
+              Project status by module &nbsp;<span id="impl-status-week" style="font-size:9px;color:var(--s4);font-weight:500;text-transform:none;letter-spacing:0;"></span>
+            </div>
+            <div class="impl-mod-body">
+              <div class="impl-mod-cols" id="impl-status-list"></div>
+            </div>
           </div>
         </div>
- 
-        <div style="display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
-          <div class="srch-wrap">
-            <div class="srch-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
-            <input class="srch-input" id="impl-search" type="text" placeholder="Search your projects…" oninput="implSearch()" onfocus="showSR()" onblur="hideSR()" style="border-radius:10px;">
-            <div class="srch-results" id="srch-results"></div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="impl-right">
+
+          <!-- Needs Attention panel -->
+          <div class="impl-attn-panel">
+            <div class="impl-panel-hdr">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--o);display:inline-block;"></span>
+              Needs attention
+            </div>
+            <div class="impl-attn-body" id="impl-attn-body"></div>
           </div>
-          <div class="panel" style="flex:1;display:flex;flex-direction:column;min-height:0;" id="impl-detail-panel">
-            <div class="panel-title"><span class="pt-dot" style="--c:var(--v)"></span><span id="impl-detail-title">Select a project to view details</span></div>
-            <div id="impl-detail-body" style="flex:1;overflow-y:auto;">
-              <div id="impl-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:2rem;text-align:center;color:var(--s4);">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:.75rem;stroke:var(--s3)"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
-                <p style="font-size:14px;font-weight:600;color:var(--s5);margin-bottom:4px;">No project selected</p>
-                <p style="font-size:12px;">Click any project on the left to see its full details here.</p>
-              </div>
-              <div id="impl-detail-content" style="display:none;">
-                <div id="impl-detail-meta" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;"></div>
-                <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;">Implementation Phases</div>
-                <div id="impl-phase-steps" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;"></div>
-                <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem;">Project Info</div>
-                <div id="impl-flash-items" style="display:flex;flex-direction:column;gap:5px;"></div>
+
+          <!-- Selected Project panel -->
+          <div class="impl-sel-panel">
+            <div class="impl-panel-hdr">
+              <span style="width:6px;height:6px;border-radius:50%;background:var(--v);display:inline-block;"></span>
+              Selected project
+            </div>
+            <div class="impl-sel-fixed" id="impl-sel-fixed">
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;color:var(--s4);">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:.5rem;stroke:var(--s3)"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
+                <p style="font-size:12px;font-weight:600;color:var(--s5);margin-bottom:2px;">No project selected</p>
+                <p style="font-size:11px;">Click any project to view details.</p>
               </div>
             </div>
-            <div id="impl-detail-footer" style="display:none;padding-top:.85rem;border-top:1px solid var(--s1);margin-top:.5rem;">
-              <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">Upcoming Dates</div>
-              <div id="impl-upcoming" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-            </div>
+            <div class="impl-sel-scroll" id="impl-sel-scroll" style="display:none;"></div>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -1258,7 +1418,8 @@ function go(page){
     if(ni)ni.classList.remove('on');
     if(myClientsNav)myClientsNav.classList.add('on');
   }
-  // Reset edit mode when navigating away from clients page
+  var mainEl=document.querySelector('main');
+  if(mainEl){mainEl.style.padding=page==='impl'?'0':'1.5rem';}
   if(page!=='clients'&&TAB_EDIT_MODE){
     if(TAB_SNAPSHOT){
       D.length=0; TAB_SNAPSHOT.D.forEach(function(r){D.push(r);});
@@ -2283,89 +2444,294 @@ function renderClients(){
   tabUpdateControls();
 }
  
+var IMPL_FILTER='all';
+var IMPL_SORT_ASC=true;
+
+function implGetColor(initials){
+  var colors=[['#dbeafe','#1e3a8a'],['#dcfce7','#14532d'],['#f5f3ff','#3b0764'],['#fff7ed','#7c2d12'],['#fce7f3','#831843'],['#e0f2fe','#0c4a6e'],['#fef9c3','#713f12'],['#f3e8ff','#581c87']];
+  var idx=0;for(var i=0;i<initials.length;i++)idx+=initials.charCodeAt(i);
+  return colors[idx%colors.length];
+}
+
+function implGetInitials(name){
+  var parts=name.trim().split(' ');
+  if(parts.length>=2)return (parts[0][0]+(parts[parts.length-1][0])).toUpperCase();
+  return name.slice(0,2).toUpperCase();
+}
+
+function implFilter(el,f){
+  IMPL_FILTER=f;
+  document.querySelectorAll('.impl-fp').forEach(function(x){x.classList.remove('on');});
+  el.classList.add('on');
+  implRenderProjects();
+}
+
+function implToggleSort(btn){
+  IMPL_SORT_ASC=!IMPL_SORT_ASC;
+  btn.querySelector('span')?null:null;
+  btn.innerHTML='<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;"><path d="M3 6h18M7 12h10M11 18h2"></path></svg> Sort: '+(IMPL_SORT_ASC?'Go-live ↑':'Go-live ↓');
+  implRenderProjects();
+}
+
+function implRenderProjects(){
+  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var filtered=myD;
+  if(IMPL_FILTER==='live')filtered=myD.filter(function(d){return d.remarks==='Live';});
+  else if(IMPL_FILTER==='ongoing')filtered=myD.filter(function(d){return d.remarks==='Ongoing';});
+  else if(IMPL_FILTER==='nys')filtered=myD.filter(function(d){return d.remarks==='Not yet started';});
+  else if(IMPL_FILTER==='pyo')filtered=myD.filter(function(d){return d.service.indexOf('PYO')>=0;});
+  else if(IMPL_FILTER==='starter')filtered=myD.filter(function(d){return d.service==='Payroll Starter';});
+
+  var order={Ongoing:0,'Not yet started':1,'On-Hold':2,'For Turnover':3,Live:4,Churned:5};
+  filtered.sort(function(a,b){
+    var oa=order[a.remarks]!==undefined?order[a.remarks]:6;
+    var ob=order[b.remarks]!==undefined?order[b.remarks]:6;
+    if(oa!==ob)return oa-ob;
+    var da=a.liveRun||a.handOver||'9999';
+    var db=b.liveRun||b.handOver||'9999';
+    return IMPL_SORT_ASC?(da>db?1:-1):(da<db?1:-1);
+  });
+
+  if(!filtered.length){
+    document.getElementById('impl-proj-list').innerHTML='<div style="text-align:center;padding:2rem;color:var(--s4);"><p style="font-size:13px;font-weight:600;margin-bottom:4px;">No projects found</p><p style="font-size:11px;">Try a different filter.</p></div>';
+    return;
+  }
+
+  var html=filtered.map(function(d){
+    var sc=SC[d.remarks]||'#64748b';
+    var p=pct(d);
+    var initials=implGetInitials(d.client);
+    var clr=implGetColor(initials);
+    var golive=d.liveRun||d.handOver||'';
+    var isSel=SELECTED_PROJECT&&SELECTED_PROJECT.no===d.no;
+    var badgeCls=d.remarks==='Live'?'background:#dcfce7;color:#15803d':d.remarks==='Ongoing'?'background:#dbeafe;color:#1d4ed8':d.remarks==='Not yet started'?'background:#fff7ed;color:#c2410c':d.remarks==='Churned'?'background:#fecaca;color:#991b1b':'background:var(--s1);color:var(--s5)';
+    return '<div class="impl-prow'+(isSel?' sel':'')+'" id="ac-'+d.no+'" onclick="selProject('+d.no+')">'
+      +'<div class="impl-av" style="background:'+clr[0]+';color:'+clr[1]+';">'+initials+'</div>'
+      +'<div class="impl-pinfo">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">'
+      +'<div class="impl-pname">'+d.client+'</div>'
+      +'<span class="impl-pbadge" style="'+badgeCls+'">'+d.remarks+'</span>'
+      +'</div>'
+      +'<div class="impl-psub">'+d.month+' · '+d.service+(golive?' · Go-live '+golive:'')+'</div>'
+      +'<div class="impl-prog-wrap"><div class="impl-prog"><div class="impl-pf" style="width:'+p+'%;background:'+sc+';"></div></div><span class="impl-ppct">'+p+'%</span></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('impl-proj-list').innerHTML=html;
+}
+
 function renderImpl(){
   var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
   document.getElementById('impl-name').textContent=IMPL_USER;
+
+  /* Show admin tool button for implementer */
+  var adminBtn=document.getElementById('nav-admin-tool-btn');
+  if(adminBtn)adminBtn.style.display='flex';
+
+  /* Week label */
   var _MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var _now=new Date(),_day=_now.getDay(),_diffMon=_day===0?-6:1-_day;
   var _mon=new Date(_now);_mon.setDate(_now.getDate()+_diffMon);
   var _fri=new Date(_mon);_fri.setDate(_mon.getDate()+4);
   var _f=function(d){return _MS[d.getMonth()]+' '+d.getDate();};
   document.getElementById('impl-status-week').textContent=_f(_mon)+' – '+_f(_fri)+', '+_fri.getFullYear();
+
+  /* KPI inline bar */
   var live=myD.filter(function(d){return d.remarks==='Live';}).length;
   var on=myD.filter(function(d){return d.remarks==='Ongoing';}).length;
   var nys=myD.filter(function(d){return d.remarks==='Not yet started';}).length;
   var ch=myD.filter(function(d){return d.remarks==='Churned';}).length;
   var avgP=myD.length?Math.round(myD.reduce(function(a,d){return a+pct(d);},0)/myD.length):0;
-  document.getElementById('impl-kpis').innerHTML=[{l:'My Projects',v:myD.length,s:'Total assigned',c:'#0f172a'},{l:'Live',v:live,s:'Active & running',c:'#16a34a'},{l:'Ongoing',v:on,s:'In progress',c:'#2563eb'},{l:'Not Yet Started',v:nys,s:'Pending kickoff',c:'#ea580c'},{l:'Churned',v:ch,s:'Disengaged',c:'#dc2626'},{l:'Avg Progress',v:avgP+'%',s:'Across all projects',c:'#7c3aed'}].map(function(k){return '<div style="flex:1;min-width:100px;background:#fff;border-radius:10px;padding:.8rem 1rem;border-top:3px solid '+k.c+';box-shadow:var(--sh);"><div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">'+k.l+'</div><div style="font-size:22px;font-weight:700;color:'+k.c+';font-family:var(--mono);line-height:1.1;">'+k.v+'</div><div style="font-size:11px;color:var(--s4);margin-top:3px;">'+k.s+'</div></div>';}).join('');
-  var statusCfg=[{l:'Not yet started',c:'#ea580c'},{l:'On-Hold',c:'#64748b'},{l:'Ongoing',c:'#2563eb'},{l:'Live',c:'#16a34a'},{l:'For Turnover',c:'#7c3aed'}];
+  var kpis=[
+    {l:'My projects',v:myD.length,s:'Total assigned',c:'#0f172a'},
+    {l:'Live',v:live,s:'Active & running',c:'#16a34a'},
+    {l:'Ongoing',v:on,s:'In progress',c:'#2563eb'},
+    {l:'Not started',v:nys,s:'Pending kickoff',c:'#ea580c'},
+    {l:'Churned',v:ch,s:'Disengaged',c:'#dc2626'},
+    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#7c3aed'}
+  ];
+  document.getElementById('impl-kpis').innerHTML=kpis.map(function(k,i){
+    return (i>0?'<div class="impl-kpi-div"></div>':'')
+      +'<div class="impl-kpi-seg">'
+      +'<div class="impl-kpi-lbl">'+k.l+'</div>'
+      +'<div class="impl-kpi-val" style="color:'+k.c+';">'+k.v+'</div>'
+      +'<div class="impl-kpi-sub">'+k.s+'</div>'
+      +'</div>';
+  }).join('');
+
+  /* Project status by module */
+  var statusCfg=[{l:'Not yet started',c:'#ea580c'},{l:'Ongoing',c:'#2563eb'},{l:'Live',c:'#16a34a'}];
   var starterSvcs=['Payroll Starter'];
-  var pyoSvcs=['PYO','PYO + HR','PYO + HR + Sprout Gov'];
+  var pyoSvcs=['PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','PYO + HR + Sprout Gov'];
   var buckets=[
     {name:'Payroll Starter',pill:'#dcfce7',pillText:'#14532d',projects:myD.filter(function(d){return starterSvcs.indexOf(d.service)>=0;})},
-    {name:'PYO',pill:'#dbeafe',pillText:'#1e3a8a',projects:myD.filter(function(d){return pyoSvcs.indexOf(d.service)>=0;})}
+    {name:'PYO',pill:'#dbeafe',pillText:'#1e3a8a',projects:myD.filter(function(d){return d.service.indexOf('PYO')>=0;})}
   ];
-  var statusHTML='';
-  buckets.forEach(function(b,bi){
-    if(!b.projects.length)return;
-    statusHTML+='<div style="'+(bi>0?'margin-top:10px;padding-top:10px;border-top:1px solid var(--s1);':'')+'">';
-    statusHTML+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">';
-    statusHTML+='<span style="font-size:11px;font-weight:700;color:var(--s7);">'+b.name+'</span>';
-    statusHTML+='<span style="font-size:10px;font-weight:600;padding:1px 8px;border-radius:20px;background:'+b.pill+';color:'+b.pillText+';">'+b.projects.length+' account'+(b.projects.length!==1?'s':'')+'</span>';
-    statusHTML+='</div>';
-    statusCfg.forEach(function(s){
+  var modHTML=buckets.filter(function(b){return b.projects.length>0;}).map(function(b,bi){
+    var rows=statusCfg.map(function(s){
       var cnt=b.projects.filter(function(d){return d.remarks===s.l;}).length;
-      if(!cnt)return;
-      var barW=Math.round(cnt/b.projects.length*100);
-      statusHTML+='<div style="display:flex;align-items:center;gap:10px;padding:5px 8px;border-radius:8px;background:var(--s0);border:1px solid var(--s1);margin-bottom:4px;">';
-      statusHTML+='<span style="font-size:11px;font-weight:500;color:var(--s7);flex:1;">'+s.l+'</span>';
-      statusHTML+='<div style="width:80px;height:5px;background:var(--s2);border-radius:3px;overflow:hidden;"><div style="width:'+barW+'%;height:100%;background:'+s.c+';border-radius:3px;"></div></div>';
-      statusHTML+='<span style="font-size:14px;font-weight:700;color:'+s.c+';font-family:var(--mono);width:20px;text-align:right;">'+cnt+'</span>';
-      statusHTML+='</div>';
-    });
-    statusHTML+='</div>';
-  });
-  document.getElementById('impl-status-list').innerHTML=statusHTML||'<div style="font-size:12px;color:var(--s4);text-align:center;padding:.5rem 0;">No Starter or PYO accounts assigned.</div>';
-  if(!myD.length){document.getElementById('impl-proj-list').innerHTML='<div style="text-align:center;padding:2rem;color:var(--s4);"><p style="font-size:14px;font-weight:600;margin-bottom:4px;">No projects assigned</p><p style="font-size:12px;">Check with your manager.</p></div>';return;}
-  document.getElementById('impl-proj-list').innerHTML=myD.map(function(d){var sc=SC[d.remarks]||'#64748b';var p=pct(d);var nxt=d.handOver&&new Date(d.handOver)>=TODAY?d.handOver:d.liveRun&&new Date(d.liveRun)>=TODAY?d.liveRun:'';var nxtLabel=d.handOver&&new Date(d.handOver)>=TODAY?'HO':d.liveRun&&new Date(d.liveRun)>=TODAY?'LR':'';return '<div class="act-card" style="--c:'+sc+';cursor:pointer;" id="ac-'+d.no+'" onclick="selProject('+d.no+')"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;"><div style="font-size:13px;font-weight:600;color:var(--s9);">'+d.client+'</div>'+bdg(d.remarks)+'</div><div style="font-size:11px;color:var(--s4);margin-bottom:6px;">'+d.month+' &nbsp;·&nbsp; '+d.service+'</div><div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;height:4px;background:var(--s1);border-radius:2px;overflow:hidden;"><div style="width:'+p+'%;height:100%;background:'+sc+';border-radius:2px;"></div></div><span style="font-size:10px;font-weight:600;color:var(--s5);font-family:var(--mono);">'+p+'%</span>'+(nxt?'<span style="font-size:10px;font-weight:700;color:'+sc+';background:'+sc+'14;padding:1px 7px;border-radius:4px;font-family:var(--mono);">'+nxtLabel+': '+nxt+'</span>':'')+'</div></div>';}).join('');
+      var barW=b.projects.length?Math.round(cnt/b.projects.length*100):0;
+      return '<div class="impl-sbar">'
+        +'<span class="impl-sbar-lbl">'+s.l+'</span>'
+        +'<div class="impl-sbar-track">'
+        +(cnt?'<div class="impl-sbar-fill" style="width:'+barW+'%;background:'+s.c+';"><span>'+cnt+'</span></div>'
+          :'<span class="impl-sbar-zero">0</span>')
+        +'</div>'
+        +'</div>';
+    }).join('');
+    return (bi>0?'<div class="impl-mod-div"></div>':'')
+      +'<div class="impl-mod-col">'
+      +'<div class="impl-mod-name">'+b.name+'<span class="impl-mod-pill" style="background:'+b.pill+';color:'+b.pillText+';">'+b.projects.length+' accounts</span></div>'
+      +rows
+      +'</div>';
+  }).join('');
+  document.getElementById('impl-status-list').innerHTML=modHTML||'<div style="font-size:11px;color:var(--s4);padding:.5rem 0;">No Starter or PYO accounts assigned.</div>';
+
+  /* Needs Attention */
+  implRenderAttention(myD);
+
+  /* Project list */
+  implRenderProjects();
+
+  /* Auto-select first ongoing project */
+  if(!SELECTED_PROJECT){
+    var first=myD.find(function(d){return d.remarks==='Ongoing';})||myD[0];
+    if(first)selProject(first.no);
+  }
 }
- 
+
+function implRenderAttention(myD){
+  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var overdue=[];
+  var upcoming=[];
+  var ok=[];
+  myD.forEach(function(d){
+    var sc=SC[d.remarks]||'#64748b';
+    if(d.remarks==='Not yet started'&&!d.komDate){
+      overdue.push({no:d.no,name:d.client,sub:'Kickoff not scheduled',color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});
+    } else if(d.liveRun){
+      var lr=new Date(d.liveRun);var diff=Math.round((lr-TODAY)/(1000*60*60*24));
+      if(diff>=0&&diff<=14){upcoming.push({no:d.no,name:d.client,sub:'Go-live in '+diff+' day'+(diff===1?'':'s')+' · '+d.liveRun,color:'#f59e0b',badge:'Soon',badgeCls:'background:#fef9c3;color:#854d0e'});}
+      else if(diff<0&&d.remarks!=='Live'){overdue.push({no:d.no,name:d.client,sub:'Live run was '+d.liveRun,color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});}
+      else if(d.remarks==='Live'){ok.push({no:d.no,name:d.client,sub:'Live · all clear',color:'#16a34a',badge:'OK',badgeCls:'background:#dcfce7;color:#15803d'});}
+    } else if(d.remarks==='Live'){
+      ok.push({no:d.no,name:d.client,sub:'Live · all clear',color:'#16a34a',badge:'OK',badgeCls:'background:#dcfce7;color:#15803d'});
+    }
+  });
+  var html='';
+  var row=function(item){return '<div class="impl-attn-row" onclick="selProject('+item.no+')">'
+    +'<div class="impl-attn-dot" style="background:'+item.color+';"></div>'
+    +'<div style="flex:1;min-width:0;"><div class="impl-attn-txt">'+item.name+'</div><div class="impl-attn-sub">'+item.sub+'</div></div>'
+    +'<span class="impl-attn-badge" style="'+item.badgeCls+'">'+item.badge+'</span>'
+    +'</div>';};
+  if(overdue.length){html+='<div class="impl-attn-sublbl">Overdue</div>'+overdue.map(row).join('');}
+  if(upcoming.length){html+='<div class="impl-attn-sublbl">Upcoming</div>'+upcoming.map(row).join('');}
+  if(ok.length){html+=ok.map(row).join('');}
+  if(!html)html='<div style="font-size:11px;color:var(--s4);padding:.5rem 0;">All projects on track.</div>';
+  document.getElementById('impl-attn-body').innerHTML=html;
+}
+
 function selProject(no){
   SELECTED_PROJECT=D.find(function(d){return d.no===no;});
-  document.querySelectorAll('.act-card').forEach(function(el){el.classList.remove('sel');});
-  var el=document.getElementById('ac-'+no);if(el)el.classList.add('sel');
+  document.querySelectorAll('.impl-prow').forEach(function(el){el.classList.remove('sel');});
+  var el=document.getElementById('ac-'+no);
+  if(el){el.classList.add('sel');el.scrollIntoView({behavior:'smooth',block:'nearest'});}
   if(!SELECTED_PROJECT)return;
-  var d=SELECTED_PROJECT;var sc=SC[d.remarks]||'#64748b';
-  document.getElementById('impl-detail-title').textContent=d.client;
-  document.getElementById('impl-placeholder').style.display='none';
-  document.getElementById('impl-detail-content').style.display='block';
-  var meta=[{k:'Status',v:bdg(d.remarks)},{k:'Service',v:'<span style="font-size:13px;font-weight:500;">'+d.service+'</span>'},{k:'Project Manager',v:'<span style="font-size:13px;font-weight:500;">'+(d.pm||'—')+'</span>'},{k:'Month',v:'<span style="font-size:13px;font-weight:500;">'+d.month+'</span>'},{k:'Impl. Days',v:'<span style="font-size:13px;font-weight:600;font-family:var(--mono);color:var(--s8);">'+(d.days||'—')+'</span>'},{k:'Progress',v:'<div style="display:flex;align-items:center;gap:6px;"><div style="width:70px;height:5px;background:var(--s1);border-radius:3px;overflow:hidden;"><div style="width:'+pct(d)+'%;height:100%;background:'+sc+';border-radius:3px;"></div></div><span style="font-size:12px;font-weight:700;color:'+sc+';font-family:var(--mono);">'+pct(d)+'%</span></div>'},{k:'KOM Date',v:'<span style="font-size:13px;font-family:var(--mono);">'+(d.komDate||'—')+'</span>'},{k:'Hand Over',v:'<span style="font-size:13px;font-family:var(--mono);">'+(d.handOver||'—')+'</span>'},{k:'Live Run Date',v:'<span style="font-size:13px;font-family:var(--mono);">'+(d.liveRun||'—')+'</span>'}];
-  document.getElementById('impl-detail-meta').innerHTML=meta.map(function(m){return '<div style="background:var(--s0);border-radius:8px;padding:.6rem .75rem;border:1px solid var(--s1);"><div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">'+m.k+'</div><div>'+m.v+'</div></div>';}).join('');
-  var steps=[{k:'kom',l:'KOM'},{k:'sim',l:'Simulation'},{k:'par',l:'Parallel Run'},{k:'live',l:'Live Run'},{k:'post',l:'Post Live'}];
-  document.getElementById('impl-phase-steps').innerHTML=steps.map(function(s,i){var done=d[s.k]===1;var isNext=!done&&(i===0||d[steps[i-1].k]===1);var bg=done?'var(--g)':isNext?sc:'var(--s1)';var border=done?'var(--g)':isNext?sc:'var(--s2)';return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:60px;"><div style="width:36px;height:36px;border-radius:50%;background:'+bg+';border:2px solid '+border+';display:flex;align-items:center;justify-content:center;">'+(done?'<svg width="14" height="12" viewBox="0 0 14 12" fill="none"><path d="M2 6L5.5 9.5L12 2.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>':isNext?'<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="3" fill="white"/></svg>':'<span style="font-size:10px;font-weight:700;color:var(--s4);">'+(i+1)+'</span>')+'</div><span style="font-size:10px;font-weight:600;color:'+(done?'var(--g4)':isNext?sc:'var(--s4)')+';text-align:center;">'+s.l+'</span>'+(done?'<span style="font-size:9px;color:var(--g);font-weight:700;">Done</span>':isNext?'<span style="font-size:9px;font-weight:700;color:'+sc+';">Next</span>':'<span style="font-size:9px;color:var(--s3);">Pending</span>')+'</div>';}).join('');
-  var flashItems=[{icon:'📋',label:'Current Status',val:d.remarks,color:sc},{icon:'📅',label:'Upcoming Activity',val:d.handOver&&new Date(d.handOver)>=TODAY?'Hand Over on '+d.handOver:d.liveRun&&new Date(d.liveRun)>=TODAY?'Live Run on '+d.liveRun:'No upcoming dates',color:'#2563eb'},{icon:'👥',label:'HC (Based from Contract)',val:d.days?d.days+' days':'—',color:'#ea580c'},{icon:'💰',label:'MRR',val:'—',color:'#7c3aed'},{icon:'⚙️',label:'Services Availed',val:d.service,color:'#16a34a'},{icon:'📌',label:'Action Items for Client',val:'—',color:'#2563eb'},{icon:'🔧',label:'Action Items for Sprout',val:'—',color:'#ea580c'},{icon:'⚠️',label:'Issue Logs',val:'—',color:'#dc2626'},{icon:'✅',label:'Closed-off Items',val:'—',color:'#64748b'}];
-  document.getElementById('impl-flash-items').innerHTML=flashItems.map(function(f){return '<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;background:var(--s0);border:1px solid var(--s1);"><span style="font-size:14px;flex-shrink:0;">'+f.icon+'</span><span style="font-size:12px;font-weight:600;color:var(--s6);flex:1;">'+f.label+'</span><span style="font-size:12px;font-weight:600;color:'+f.color+';text-align:right;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+f.val+'</span></div>';}).join('');
-  var upDates=[];
-  if(d.komDate&&new Date(d.komDate)>=TODAY)upDates.push({label:'KOM',date:d.komDate,color:'#7c3aed'});
-  if(d.handOver&&new Date(d.handOver)>=TODAY)upDates.push({label:'Hand Over',date:d.handOver,color:'#2563eb'});
-  if(d.liveRun&&new Date(d.liveRun)>=TODAY)upDates.push({label:'Live Run',date:d.liveRun,color:'#16a34a'});
-  var footer=document.getElementById('impl-detail-footer');
-  if(upDates.length){document.getElementById('impl-upcoming').innerHTML=upDates.map(function(u){return '<div style="flex:1;min-width:100px;padding:8px 12px;border-radius:8px;background:'+u.color+'10;border:1px solid '+u.color+'25;border-left:3px solid '+u.color+'"><div style="font-size:10px;font-weight:700;color:'+u.color+';text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">'+u.label+'</div><div style="font-size:13px;font-weight:600;font-family:var(--mono);color:var(--s8);">'+u.date+'</div></div>';}).join('');footer.style.display='block';}
-  else{footer.style.display='none';}
+  var d=SELECTED_PROJECT;
+  var sc=SC[d.remarks]||'#64748b';
+  var p=pct(d);
+  var initials=implGetInitials(d.client);
+  var clr=implGetColor(initials);
+  var addon=CL_ADDONS[d.no]||{};
+  var milestone=CL_MILESTONES[d.no]||{};
+  var afterho=CL_AFTERHO[d.no]||{};
+  var badgeCls=d.remarks==='Live'?'background:#dcfce7;color:#15803d':d.remarks==='Ongoing'?'background:#dbeafe;color:#1d4ed8':d.remarks==='Not yet started'?'background:#fff7ed;color:#c2410c':d.remarks==='Churned'?'background:#fecaca;color:#991b1b':'background:var(--s1);color:var(--s5)';
+
+  /* Fixed header */
+  document.getElementById('impl-sel-fixed').innerHTML=
+    '<div class="impl-sel-client-row">'
+    +'<div class="impl-sel-av" style="background:'+clr[0]+';color:'+clr[1]+';">'+initials+'</div>'
+    +'<div style="flex:1;min-width:0;">'
+    +'<div class="impl-sel-name">'+d.client+'</div>'
+    +'<div class="impl-sel-sub">'+d.month+' 2026 · '+d.service+'</div>'
+    +'</div>'
+    +'<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:10px;white-space:nowrap;'+badgeCls+'">'+d.remarks+'</span>'
+    +'</div>'
+    +'<div class="impl-big-prog-row">'
+    +'<div class="impl-big-prog-track"><div class="impl-big-prog-fill" style="width:'+p+'%;background:'+sc+';"></div></div>'
+    +'<span class="impl-big-pct" style="color:'+sc+';">'+p+'%</span>'
+    +'</div>';
+
+  /* Helper */
+  var dr=function(k,v){return '<div class="impl-dr"><span class="impl-dk">'+k+'</span><span class="impl-dv'+(v?'':' none')+'">'+( v||'—')+'</span></div>';};
+  var secHdr=function(label,color){return '<div class="impl-sec-hdr"><div class="impl-sec-dot" style="background:'+color+';"></div>'+label+'</div>';};
+
+  /* Phases */
+  var phases=[{k:'kom',l:'KOM (Kickoff)'},{k:'sim',l:'Simulation'},{k:'par',l:'Parallel Run'},{k:'live',l:'Live Run'},{k:'post',l:'Post Live'}];
+  var phaseHTML=phases.map(function(s){
+    var done=d[s.k]===1;
+    var dotColor=done?'#16a34a':'var(--s2)';
+    var statusColor=done?'color:#16a34a;':d.remarks==='Ongoing'&&!done?'color:'+sc+';':'color:var(--s4);';
+    var statusText=done?'Done':d.remarks==='Live'?'Done':'Pending';
+    return '<div class="impl-phase-row">'
+      +'<div class="impl-phase-dot" style="background:'+dotColor+';"></div>'
+      +'<span class="impl-phase-name">'+s.l+'</span>'
+      +'<span class="impl-phase-status" style="'+statusColor+'">'+statusText+'</span>'
+      +'</div>';
+  }).join('');
+
+  /* Add-ons */
+  var addonFields=[
+    {k:'Sprout Gov',fk:'sg'},{k:'Benefits Administration',fk:'ba'},
+    {k:'Salary Disbursement',fk:'sd'},{k:'Statutory Disbursement',fk:'std'},
+    {k:'Outsourced Timekeeping',fk:'otk'}
+  ];
+  var addonHTML=addonFields.map(function(f){
+    var val=addon[f.fk];
+    var v=val===1?'<span style="color:#16a34a;font-weight:600;">Yes</span>':val===-1?'<span style="color:#dc2626;font-weight:600;">No</span>':'';
+    return dr(f.k,v||'');
+  }).join('');
+
+  /* Scrollable content */
+  var scrollHTML=
+    secHdr('Overview','#16a34a')
+    +dr('Implementor',d.resource)
+    +dr('Project Manager',d.pm||'')
+    +dr('Status','<span style="'+badgeCls+';padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;">'+d.remarks+'</span>')
+    +dr('Service',d.service)
+    +dr('Duration',d.days?d.days+' days':'')
+    +secHdr('Implementation phases','#2563eb')
+    +phaseHTML
+    +secHdr('Add-on services','#7c3aed')
+    +addonHTML
+    +secHdr('Milestone dates','#ea580c')
+    +dr('KOM date',d.komDate||'')
+    +dr('Hand over date',d.handOver||'')
+    +dr('Live run date',d.liveRun||'')
+    +dr('Churn date',milestone.churnDate||'')
+    +dr('Billing month',milestone.billingMonth||'')
+    +dr('Month completed',milestone.monthCompleted||'')
+    +secHdr('After hand over','#64748b')
+    +dr('CSM',afterho.csm||'')
+    +dr('Processor',afterho.processor||'');
+
+  var scrollEl=document.getElementById('impl-sel-scroll');
+  scrollEl.style.display='block';
+  scrollEl.innerHTML='<div class="impl-fade">'+scrollHTML+'</div>';
 }
- 
+
 function implSearch(){
   var q=document.getElementById('impl-search').value.toLowerCase();
   var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
   var res=q?myD.filter(function(d){return d.client.toLowerCase().indexOf(q)>=0||d.service.toLowerCase().indexOf(q)>=0||d.remarks.toLowerCase().indexOf(q)>=0;}):[];
   var el=document.getElementById('srch-results');
   if(!res.length){el.style.display='none';return;}
-  el.innerHTML=res.map(function(d){return '<div class="sr-item" onmousedown="selFromSearch('+d.no+')"><div class="sr-name">'+d.client+'</div><div class="sr-meta">'+d.month+' · '+d.service+' · '+bdg(d.remarks)+'</div></div>';}).join('');
+  el.innerHTML=res.map(function(d){return '<div class="sr-item" onmousedown="selFromSearch('+d.no+')"><div class="sr-name">'+d.client+'</div><div class="sr-meta">'+d.month+' · '+d.service+' · '+d.remarks+'</div></div>';}).join('');
   el.style.display='block';
 }
 function showSR(){if(document.getElementById('impl-search').value)implSearch();}
 function hideSR(){setTimeout(function(){document.getElementById('srch-results').style.display='none';},200);}
-function selFromSearch(no){document.getElementById('impl-search').value='';document.getElementById('srch-results').style.display='none';selProject(no);var el=document.getElementById('ac-'+no);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function selFromSearch(no){document.getElementById('impl-search').value='';document.getElementById('srch-results').style.display='none';selProject(no);}
  
 // ══════════════ ADMINISTRATION TOOLS ══════════════
 var TOOLS={
@@ -4167,6 +4533,8 @@ function startApp(){
   document.getElementById('hdr-avatar').style.background=cfg.avatarBg;
   document.getElementById('hdr-uname').textContent=CURRENT_NAME;
   ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
+  var adminNavBtn=document.getElementById('nav-admin-tool-btn');
+  if(adminNavBtn)adminNavBtn.style.display=CURRENT_ROLE==='implementer'?'flex':'none';
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-header').style.display='flex';
   document.getElementById('app-body').style.display='flex';
