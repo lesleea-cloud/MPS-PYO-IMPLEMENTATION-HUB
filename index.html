@@ -1594,14 +1594,17 @@ var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
 
-// Restore data on load — prefer version-matched localStorage, otherwise use baked defaults
+// Restore data on load — prefer localStorage, fall back to baked defaults
+// Version check only applies when DATA_VERSION>0 (i.e. after a GitHub commit).
+// When DATA_VERSION===0, accept any localStorage data (no version gating).
 (function(){
   if(!D_DEFAULT.length)return;
   try{
-    var savedVer=localStorage.getItem('pyo_data_ver');
-    if(DATA_VERSION>0&&savedVer&&parseInt(savedVer)===DATA_VERSION){
-      var sd=localStorage.getItem('pyo_data');
-      if(sd){
+    var sd=localStorage.getItem('pyo_data');
+    if(sd){
+      var savedVer=localStorage.getItem('pyo_data_ver');
+      var versionOk=DATA_VERSION===0||(savedVer&&parseInt(savedVer)===DATA_VERSION);
+      if(versionOk){
         JSON.parse(sd).forEach(function(r){D.push(r);});
         var sa=localStorage.getItem('pyo_addons');
         var sm=localStorage.getItem('pyo_milestones');
@@ -1613,8 +1616,7 @@ var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
       }
     }
   }catch(e){}
-  // No matching localStorage — clear stale entries and load baked defaults
-  ['pyo_data','pyo_addons','pyo_milestones','pyo_afterho','pyo_data_ver'].forEach(function(k){localStorage.removeItem(k);});
+  // No usable localStorage — load baked defaults
   D_DEFAULT.forEach(function(r){D.push(Object.assign({},r));});
   Object.keys(ADDONS_DEFAULT).forEach(function(k){CL_ADDONS[k]=Object.assign({},ADDONS_DEFAULT[k]);});
   Object.keys(MILESTONES_DEFAULT).forEach(function(k){CL_MILESTONES[k]=Object.assign({},MILESTONES_DEFAULT[k]);});
