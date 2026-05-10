@@ -247,7 +247,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .view-btn:hover{background:var(--s8);}
 
 /* ══ NEW IMPLEMENTER DASHBOARD ══ */
-#page-impl{height:calc(100vh - 52px);overflow:hidden;display:flex;flex-direction:column;gap:0;padding:0;}
+#page-impl{height:calc(100vh - 52px);overflow:hidden;flex-direction:column;gap:0;padding:0;}
 .impl-topbar{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1.25rem .5rem;flex-shrink:0;background:var(--bg);}
 .impl-greeting{font-size:18px;font-weight:700;color:var(--s9);letter-spacing:-.02em;}
 .impl-greeting span{color:var(--g);}
@@ -726,7 +726,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     <span class="logo-sub">Implementation Hub 2026</span>
   </div>
   <div class="hdr-right">
-    <span class="hdr-date">Mar 30, 2026</span>
+    <span class="hdr-date" id="hdr-date">Mar 30, 2026</span>
     <span class="role-pill rp-adm" id="role-pill">Admin</span>
     <div class="hdr-user">
       <div class="hdr-avatar" id="hdr-avatar" style="background: rgb(37, 99, 235);">Z</div>
@@ -4262,9 +4262,15 @@ async function mfDownload(){
     var xlWb=XLSX.read(new Uint8Array(buf),{type:'array'});
     var xlWs=xlWb.Sheets[xlWb.SheetNames[0]];
     var xlRange=XLSX.utils.decode_range(xlWs['!ref']||'A1:AV4');
+    var xlRaw=XLSX.utils.sheet_to_json(xlWs,{header:1,defval:''});
+    var hdrIdx=1;
+    for(var hi=0;hi<Math.min(xlRaw.length,5);hi++){
+      var hrow=xlRaw[hi].map(function(hc){return String(hc).replace(/[\r\n\t]+/g,' ').trim();});
+      if(hrow.indexOf('Status')>=0&&hrow.some(function(hc){return hc.indexOf('Employee ID')>=0;})){hdrIdx=hi;break;}
+    }
     var colMap={};
     for(var c=xlRange.s.c;c<=xlRange.e.c;c++){
-      var hCell=xlWs[XLSX.utils.encode_cell({r:1,c:c})];
+      var hCell=xlWs[XLSX.utils.encode_cell({r:hdrIdx,c:c})];
       if(hCell&&hCell.v!==undefined)colMap[String(hCell.v).replace(/[\r\n\t]+/g,' ').trim()]=c;
     }
     var zip=await JSZip.loadAsync(buf);
@@ -4295,7 +4301,8 @@ async function mfDownload(){
 }
 
 function mfInjectRows(sheetXml,rows,cols,colMap){
-  var clean=sheetXml.replace(/<row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/row>/g,function(m,n){
+  // Strip rows r >= 5 — handles namespace prefixes like <x:row>
+  var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
     return parseInt(n)>=5?'':m;
   });
   var newRows='';
@@ -4315,7 +4322,10 @@ function mfInjectRows(sheetXml,rows,cols,colMap){
     });
     if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
   });
-  return clean.replace('</sheetData>',newRows+'</sheetData>');
+  // Replace closing sheetData tag — handles namespace prefixes like </x:sheetData>
+  var sdClose=clean.match(/<\/[a-zA-Z]*:?sheetData>/);
+  if(!sdClose)return clean;
+  return clean.replace(sdClose[0],newRows+sdClose[0]);
 }
 
 function mfColLetter(n){
@@ -4722,6 +4732,11 @@ function startApp(){
   document.getElementById('hdr-avatar').textContent=CURRENT_NAME.charAt(0).toUpperCase();
   document.getElementById('hdr-avatar').style.background=cfg.avatarBg;
   document.getElementById('hdr-uname').textContent=CURRENT_NAME;
+  var _MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var _nd=new Date();
+  var _ds=_MN[_nd.getMonth()]+' '+_nd.getDate()+', '+_nd.getFullYear();
+  var hdEl=document.getElementById('hdr-date');if(hdEl)hdEl.textContent=_ds;
+  var luEl=document.getElementById('last-updated');if(luEl)luEl.textContent='As of '+_ds;
   ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
   var adminNavBtn=document.getElementById('nav-admin-tool-btn');
   if(adminNavBtn)adminNavBtn.style.display=CURRENT_ROLE==='implementer'?'flex':'none';
