@@ -1269,7 +1269,7 @@ function go(page){
   }
   if(page==='dashboard')renderDashboard();
   else if(page==='weekly')renderWeekly();
-  else if(page==='clients'){clPg=1;renderClients();}
+  else if(page==='clients'){switchClientTab('overview');}
   else if(page==='impl')renderImpl();
   else if(page==='settings')renderSettings();
 }
