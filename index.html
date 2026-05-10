@@ -2938,17 +2938,7 @@ function hideSR(){setTimeout(function(){document.getElementById('srch-results').
 function selFromSearch(no){document.getElementById('impl-search').value='';document.getElementById('srch-results').style.display='none';selProject(no);}
  
 // ══════════════ ADMINISTRATION TOOLS ══════════════
-var TOOLS={
-  'masterfile':{name:'Masterfile Creator',icon:'📋',desc:'Upload your reference file and expected output format to generate a clean, mapped masterfile ready for Sprout.',color:'#2563eb'},
-  'variance':{name:'Phase 3 Variance Analysis Bot',icon:'📊',desc:'Automatically compare policy vs register and Sprout vs client payroll data.',color:'#7c3aed'},
-  'mom':{name:'MOM Generator',icon:'📝',desc:'Generate a structured Minutes of Meeting document from your meeting notes.',color:'#ea580c'},
-  'crf':{name:'Copy Database CRF Generator (Live Accounts)',icon:'📄',desc:'Upload the Implementation Monitoring Excel file to auto-generate and submit a Change Request Form to Zoho.',color:'#16a34a'},
-  'sla':{name:'SLA Generator',icon:'⚖️',desc:'Create a Service Level Agreement document pre-filled with client details.',color:'#dc2626'},
-  'payroll-cal':{name:'Payroll Calendar Generator',icon:'📅',desc:'Generate a payroll processing calendar based on the client\'s cut-off schedule.',color:'#0e7490'},
-  'payroll-acc':{name:'Payroll Account Creator',icon:'🏦',desc:'Automate the creation of payroll account entries in Sprout Payroll.',color:'#854d0e'},
-  'payroll-repli':{name:'Payroll Repli Account Creator',icon:'🔁',desc:'Create replicated payroll accounts across multiple entities or branches.',color:'#0e7490'}
-};
- 
+
 // ══════════════ MASTERFILE CREATOR ══════════════
 // Exact 49 PayrollPie output columns (from template)
 var MF_COLUMNS=[
@@ -2984,7 +2974,7 @@ function pickTool(val){
   setTimeout(function(){openTool(val);},10);
 }
 document.addEventListener('click',function(e){
-  var wrap=document.getElementById('admin-tool-wrap');
+  var wrap=document.getElementById('nav-admin-tool-wrap');
   if(wrap&&!wrap.contains(e.target)){var menu=document.getElementById('admin-tool-menu');if(menu)menu.style.display='none';}
 });
  
@@ -3870,7 +3860,7 @@ function renderMasterfileUI(){
       +'<button onclick="closeTool()" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Cancel</button>'
       +'<div style="display:flex;gap:8px;">'
         +'<button id="mf-generate-btn" onclick="mfGenerate()" disabled style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:.4;display:inline-flex;align-items:center;gap:6px;" title="Upload both files first">✨ Generate Masterfile</button>'
-        +'<button id="mf-download-btn" onclick="mfDownload()" style="display:none;padding:9px 22px;border-radius:9px;border:none;background:var(--g);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:none;align-items:center;gap:6px;">⬇️ Download .xlsx</button>'
+        +'<button id="mf-download-btn" onclick="mfDownload()" style="display:none;padding:9px 22px;border-radius:9px;border:none;background:var(--g);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);align-items:center;gap:6px;">⬇️ Download .xlsx</button>'
       +'</div>'
     +'</div>';
   ['ref','out'].forEach(function(k){
@@ -3923,11 +3913,10 @@ function mfHandleFile(key,file){
         MF.outCols=cols||MF_COLUMNS;
         mfSetStatus('✅ Output template loaded — <strong>'+MF.outCols.length+'</strong> columns detected.','info');
       }catch(e2){MF.outCols=MF_COLUMNS;}
+      if(MF.ref){var b=document.getElementById('mf-generate-btn');b.disabled=false;b.style.opacity='1';b.title='';}
     };
     reader.readAsArrayBuffer(file);
-  }
- 
-  if(MF.ref&&MF.out){
+  } else if(MF.out&&MF.outCols){
     var b=document.getElementById('mf-generate-btn');
     b.disabled=false;b.style.opacity='1';b.title='';
   }
@@ -3949,14 +3938,25 @@ function mfSetStatus(msg,type){
 function mfReadXlsx(file){
   return new Promise(function(resolve,reject){
     var reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,dateNF:'mm/dd/yyyy'});
-        resolve(wb);
-      }catch(err){reject(err);}
-    };
-    reader.onerror=reject;
-    reader.readAsArrayBuffer(file);
+    if(/\.csv$/i.test(file.name)){
+      reader.onload=function(e){
+        try{
+          var wb=XLSX.read(e.target.result,{type:'string',cellDates:true,dateNF:'mm/dd/yyyy'});
+          resolve(wb);
+        }catch(err){reject(err);}
+      };
+      reader.onerror=reject;
+      reader.readAsText(file);
+    } else {
+      reader.onload=function(e){
+        try{
+          var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true,dateNF:'mm/dd/yyyy'});
+          resolve(wb);
+        }catch(err){reject(err);}
+      };
+      reader.onerror=reject;
+      reader.readAsArrayBuffer(file);
+    }
   });
 }
  
@@ -4033,7 +4033,7 @@ function mfNormMWE(v){
 function mfNormBankType(v){
   var s=String(v||'').trim().toLowerCase();
   if(s.includes('current'))return 'Current';
-  if(s.includes('savings')||s)return 'Savings';
+  if(s)return 'Savings';
   return '';
 }
  
@@ -4120,13 +4120,14 @@ async function mfGenerate(){
       if(!ln)continue;
  
       var g=mfGet;
+      var normEmpStatus=mfNormStatus(g(row,srcHeaders,['Employment Status','Emp Status']));
+      if(normEmpStatus==='Inactive')continue;
       var hireRaw=g(row,srcHeaders,['Hire Date','Date Hired','Start Date']);
       var hireFmt=mfFmtDate(hireRaw);
- 
+
       // Build the mapped output object keyed by exact output column name
       var mapped={};
- 
-      // Status — always ADD for new employees
+
       mapped['Status']='ADD';
  
       // Employee ID
@@ -4154,8 +4155,7 @@ async function mfGenerate(){
  
       // Employment
       mapped['Hire Date (mm/dd/yyyy)*']=hireFmt;
-      var rawStatus=g(row,srcHeaders,['Employment Status','Emp Status']);
-      mapped['Employment Status*']=mfNormStatus(rawStatus);
+      mapped['Employment Status*']=normEmpStatus;
       mapped['Status Date (mm/dd/yyyy)*']=hireFmt;
       mapped['ROHQ (Yes/No)']='No';
  
@@ -4186,7 +4186,6 @@ async function mfGenerate(){
       // Previous employer
       mapped['Previous Employer Non-Tax 13th Month']='';
       mapped['Previous Employer Non-Tax Salaries']='';
-      mapped['Previous Employer Taxable Salaries']='';
       mapped['Previous Employer Tax Withheld']='';
       mapped['Previous Employer Government Deductions']='';
       mapped['Previous Employer De Minimis']='';
