@@ -286,8 +286,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 /* Project rows */
 .impl-proj-list{flex:1;overflow-y:auto;padding:.3rem .5rem;}
-.impl-proj-list::-webkit-scrollbar{width:4px;}
-.impl-proj-list::-webkit-scrollbar-thumb{background:var(--s2);border-radius:2px;}
+.impl-proj-list::-webkit-scrollbar{width:6px;}
+.impl-proj-list::-webkit-scrollbar-track{background:var(--s1);}
+.impl-proj-list::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
+.impl-proj-list::-webkit-scrollbar-thumb:hover{background:var(--s4);}
 .impl-prow{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;border-left:3px solid transparent;cursor:pointer;transition:background .1s;}
 .impl-prow:hover{background:var(--s0);}
 .impl-prow.sel{background:var(--g0);border-left-color:var(--g);}
@@ -322,8 +324,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 /* Needs attention panel */
 .impl-attn-panel{border-bottom:1px solid var(--s2);flex-shrink:0;max-height:42%;display:flex;flex-direction:column;min-height:0;}
 .impl-attn-body{padding:.5rem .85rem;overflow-y:auto;flex:1;min-height:0;}
-.impl-attn-body::-webkit-scrollbar{width:4px;}
-.impl-attn-body::-webkit-scrollbar-thumb{background:var(--s2);border-radius:2px;}
+.impl-attn-body::-webkit-scrollbar{width:6px;}
+.impl-attn-body::-webkit-scrollbar-track{background:var(--s1);}
+.impl-attn-body::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
+.impl-attn-body::-webkit-scrollbar-thumb:hover{background:var(--s4);}
 .impl-attn-sublbl{font-size:9px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;margin-top:5px;}
 .impl-attn-sublbl:first-child{margin-top:0;}
 .impl-attn-row{display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .1s;border-radius:4px;}
@@ -349,8 +353,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 /* Scrollable detail area */
 .impl-sel-scroll{flex:1;overflow-y:auto;padding:0 .85rem .85rem;}
-.impl-sel-scroll::-webkit-scrollbar{width:4px;}
-.impl-sel-scroll::-webkit-scrollbar-thumb{background:var(--s2);border-radius:2px;}
+.impl-sel-scroll::-webkit-scrollbar{width:6px;}
+.impl-sel-scroll::-webkit-scrollbar-track{background:var(--s1);}
+.impl-sel-scroll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
+.impl-sel-scroll::-webkit-scrollbar-thumb:hover{background:var(--s4);}
 .impl-sec-hdr{font-size:9px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;padding:8px 0 4px;border-bottom:1px solid var(--s1);margin-bottom:2px;display:flex;align-items:center;gap:4px;}
 .impl-sec-hdr:first-child{padding-top:0;}
 .impl-sec-dot{width:5px;height:5px;border-radius:50%;}
@@ -2606,18 +2612,14 @@ function implRenderAttention(myD){
   if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
   var overdue=[];
   var upcoming=[];
-  var ok=[];
   myD.forEach(function(d){
-    var sc=SC[d.remarks]||'#64748b';
+    if(d.remarks==='Live')return; // Live clients don't need attention
     if(d.remarks==='Not yet started'&&!d.komDate){
       overdue.push({no:d.no,name:d.client,sub:'Kickoff not scheduled',color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});
     } else if(d.liveRun){
       var lr=new Date(d.liveRun);var diff=Math.round((lr-TODAY)/(1000*60*60*24));
       if(diff>=0&&diff<=14){upcoming.push({no:d.no,name:d.client,sub:'Go-live in '+diff+' day'+(diff===1?'':'s')+' · '+d.liveRun,color:'#f59e0b',badge:'Soon',badgeCls:'background:#fef9c3;color:#854d0e'});}
-      else if(diff<0&&d.remarks!=='Live'){overdue.push({no:d.no,name:d.client,sub:'Live run was '+d.liveRun,color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});}
-      else if(d.remarks==='Live'){ok.push({no:d.no,name:d.client,sub:'Live · all clear',color:'#16a34a',badge:'OK',badgeCls:'background:#dcfce7;color:#15803d'});}
-    } else if(d.remarks==='Live'){
-      ok.push({no:d.no,name:d.client,sub:'Live · all clear',color:'#16a34a',badge:'OK',badgeCls:'background:#dcfce7;color:#15803d'});
+      else if(diff<0){overdue.push({no:d.no,name:d.client,sub:'Live run was '+d.liveRun,color:'#dc2626',badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b'});}
     }
   });
   var html='';
@@ -2628,8 +2630,7 @@ function implRenderAttention(myD){
     +'</div>';};
   if(overdue.length){html+='<div class="impl-attn-sublbl">Overdue</div>'+overdue.map(row).join('');}
   if(upcoming.length){html+='<div class="impl-attn-sublbl">Upcoming</div>'+upcoming.map(row).join('');}
-  if(ok.length){html+=ok.map(row).join('');}
-  if(!html)html='<div style="font-size:11px;color:var(--s4);padding:.5rem 0;">All projects on track.</div>';
+  if(!html)html='<div style="font-size:11px;color:var(--s4);padding:.5rem 0;">No pending items — all clear.</div>';
   document.getElementById('impl-attn-body').innerHTML=html;
 }
 
