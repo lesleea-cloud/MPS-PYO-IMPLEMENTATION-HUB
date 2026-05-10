@@ -4272,9 +4272,10 @@ async function mfDownload(){
       if(hrow.indexOf('Status')>=0&&hrow.some(function(hc){return hc.indexOf('Employee ID')>=0;})){hdrIdx=hi;break;}
     }
     var colMap={};
-    for(var c=xlRange.s.c;c<=xlRange.e.c;c++){
-      var hCell=xlWs[XLSX.utils.encode_cell({r:hdrIdx,c:c})];
-      if(hCell&&hCell.v!==undefined)colMap[String(hCell.v).replace(/[\r\n\t]+/g,' ').trim()]=c;
+    var hdrRow=xlRaw[hdrIdx]||[];
+    for(var c=0;c<hdrRow.length;c++){
+      var cv=String(hdrRow[c]||'').replace(/[\r\n\t]+/g,' ').trim();
+      if(cv)colMap[cv]=c;
     }
     var zip=await JSZip.loadAsync(buf);
     var sheetXmlPath='xl/worksheets/sheet1.xml';
@@ -4304,10 +4305,15 @@ async function mfDownload(){
 }
 
 function mfInjectRows(sheetXml,rows,cols,colMap){
-  // Strip rows r >= 5 — handles namespace prefixes like <x:row>
+  // Detect namespace prefix used in this sheet (e.g. 'x:' if tags are <x:row>)
+  var nsM=sheetXml.match(/<([a-zA-Z]+):row\b/);
+  var p=nsM?nsM[1]+':':'';
+
+  // Strip existing data rows r >= 5
   var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
     return parseInt(n)>=5?'':m;
   });
+
   var newRows='';
   rows.forEach(function(rowData,ri){
     var rn=ri+5;
@@ -4321,14 +4327,27 @@ function mfInjectRows(sheetXml,rows,cols,colMap){
       if(ci===undefined)return;
       var v=rowData[col];
       if(v===undefined||v===null||v==='')return;
-      cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
+      var addr=mfColLetter(ci)+rn;
+      cells+='<'+p+'c r="'+addr+'" t="inlineStr"><'+p+'is><'+p+'t xml:space="preserve">'+mfEscXml(String(v))+'</'+p+'t></'+p+'is></'+p+'c>';
     });
-    if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
+    if(cells)newRows+='<'+p+'row r="'+rn+'">'+cells+'</'+p+'row>';
   });
-  // Replace closing sheetData tag — handles namespace prefixes like </x:sheetData>
+
+  // Replace closing sheetData tag — use function to avoid $ interpolation in newRows
   var sdClose=clean.match(/<\/[a-zA-Z]*:?sheetData>/);
-  if(!sdClose)return clean;
-  return clean.replace(sdClose[0],newRows+sdClose[0]);
+  if(sdClose){
+    var closeTag=sdClose[0];
+    return clean.replace(closeTag,function(){return newRows+closeTag;});
+  }
+  // Fallback: handle self-closing <sheetData/> tag
+  var sdSelf=clean.match(/<(?:[a-zA-Z]*:)?sheetData\s*\/>/);
+  if(sdSelf){
+    var selfTag=sdSelf[0];
+    var sdPfx=selfTag.match(/<([a-zA-Z]+:)?/);
+    var sp=sdPfx&&sdPfx[1]?sdPfx[1]:'';
+    return clean.replace(selfTag,function(){return '<'+sp+'sheetData>'+newRows+'</'+sp+'sheetData>';});
+  }
+  return clean;
 }
 
 function mfColLetter(n){
