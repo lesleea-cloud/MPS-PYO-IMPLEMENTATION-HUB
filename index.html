@@ -1723,6 +1723,22 @@ function clPaginate(rows){
   document.getElementById('cl-pag').innerHTML=h;
 }
 
+// Normalize any date value from Excel import → mm/dd/yyyy string
+// Handles: Excel serial numbers, yyyy-mm-dd strings, mm/dd/yyyy strings
+function parseImportDate(val){
+  if(val===null||val===undefined||val==='')return '';
+  if(typeof val==='number'){
+    // Excel serial: 25569 = 1970-01-01 in UTC; adjust for Excel's 1900 leap-year bug
+    var d=new Date(Math.round((val-25569)*86400*1000));
+    if(isNaN(d.getTime()))return '';
+    return String(d.getUTCMonth()+1).padStart(2,'0')+'/'+String(d.getUTCDate()).padStart(2,'0')+'/'+d.getUTCFullYear();
+  }
+  var s=String(val).trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)){var p=s.split('-');return p[1]+'/'+p[2]+'/'+p[0];}
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s))return s;
+  return '';
+}
+
 // yyyy-mm-dd → mm/dd/yyyy (also handles already-mm/dd/yyyy and blanks)
 function mlFromISO(val){
   if(!val)return '';
@@ -1985,13 +2001,13 @@ function handleImport(e){
           if(!no)return;
           var d=D.find(function(x){return x.no===no;});
           if(d){
-            if(row['KOM Date'])d.komDate=row['KOM Date'];
-            if(row['Hand Over Date'])d.handOver=row['Hand Over Date'];
-            if(row['Live Run Date'])d.liveRun=row['Live Run Date'];
+            if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);
+            if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);
+            if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);
           }
           if(row['Churn Date']||row['Billing Month']||row['Month Completed']){
             if(!CL_MILESTONES[no])CL_MILESTONES[no]={};
-            if(row['Churn Date'])CL_MILESTONES[no].churnDate=row['Churn Date'];
+            if(row['Churn Date'])CL_MILESTONES[no].churnDate=parseImportDate(row['Churn Date']);
             if(row['Billing Month'])CL_MILESTONES[no].billingMonth=row['Billing Month'];
             if(row['Month Completed'])CL_MILESTONES[no].monthCompleted=row['Month Completed'];
           }
@@ -3853,7 +3869,7 @@ function stHandleFile(e){
       var aoSheet=wb.Sheets['Add-on Services'];
       if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,sd:parseInt(row['Salary Disbursement'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0};});
       var mlSheet=wb.Sheets['Milestone Dates'];
-      if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=row['KOM Date'];if(row['Hand Over Date'])d.handOver=row['Hand Over Date'];if(row['Live Run Date'])d.liveRun=row['Live Run Date'];}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=row['Churn Date'];if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
+      if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=parseImportDate(row['Churn Date']);if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
       var newAfterho={};
       var ahSheet=wb.Sheets['After Hand Over'];
       if(ahSheet)XLSX.utils.sheet_to_json(ahSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAfterho[no]={csm:row['CSM']||'',processor:row['Processor']||''};});
