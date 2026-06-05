@@ -670,6 +670,13 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 @keyframes spin{to{transform:rotate(360deg);}}
 .atm-item{display:block;width:100%;text-align:left;padding:8px 12px;border:none;background:transparent;font-family:var(--font);font-size:12px;font-weight:500;color:var(--s7);cursor:pointer;border-radius:7px;transition:background .1s;}
 .atm-item:hover{background:var(--g0);color:var(--g4);}
+/* ══ CLIENT TYPE TOGGLE ══ */
+.cl-type-bar{display:flex;align-items:center;gap:12px;padding:.55rem 0 .1rem;}
+.cl-type-toggle{display:flex;background:var(--s1);border-radius:10px;padding:3px;gap:2px;}
+.cl-type-btn{padding:6px 22px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s5);background:transparent;transition:all .15s;white-space:nowrap;}
+.cl-type-btn.active{background:#fff;color:var(--g4);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.cl-type-btn:not(.active):hover{color:var(--s8);}
+.cl-type-count{font-size:11px;color:var(--s4);font-family:var(--mono);}
 
 </style>
 </head>
@@ -1046,6 +1053,14 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </button>
         </div>
       </div>
+      <!-- Client type toggle -->
+      <div class="cl-type-bar">
+        <div class="cl-type-toggle">
+          <button class="cl-type-btn active" id="ctb-pyo" onclick="setClType('pyo')">PYO</button>
+          <button class="cl-type-btn" id="ctb-ps" onclick="setClType('ps')">Payroll Starter</button>
+        </div>
+        <span class="cl-type-count" id="cl-type-count"></span>
+      </div>
       <!-- Filter bar -->
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <input type="text" id="cq" placeholder="🔍  Search client, resource, PM…" oninput="renderClients()" style="padding:7px 11px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;min-width:220px;">
@@ -1165,7 +1180,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth">CSM</th><th class="cth">Processor</th><th class="cth">Remarks</th>
+                <th class="cth">CSM</th><th class="cth">Remarks</th>
               </tr></thead>
               <tbody id="cl-body-afterho"><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">1</td><td class="ctd"><span class="cl-link">Brandfox Digital</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(1,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Tiara" placeholder="—" onblur="ahUpdateField(1,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">2</td><td class="ctd"><span class="cl-link">Appen Services Philippines</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(2,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Jaysel" placeholder="—" onblur="ahUpdateField(2,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">3</td><td class="ctd"><span class="cl-link">DIS TECH PHILIPPINES, LLC</span></td><td class="ctd"><input type="text" value="Jerry San Pedro" placeholder="—" onblur="ahUpdateField(3,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Rez-ann" placeholder="—" onblur="ahUpdateField(3,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">4</td><td class="ctd"><span class="cl-link">Evermere Food Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">5</td><td class="ctd"><span class="cl-link">Powers Technical Services OPC</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">6</td><td class="ctd"><span class="cl-link">Wilmar Sugar Philippines Inc.</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(6,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(6,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">7</td><td class="ctd"><span class="cl-link">Glowify Aesthetic Clinic</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">8</td><td class="ctd"><span class="cl-link">Kuh Meal</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">9</td><td class="ctd"><span class="cl-link">Q&amp;A Consulting OPC/ Arden Consult</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">10</td><td class="ctd"><span class="cl-link">Exter Philippines Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr></tbody>
             </table>
@@ -1807,14 +1822,14 @@ function tabTriggerDownload(fname){
     XLSX.utils.book_append_sheet(wb, mlSheet, 'Milestone Dates');
 
     // Sheet 4: After Hand Over
-    var ahHeaders = ['#','Client Name','Resource','CSM','Processor'];
+    var ahHeaders = ['#','Client Name','Resource','CSM'];
     var ahRows = [ahHeaders];
     exportData.forEach(function(d){
       var a = CL_AFTERHO[d.no]||{};
-      ahRows.push([d.no, d.client, d.resource, a.csm||'', a.processor||'']);
+      ahRows.push([d.no, d.client, d.resource, a.csm||'']);
     });
     var ahSheet = XLSX.utils.aoa_to_sheet(ahRows);
-    setColWidths(ahSheet, [5, 38, 12, 22, 22]);
+    setColWidths(ahSheet, [5, 38, 12, 22]);
     XLSX.utils.book_append_sheet(wb, ahSheet, 'After Hand Over');
 
     XLSX.writeFile(wb, fname);
@@ -1823,6 +1838,7 @@ function tabTriggerDownload(fname){
 
 // ══ CLIENT TABS STATE ══
 var CL_TAB='overview';
+var CL_TYPE='pyo'; // 'pyo' or 'ps' (payroll starter)
 var CL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var CL_SERVICES=['Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','Sprout Gov','Statutory Disbursement'];
 var MON_SELECTED=[];  // multi-select state for month filter
@@ -2433,8 +2449,26 @@ function showImportToast(type,msg){
   },3000);
 }
 
+function setClType(type){
+  CL_TYPE=type;
+  clPg=1;
+  document.getElementById('ctb-pyo').classList.toggle('active',type==='pyo');
+  document.getElementById('ctb-ps').classList.toggle('active',type==='ps');
+  renderClients();
+}
+
 function renderClients(){
   var baseData=(CURRENT_ROLE==='implementer')?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  // Client type filter
+  baseData=baseData.filter(function(d){
+    if(CL_TYPE==='ps') return d.service==='Payroll Starter';
+    return d.service!=='Payroll Starter';
+  });
+  // Update toggle count label
+  var pyoCnt=D.filter(function(d){return d.service!=='Payroll Starter';}).length;
+  var psCnt=D.filter(function(d){return d.service==='Payroll Starter';}).length;
+  var countEl=document.getElementById('cl-type-count');
+  if(countEl) countEl.textContent=(CL_TYPE==='pyo'?pyoCnt+' PYO clients':psCnt+' Payroll Starter clients');
   // role UI
   var addBtn=document.getElementById('add-client-btn');
   var impGrp=document.getElementById('import-group');
@@ -2445,8 +2479,9 @@ function renderClients(){
     if(addBtn)addBtn.style.display='none';
     if(impGrp)impGrp.style.display='none';
   } else {
-    document.getElementById('cl-page-title').textContent='All Clients — 2026';
-    document.getElementById('cl-page-sub').textContent='Complete implementation project list';
+    var typeLabel=CL_TYPE==='ps'?'Payroll Starter':'PYO';
+    document.getElementById('cl-page-title').textContent=typeLabel+' Clients — 2026';
+    document.getElementById('cl-page-sub').textContent=CL_TYPE==='ps'?'Payroll Starter implementation projects':'PYO and complex implementation projects';
     document.getElementById('cr').style.display='';
     if(addBtn)addBtn.style.display='flex';
     if(impGrp)impGrp.style.display='flex';
@@ -2560,7 +2595,6 @@ function renderClients(){
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd">'+ahInp('csm',a.csm)+'</td>'+
-        '<td class="ctd">'+ahInp('processor',a.processor)+'</td>'+
         '<td class="ctd">'+bdg(ahRemark)+'</td>'+
       '</tr>';
     }).join('');
