@@ -514,9 +514,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 #login-screen{
   position:fixed;inset:0;z-index:1000;
-  display:flex;
+  display:flex;flex-direction:row;
   background:#092903;
   font-family:var(--font);
+  min-height:100vh;width:100vw;
 }
 #login-screen.hidden{display:none;}
 
@@ -591,9 +592,9 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 /* ── Right panel (sign-in card) ── */
 .login-right{
-  flex:1;background:#092903;
+  flex:1;min-width:0;background:#092903;
   display:flex;align-items:center;justify-content:center;
-  padding:2.5rem;
+  padding:2.5rem;height:100%;
   overflow-y:auto;
 }
 .login-form{
