@@ -261,7 +261,11 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 /* KPI inline bar */
 .impl-kpi-bar{display:flex;align-items:center;background:#fff;border-top:1px solid var(--s2);border-bottom:1px solid var(--s2);padding:0 1.25rem;flex-shrink:0;}
-.impl-kpi-seg{flex:1;display:flex;flex-direction:column;padding:.55rem .8rem;}
+.impl-kpi-seg{flex:1;display:flex;flex-direction:column;padding:.55rem .8rem;cursor:pointer;transition:background .12s;border-radius:6px;}
+.impl-kpi-seg:hover{background:var(--s0);}
+.impl-kpi-seg.kpi-active{background:var(--g0);}
+.impl-kpi-seg.kpi-active .impl-kpi-lbl{color:var(--g4);}
+.impl-kpi-seg.kpi-active .impl-kpi-val{color:var(--g4) !important;}
 .impl-kpi-div{width:1px;height:32px;background:var(--s1);}
 .impl-kpi-lbl{font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
 .impl-kpi-val{font-size:20px;font-weight:700;line-height:1;font-family:var(--mono);}
@@ -1262,18 +1266,19 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <div class="impl-cpanel-hdr" onclick="toggleCPanel('projects')">
               <div class="impl-cpanel-title">
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
-                My Projects
+                <span id="impl-proj-panel-title">My Projects</span>
               </div>
               <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
             <div class="impl-cpanel-body" id="cpbody-projects">
               <div class="impl-filter-row">
-                <span class="impl-fp on" onclick="implFilter(this,'all')">All</span>
-                <span class="impl-fp" onclick="implFilter(this,'live')">Live</span>
-                <span class="impl-fp" onclick="implFilter(this,'ongoing')">Ongoing</span>
-                <span class="impl-fp" onclick="implFilter(this,'nys')">Not started</span>
-                <span class="impl-fp" onclick="implFilter(this,'pyo')">PYO</span>
-                <span class="impl-fp" onclick="implFilter(this,'starter')">Payroll Starter</span>
+                <span class="impl-fp on" data-f="all" onclick="implFilter(this,'all')">All</span>
+                <span class="impl-fp" data-f="live" onclick="implFilter(this,'live')">Live</span>
+                <span class="impl-fp" data-f="ongoing" onclick="implFilter(this,'ongoing')">Ongoing</span>
+                <span class="impl-fp" data-f="nys" onclick="implFilter(this,'nys')">Not started</span>
+                <span class="impl-fp" data-f="churned" onclick="implFilter(this,'churned')">Churned</span>
+                <span class="impl-fp" data-f="pyo" onclick="implFilter(this,'pyo')">PYO</span>
+                <span class="impl-fp" data-f="starter" onclick="implFilter(this,'starter')">Payroll Starter</span>
                 <button class="impl-sort-btn" id="impl-sort-btn" onclick="implToggleSort(this)">
                   <svg viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2" stroke-linecap="round"></path></svg>
                   Sort: Go-live
@@ -2672,6 +2677,31 @@ function implFilter(el,f){
   implRenderProjects();
 }
 
+function implKpiClick(filter,label,el){
+  var isActive=el.classList.contains('kpi-active');
+  /* Deactivate all KPI segments */
+  document.querySelectorAll('.impl-kpi-seg').forEach(function(x){x.classList.remove('kpi-active');});
+  var panel=document.getElementById('cpanel-projects');
+  /* Toggle off if clicking the already-active KPI */
+  if(isActive){
+    if(panel)panel.style.display='none';
+    return;
+  }
+  /* Activate */
+  el.classList.add('kpi-active');
+  IMPL_FILTER=filter;
+  /* Update panel title */
+  var titleEl=document.getElementById('impl-proj-panel-title');
+  if(titleEl)titleEl.textContent=label;
+  /* Sync filter pills */
+  document.querySelectorAll('.impl-fp').forEach(function(x){x.classList.remove('on');});
+  var pill=document.querySelector('.impl-fp[data-f="'+filter+'"]');
+  if(pill)pill.classList.add('on');
+  /* Show panel */
+  if(panel){panel.style.display='';panel.classList.remove('collapsed');}
+  implRenderProjects();
+}
+
 function implToggleSort(btn){
   IMPL_SORT_ASC=!IMPL_SORT_ASC;
   btn.querySelector('span')?null:null;
@@ -2685,6 +2715,7 @@ function implRenderProjects(){
   if(IMPL_FILTER==='live')filtered=myD.filter(function(d){return d.remarks==='Live';});
   else if(IMPL_FILTER==='ongoing')filtered=myD.filter(function(d){return d.remarks==='Ongoing';});
   else if(IMPL_FILTER==='nys')filtered=myD.filter(function(d){return d.remarks==='Not yet started';});
+  else if(IMPL_FILTER==='churned')filtered=myD.filter(function(d){return d.remarks==='Churned';});
   else if(IMPL_FILTER==='pyo')filtered=myD.filter(function(d){return d.service.indexOf('PYO')>=0;});
   else if(IMPL_FILTER==='starter')filtered=myD.filter(function(d){return d.service==='Payroll Starter';});
 
@@ -2749,16 +2780,16 @@ function renderImpl(){
   var ch=myD.filter(function(d){return d.remarks==='Churned';}).length;
   var avgP=myD.length?Math.round(myD.reduce(function(a,d){return a+pct(d);},0)/myD.length):0;
   var kpis=[
-    {l:'My projects',v:myD.length,s:'Total assigned',c:'#0f172a'},
-    {l:'Live',v:live,s:'Active & running',c:'#16a34a'},
-    {l:'Ongoing',v:on,s:'In progress',c:'#2563eb'},
-    {l:'Not started',v:nys,s:'Pending kickoff',c:'#ea580c'},
-    {l:'Churned',v:ch,s:'Disengaged',c:'#dc2626'},
-    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#7c3aed'}
+    {l:'My projects',v:myD.length,s:'Total assigned',c:'#0f172a',f:'all'},
+    {l:'Live',v:live,s:'Active & running',c:'#16a34a',f:'live'},
+    {l:'Ongoing',v:on,s:'In progress',c:'#2563eb',f:'ongoing'},
+    {l:'Not started',v:nys,s:'Pending kickoff',c:'#ea580c',f:'nys'},
+    {l:'Churned',v:ch,s:'Disengaged',c:'#dc2626',f:'churned'},
+    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#7c3aed',f:'all'}
   ];
   document.getElementById('impl-kpis').innerHTML=kpis.map(function(k,i){
     return (i>0?'<div class="impl-kpi-div"></div>':'')
-      +'<div class="impl-kpi-seg">'
+      +'<div class="impl-kpi-seg" onclick="implKpiClick(\''+k.f+'\',\''+k.l+'\',this)">'
       +'<div class="impl-kpi-lbl">'+k.l+'</div>'
       +'<div class="impl-kpi-val" style="color:'+k.c+';">'+k.v+'</div>'
       +'<div class="impl-kpi-sub">'+k.s+'</div>'
