@@ -1147,7 +1147,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <label class="svc-ms-opt"><input type="checkbox" value="Statutory Disbursement" onchange="updateSvcMs()"> Statutory Disbursement</label>
           </div>
         </div>
-        <select id="cph" onchange="renderClients()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);outline:none;"><option value="">All phases</option><option value="kom">KOM done</option><option value="sim">Simulation done</option><option value="par">Parallel Run done</option><option value="live">Live Run done</option><option value="post">Post Live done</option></select>
+        <select id="cph" onchange="renderClients()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);outline:none;"><option value="">All phases</option><option value="kom">KOM done</option><option value="sim">Simulation done</option><option value="par">Parallel Run done</option><option value="live">Live Run done</option></select>
         <span style="font-size:12px;color:var(--s4);margin-left:auto;" id="cl-count">36 clients</span>
       </div>
       <!-- Tabbed panel -->
@@ -1189,7 +1189,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth">KOM</th><th class="cth">Simulation</th><th class="cth" id="ph-th-par">Parallel Run</th><th class="cth">Live Run</th><th class="cth">Post Live</th>
+                <th class="cth">KOM</th><th class="cth">Simulation</th><th class="cth" id="ph-th-par">Parallel Run</th><th class="cth">Live Run</th>
               </tr></thead>
               <tbody id="cl-body-phases"></tbody>
             </table>
@@ -1219,7 +1219,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth">CSM</th><th class="cth">Remarks</th>
+                <th class="cth">CSM</th><th class="cth">Post Live</th><th class="cth">Remarks</th>
               </tr></thead>
               <tbody id="cl-body-afterho"><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">1</td><td class="ctd"><span class="cl-link">Brandfox Digital</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(1,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Tiara" placeholder="—" onblur="ahUpdateField(1,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">2</td><td class="ctd"><span class="cl-link">Appen Services Philippines</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(2,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Jaysel" placeholder="—" onblur="ahUpdateField(2,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">3</td><td class="ctd"><span class="cl-link">DIS TECH PHILIPPINES, LLC</span></td><td class="ctd"><input type="text" value="Jerry San Pedro" placeholder="—" onblur="ahUpdateField(3,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Rez-ann" placeholder="—" onblur="ahUpdateField(3,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">4</td><td class="ctd"><span class="cl-link">Evermere Food Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">5</td><td class="ctd"><span class="cl-link">Powers Technical Services OPC</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">6</td><td class="ctd"><span class="cl-link">Wilmar Sugar Philippines Inc.</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(6,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(6,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">7</td><td class="ctd"><span class="cl-link">Glowify Aesthetic Clinic</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">8</td><td class="ctd"><span class="cl-link">Kuh Meal</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">9</td><td class="ctd"><span class="cl-link">Q&amp;A Consulting OPC/ Arden Consult</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">10</td><td class="ctd"><span class="cl-link">Exter Philippines Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr></tbody>
             </table>
@@ -1532,7 +1532,7 @@ function pct(d){
   if(d.service==='Payroll Starter'){
     return Math.round([d.kom,d.sim,d.live].filter(function(v){return v===1;}).length/3*100);
   }
-  return Math.round([d.kom,d.sim,d.par,d.live,d.post].filter(function(v){return v===1;}).length/5*100);
+  return Math.round([d.kom,d.sim,d.par,d.live].filter(function(v){return v===1;}).length/4*100);
 }
 function bdg(s){var m={Live:'bL',Ongoing:'bO','Not yet started':'bN',Churned:'bC','On-Hold':'bH','For Turnover':'bFT','On-Hold Back to Sales':'bOBS'};return '<span class="badge '+(m[s]||'bN')+'">'+s+'</span>';}
 function chip(r){var b=r.split('/')[0].trim();return '<span class="chip c'+b+'">'+r+'</span>';}
@@ -1639,7 +1639,7 @@ function renderDashboard(){
   var smx=se.length?se[0].v:1;
   var colors=['#7c3aed','#2563eb','#16a34a','#ea580c','#dc2626','#0e7490','#854d0e'];
   document.getElementById('svc-mix').innerHTML=se.map(function(s,i){var w=Math.round(s.v/smx*100);var c=colors[i%colors.length];return '<div class="hbar-row"><span class="hbar-label" title="'+s.k+'">'+s.k+'</span><div class="hbar-track"><div class="hbar-fill" style="width:'+w+'%;background:'+c+'"><span>'+s.v+'</span></div></div><span class="hbar-count">'+s.v+'</span></div>';}).join('');
-  var phases=[{l:'KOM',k:'kom',c:'#2563eb'},{l:'Simulation',k:'sim',c:'#7c3aed'},{l:'Parallel',k:'par',c:'#ea580c'},{l:'Live Run',k:'live',c:'#16a34a'},{l:'Post Live',k:'post',c:'#94a3b8'}];
+  var phases=[{l:'KOM',k:'kom',c:'#2563eb'},{l:'Simulation',k:'sim',c:'#7c3aed'},{l:'Parallel',k:'par',c:'#ea580c'},{l:'Live Run',k:'live',c:'#16a34a'}];
   document.getElementById('phase-rings').innerHTML=phases.map(function(ph){var cnt=D.filter(function(d){return d[ph.k]===1;}).length;var p=Math.round(cnt/D.length*100);return '<div class="ring-card" style="--c:'+ph.c+'"><div class="ring-val">'+cnt+'</div><div class="ring-label">'+ph.l+'</div><div class="ring-sub">'+p+'% done</div></div>';}).join('');
   document.getElementById('avg-progress').innerHTML=rl.map(function(r){var rd=D.filter(function(d){return d.resource.indexOf(r)>=0;});if(!rd.length)return '';var avg=Math.round(rd.reduce(function(a,d){return a+pct(d);},0)/rd.length);return '<div class="hbar-row"><span class="hbar-label">'+r+'</span><div class="hbar-track"><div class="hbar-fill" style="width:'+avg+'%;background:'+RC[r]+'"><span>'+avg+'%</span></div></div><span class="hbar-count">'+avg+'</span></div>';}).join('');
 }
@@ -1886,14 +1886,14 @@ function tabTriggerDownload(fname){
     XLSX.utils.book_append_sheet(wb, mlSheet, 'Milestone Dates');
 
     // Sheet 4: After Hand Over
-    var ahHeaders = ['#','Client Name','Resource','CSM'];
+    var ahHeaders = ['#','Client Name','Resource','CSM','Post Live'];
     var ahRows = [ahHeaders];
     exportData.forEach(function(d){
       var a = CL_AFTERHO[d.no]||{};
-      ahRows.push([d.no, d.client, d.resource, a.csm||'']);
+      ahRows.push([d.no, d.client, d.resource, a.csm||'', d.post===1?'Done':'']);
     });
     var ahSheet = XLSX.utils.aoa_to_sheet(ahRows);
-    setColWidths(ahSheet, [5, 38, 12, 22]);
+    setColWidths(ahSheet, [5, 38, 12, 22, 12]);
     XLSX.utils.book_append_sheet(wb, ahSheet, 'After Hand Over');
 
     XLSX.writeFile(wb, fname);
@@ -2597,7 +2597,6 @@ function renderClients(){
         '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'sim',d.sim,d.service,d.simDate||'')+'</td>'+
         (CL_TYPE==='ps'?'':'<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par,d.service,d.parDate||'')+'</td>')+
         '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'live',d.live,d.service,d.liveRun||'')+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post,d.service,'')+'</td>'+
       '</tr>';
     }).join('');
   } else if(CL_TAB==='addons'){
@@ -2661,6 +2660,7 @@ function renderClients(){
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd">'+ahInp('csm',a.csm)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post,d.service,'')+'</td>'+
         '<td class="ctd">'+bdg(ahRemark)+'</td>'+
       '</tr>';
     }).join('');
@@ -2697,8 +2697,10 @@ function implFilter(el,f){
 }
 
 function implKpiClick(filter,label,el){
-  var isActive=el.classList.contains('kpi-active');
   document.querySelectorAll('.impl-kpi-seg').forEach(function(x){x.classList.remove('kpi-active');});
+  /* Avg Progress always returns to default overview */
+  if(filter==='overview'){implSetMode('default');return;}
+  var isActive=el.classList.contains('kpi-active');
   if(isActive){implSetMode('default');return;}
   el.classList.add('kpi-active');
   IMPL_FILTER=filter;
@@ -2825,7 +2827,7 @@ function renderImpl(){
     {l:'Ongoing',v:on,s:'In progress',c:'#1679FA',f:'ongoing'},
     {l:'Not started',v:nys,s:'Pending kickoff',c:'#FF7F00',f:'nys'},
     {l:'Churned',v:ch,s:'Disengaged',c:'#dc2626',f:'churned'},
-    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#8139EE',f:'all'}
+    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#8139EE',f:'overview'}
   ];
   document.getElementById('impl-kpis').innerHTML=kpis.map(function(k,i){
     return (i>0?'<div class="impl-kpi-div"></div>':'')
@@ -3088,7 +3090,7 @@ function selProject(no){
   var secHdr=function(label,color){return '<div class="impl-sec-hdr"><div class="impl-sec-dot" style="background:'+color+';"></div>'+label+'</div>';};
 
   /* Phases */
-  var phases=[{k:'kom',l:'KOM (Kickoff)'},{k:'sim',l:'Simulation'},{k:'par',l:'Parallel Run'},{k:'live',l:'Live Run'},{k:'post',l:'Post Live'}];
+  var phases=[{k:'kom',l:'KOM (Kickoff)'},{k:'sim',l:'Simulation'},{k:'par',l:'Parallel Run'},{k:'live',l:'Live Run'}];
   var phaseHTML=phases.map(function(s){
     var done=d[s.k]===1;
     var dotColor=done?'#16a34a':'var(--s2)';
@@ -3133,6 +3135,7 @@ function selProject(no){
     +dr('Billing month',milestone.billingMonth||'')
     +dr('Month completed',milestone.monthCompleted||'')
     +secHdr('After hand over','#64748b')
+    +dr('Post Live',d.post===1?'<span style="color:#16a34a;font-weight:600;">Done</span>':'<span style="color:var(--s4);">Pending</span>')
     +dr('CSM',afterho.csm||'')
     +dr('Processor',afterho.processor||'');
 
