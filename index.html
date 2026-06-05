@@ -269,8 +269,27 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 /* Main columns */
 .impl-body{display:flex;gap:10px;flex:1;min-height:0;overflow:hidden;padding:10px;background:var(--bg);}
-.impl-left{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;overflow:hidden;}
-.impl-right{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;overflow:hidden;}
+.impl-left{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;overflow-y:auto;padding-right:2px;}
+.impl-right{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0;overflow-y:auto;padding-right:2px;}
+.impl-left::-webkit-scrollbar,.impl-right::-webkit-scrollbar{width:5px;}
+.impl-left::-webkit-scrollbar-track,.impl-right::-webkit-scrollbar-track{background:transparent;}
+.impl-left::-webkit-scrollbar-thumb,.impl-right::-webkit-scrollbar-thumb{background:var(--s2);border-radius:3px;}
+/* Collapsible panels */
+.impl-cpanel{background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);overflow:hidden;flex-shrink:0;}
+.impl-cpanel-hdr{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;cursor:pointer;user-select:none;transition:background .12s;border-bottom:1px solid var(--s1);}
+.impl-cpanel-hdr:hover{background:var(--s0);}
+.impl-cpanel-title{font-size:10px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
+.impl-chev{width:13px;height:13px;fill:none;stroke:var(--s4);stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .2s;}
+.impl-cpanel.collapsed .impl-chev{transform:rotate(-90deg);}
+.impl-cpanel.collapsed .impl-cpanel-body{display:none;}
+/* Alerts panel — priority 1, always open, prominent header */
+.impl-alerts-panel{border-left:3px solid #ea580c;border-color:#fed7aa;border-left-color:#ea580c;}
+.impl-alerts-hdr{display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;background:#fff7ed;border-bottom:1px solid #fed7aa;}
+.impl-alerts-title{font-size:10px;font-weight:700;color:#9a3412;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px;}
+.impl-attn-body{padding:.4rem .85rem;overflow-y:auto;max-height:280px;}
+.impl-proj-list{overflow-y:auto;max-height:310px;padding:.3rem .5rem;}
+.impl-sel-scroll{overflow-y:auto;max-height:340px;padding:0 .85rem .85rem;}
+.impl-sel-fixed{padding:.65rem .85rem .5rem;border-bottom:1px solid var(--s1);}
 
 /* My Projects panel */
 .impl-panel{background:#fff;display:flex;flex-direction:column;overflow:hidden;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
@@ -1217,79 +1236,90 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <!-- Main body -->
       <div class="impl-body">
 
-        <!-- LEFT COLUMN — project list, full height -->
+        <!-- LEFT COLUMN: 1 Alerts (always open) · 3 My Projects (collapsible) -->
         <div class="impl-left">
-          <div class="impl-panel" style="flex:1;min-height:0;">
-            <div class="impl-panel-hdr">
-              <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
-              My projects
+
+          <!-- PRIORITY 1 — Needs Attention (always visible, prominent) -->
+          <div class="impl-alerts-panel impl-cpanel">
+            <div class="impl-alerts-hdr">
+              <div class="impl-alerts-title">
+                <span style="width:7px;height:7px;border-radius:50%;background:#ea580c;display:inline-block;flex-shrink:0;"></span>
+                Needs Attention
+              </div>
+              <span id="impl-attn-count" style="font-size:10px;padding:1px 8px;border-radius:10px;background:#fecaca;color:#991b1b;font-weight:700;display:none;"></span>
             </div>
-            <div class="impl-filter-row">
-              <span class="impl-fp on" onclick="implFilter(this,'all')">All</span>
-              <span class="impl-fp" onclick="implFilter(this,'live')">Live</span>
-              <span class="impl-fp" onclick="implFilter(this,'ongoing')">Ongoing</span>
-              <span class="impl-fp" onclick="implFilter(this,'nys')">Not started</span>
-              <span class="impl-fp" onclick="implFilter(this,'pyo')">PYO</span>
-              <span class="impl-fp" onclick="implFilter(this,'starter')">Payroll Starter</span>
-              <button class="impl-sort-btn" id="impl-sort-btn" onclick="implToggleSort(this)">
-                <svg viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2" stroke-linecap="round"></path></svg>
-                Sort: Go-live
-              </button>
+            <div class="impl-attn-body" id="impl-attn-body"></div>
+            <div class="impl-attn-legend" id="impl-attn-legend" style="display:none;">
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#dc2626;"></div>Overdue</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#ea580c;"></div>Due within 7 days</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#f59e0b;"></div>Due within 14 days</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#2563eb;"></div>Next phase unscheduled</div>
             </div>
-            <div class="impl-proj-list" id="impl-proj-list"></div>
           </div>
+
+          <!-- PRIORITY 3 — My Projects (collapsible, default open) -->
+          <div class="impl-cpanel" id="cpanel-projects">
+            <div class="impl-cpanel-hdr" onclick="toggleCPanel('projects')">
+              <div class="impl-cpanel-title">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
+                My Projects
+              </div>
+              <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div class="impl-cpanel-body" id="cpbody-projects">
+              <div class="impl-filter-row">
+                <span class="impl-fp on" onclick="implFilter(this,'all')">All</span>
+                <span class="impl-fp" onclick="implFilter(this,'live')">Live</span>
+                <span class="impl-fp" onclick="implFilter(this,'ongoing')">Ongoing</span>
+                <span class="impl-fp" onclick="implFilter(this,'nys')">Not started</span>
+                <span class="impl-fp" onclick="implFilter(this,'pyo')">PYO</span>
+                <span class="impl-fp" onclick="implFilter(this,'starter')">Payroll Starter</span>
+                <button class="impl-sort-btn" id="impl-sort-btn" onclick="implToggleSort(this)">
+                  <svg viewBox="0 0 24 24"><path d="M3 6h18M7 12h10M11 18h2" stroke-linecap="round"></path></svg>
+                  Sort: Go-live
+                </button>
+              </div>
+              <div class="impl-proj-list" id="impl-proj-list"></div>
+            </div>
+          </div>
+
         </div>
 
-        <!-- RIGHT COLUMN — tabbed panel -->
+        <!-- RIGHT COLUMN: 2 Stats (collapsible) · 4 Project Detail (collapsible) -->
         <div class="impl-right">
-          <div class="impl-rtab-panel">
 
-            <!-- Tab bar -->
-            <div class="impl-rtab-bar">
-              <button class="impl-rtab-btn active" id="irtab-alerts" onclick="setImplTab('alerts')">
-                Alerts
-                <span class="impl-rtab-count" id="impl-attn-count" style="display:none;"></span>
-              </button>
-              <button class="impl-rtab-btn" id="irtab-project" onclick="setImplTab('project')">Project</button>
-              <button class="impl-rtab-btn" id="irtab-stats" onclick="setImplTab('stats')">Stats</button>
-            </div>
-
-            <!-- ALERTS PANE -->
-            <div class="impl-rtab-pane" id="itp-alerts">
-              <div class="impl-attn-body" id="impl-attn-body"></div>
-              <div class="impl-attn-legend" id="impl-attn-legend" style="display:none;">
-                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#dc2626;"></div>Overdue</div>
-                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#ea580c;"></div>Due within 7 days</div>
-                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#f59e0b;"></div>Due within 14 days</div>
-                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#2563eb;"></div>Next phase unscheduled</div>
+          <!-- PRIORITY 2 — Project Status by Module (collapsible, default open) -->
+          <div class="impl-cpanel" id="cpanel-stats">
+            <div class="impl-cpanel-hdr" onclick="toggleCPanel('stats')">
+              <div class="impl-cpanel-title">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--b);display:inline-block;"></span>
+                Project Status by Module
+                <span id="impl-status-week" style="font-size:9px;color:var(--s4);font-weight:500;text-transform:none;letter-spacing:0;"></span>
               </div>
+              <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
-
-            <!-- PROJECT DETAIL PANE -->
-            <div class="impl-rtab-pane" id="itp-project" style="display:none;">
-              <div class="impl-sel-fixed" id="impl-sel-fixed">
-                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;text-align:center;color:var(--s4);">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:.6rem;stroke:var(--s3)"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
-                  <p style="font-size:12px;font-weight:600;color:var(--s5);margin-bottom:3px;">No project selected</p>
-                  <p style="font-size:11px;">Click any project on the left.</p>
-                </div>
-              </div>
-              <div class="impl-sel-scroll" id="impl-sel-scroll" style="display:none;"></div>
-            </div>
-
-            <!-- STATS PANE -->
-            <div class="impl-rtab-pane" id="itp-stats" style="display:none;">
-              <div style="padding:.6rem 1rem .4rem;font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--s1);display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                <span style="width:6px;height:6px;border-radius:50%;background:var(--b);display:inline-block;flex-shrink:0;"></span>
-                Project status by module
-                <span id="impl-status-week" style="font-size:9px;color:var(--s4);font-weight:500;text-transform:none;letter-spacing:0;margin-left:2px;"></span>
-              </div>
-              <div class="impl-mod-body" style="overflow-y:auto;flex:1;">
+            <div class="impl-cpanel-body" id="cpbody-stats">
+              <div class="impl-mod-body">
                 <div class="impl-mod-cols" id="impl-status-list"></div>
               </div>
             </div>
-
           </div>
+
+          <!-- PRIORITY 4 — Selected Project (collapsible, hidden until clicked) -->
+          <div class="impl-cpanel" id="cpanel-project" style="display:none;">
+            <div class="impl-cpanel-hdr" onclick="toggleCPanel('project')">
+              <div class="impl-cpanel-title">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--v);display:inline-block;"></span>
+                <span id="cpanel-project-title">Selected Project</span>
+              </div>
+              <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div class="impl-cpanel-body" id="cpbody-project">
+              <div class="impl-sel-fixed" id="impl-sel-fixed"></div>
+              <div class="impl-sel-scroll" id="impl-sel-scroll" style="display:none;"></div>
+            </div>
+          </div>
+
         </div>
 
       </div>
@@ -2618,16 +2648,9 @@ function renderClients(){
  
 var IMPL_FILTER='all';
 var IMPL_SORT_ASC=true;
-var IMPL_TAB='alerts';
-
-function setImplTab(tab){
-  IMPL_TAB=tab;
-  ['alerts','project','stats'].forEach(function(t){
-    var btn=document.getElementById('irtab-'+t);
-    var pane=document.getElementById('itp-'+t);
-    if(btn)btn.classList.toggle('active',t===tab);
-    if(pane)pane.style.display=t===tab?'flex':'none';
-  });
+function toggleCPanel(id){
+  var panel=document.getElementById('cpanel-'+id);
+  if(panel)panel.classList.toggle('collapsed');
 }
 
 function implGetColor(initials){
@@ -3042,7 +3065,14 @@ function selProject(no){
   var scrollEl=document.getElementById('impl-sel-scroll');
   scrollEl.style.display='block';
   scrollEl.innerHTML='<div class="impl-fade">'+scrollHTML+'</div>';
-  setImplTab('project');
+  // Show and expand the project detail panel
+  var projPanel=document.getElementById('cpanel-project');
+  if(projPanel){
+    projPanel.style.display='';
+    projPanel.classList.remove('collapsed');
+    var titleEl=document.getElementById('cpanel-project-title');
+    if(titleEl)titleEl.textContent=d.client;
+  }
 }
 
 function implSearch(){
