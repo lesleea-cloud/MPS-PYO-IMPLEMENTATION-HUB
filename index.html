@@ -4829,25 +4829,8 @@ function startApp(){
  
 function doSignOut(){
   _supa.auth.signOut();
-  document.querySelectorAll('.role-card').forEach(function(c){c.classList.remove('selected');});
-  document.querySelector('.role-card[data-role="manager"]').classList.add('selected');
-  document.getElementById('login-name').value='';
-  document.getElementById('login-impl-name').value='';
-  document.getElementById('login-user-select').value='';
-  document.getElementById('login-user-email').value='';
-  document.getElementById('login-user-pass').value='';
-  document.getElementById('user-creds-group').style.display='none';
-  document.getElementById('user-select-group').style.display='none';
-  document.getElementById('impl-select-group').style.display='none';
-  // Default to manager role — show user dropdown if manager users exist, else text input
-  var mgrUsers=USERS.filter(function(u){return u.role==='manager';});
-  document.getElementById('name-input-group').style.display=mgrUsers.length?'none':'block';
-  if(mgrUsers.length){
-    var sel=document.getElementById('login-user-select');
-    sel.innerHTML='<option value="">— Choose your account —</option>'+mgrUsers.map(function(u){return '<option value="'+u.username+'">'+u.username+'</option>';}).join('');
-    document.getElementById('user-select-group').style.display='block';
-  }
-  document.getElementById('login-error').classList.remove('show');
+  var el=document.getElementById('login-error');
+  if(el){el.style.display='none';el.classList.remove('show');}
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app-header').style.display='none';
   document.getElementById('app-body').style.display='none';
