@@ -344,8 +344,6 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-mod-div{width:1px;background:var(--s1);}
 
 /* Needs attention panel */
-.impl-attn-panel{flex-shrink:0;max-height:42%;display:flex;flex-direction:column;min-height:0;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);}
-.impl-attn-body{padding:.5rem .85rem;overflow-y:auto;flex:1;min-height:0;}
 .impl-attn-body::-webkit-scrollbar{width:6px;}
 .impl-attn-body::-webkit-scrollbar-track{background:var(--s1);}
 .impl-attn-body::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
@@ -1259,8 +1257,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             </div>
           </div>
 
-          <!-- PRIORITY 3 — My Projects (collapsible, default open) -->
-          <div class="impl-cpanel" id="cpanel-projects">
+          <!-- PRIORITY 3 — My Projects (hidden for now) -->
+          <div class="impl-cpanel" id="cpanel-projects" style="display:none;">
             <div class="impl-cpanel-hdr" onclick="toggleCPanel('projects')">
               <div class="impl-cpanel-title">
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
