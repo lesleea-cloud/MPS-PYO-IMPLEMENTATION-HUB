@@ -378,6 +378,15 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-phase-status{font-size:11px;font-weight:600;}
 @keyframes implFadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 .impl-fade{animation:implFadeIn .18s ease;}
+/* ══ IMPL RIGHT-COLUMN TABS ══ */
+.impl-rtab-panel{display:flex;flex-direction:column;flex:1;min-height:0;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);overflow:hidden;}
+.impl-rtab-bar{display:flex;flex-shrink:0;border-bottom:1px solid var(--s2);background:var(--s0);}
+.impl-rtab-btn{flex:1;padding:.55rem .4rem;font-size:11px;font-weight:600;color:var(--s5);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:var(--font);transition:all .12s;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;}
+.impl-rtab-btn:hover{color:var(--s8);background:#fff;}
+.impl-rtab-btn.active{color:var(--g4);border-bottom-color:var(--g);background:#fff;}
+.impl-rtab-count{font-size:10px;padding:0px 5px;border-radius:8px;background:#fecaca;color:#991b1b;font-weight:700;line-height:1.6;}
+.impl-rtab-pane{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden;}
+.impl-sel-fixed{flex-shrink:0;padding:.65rem .85rem .5rem;border-bottom:1px solid var(--s1);}
 
 /* Sidebar admin tool button */
 .nav-admin-btn{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 10px;margin:2px 8px;border:1px solid var(--s2);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:var(--s5);background:#fff;font-family:var(--font);transition:all .12s;}
@@ -1150,7 +1159,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth">KOM</th><th class="cth">Simulation</th><th class="cth">Parallel Run</th><th class="cth">Live Run</th><th class="cth">Post Live</th>
+                <th class="cth">KOM</th><th class="cth">Simulation</th><th class="cth" id="ph-th-par">Parallel Run</th><th class="cth">Live Run</th><th class="cth">Post Live</th>
               </tr></thead>
               <tbody id="cl-body-phases"></tbody>
             </table>
@@ -1208,10 +1217,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <!-- Main body -->
       <div class="impl-body">
 
-        <!-- LEFT COLUMN -->
+        <!-- LEFT COLUMN — project list, full height -->
         <div class="impl-left">
-
-          <!-- My Projects panel -->
           <div class="impl-panel" style="flex:1;min-height:0;">
             <div class="impl-panel-hdr">
               <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
@@ -1231,54 +1238,57 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             </div>
             <div class="impl-proj-list" id="impl-proj-list"></div>
           </div>
-
-          <!-- Project Status by Module panel -->
-          <div class="impl-mod-panel">
-            <div class="impl-panel-hdr">
-              <span style="width:6px;height:6px;border-radius:50%;background:var(--b);display:inline-block;"></span>
-              Project status by module &nbsp;<span id="impl-status-week" style="font-size:9px;color:var(--s4);font-weight:500;text-transform:none;letter-spacing:0;"></span>
-            </div>
-            <div class="impl-mod-body">
-              <div class="impl-mod-cols" id="impl-status-list"></div>
-            </div>
-          </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
+        <!-- RIGHT COLUMN — tabbed panel -->
         <div class="impl-right">
+          <div class="impl-rtab-panel">
 
-          <!-- Needs Attention panel -->
-          <div class="impl-attn-panel">
-            <div class="impl-panel-hdr" style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="display:flex;align-items:center;gap:5px;">
-                <span style="width:6px;height:6px;border-radius:50%;background:var(--o);display:inline-block;"></span>
-                Needs attention
-              </div>
-              <span id="impl-attn-count" style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--r1);color:#991b1b;font-weight:600;display:none;"></span>
+            <!-- Tab bar -->
+            <div class="impl-rtab-bar">
+              <button class="impl-rtab-btn active" id="irtab-alerts" onclick="setImplTab('alerts')">
+                Alerts
+                <span class="impl-rtab-count" id="impl-attn-count" style="display:none;"></span>
+              </button>
+              <button class="impl-rtab-btn" id="irtab-project" onclick="setImplTab('project')">Project</button>
+              <button class="impl-rtab-btn" id="irtab-stats" onclick="setImplTab('stats')">Stats</button>
             </div>
-            <div class="impl-attn-body" id="impl-attn-body"></div>
-            <div class="impl-attn-legend" id="impl-attn-legend" style="display:none;">
-              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#dc2626;"></div>Overdue</div>
-              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#ea580c;"></div>Due within 7 days</div>
-              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#f59e0b;"></div>Due within 14 days</div>
-              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#2563eb;"></div>Next phase unscheduled</div>
-            </div>
-          </div>
 
-          <!-- Selected Project panel -->
-          <div class="impl-sel-panel">
-            <div class="impl-panel-hdr">
-              <span style="width:6px;height:6px;border-radius:50%;background:var(--v);display:inline-block;"></span>
-              Selected project
-            </div>
-            <div class="impl-sel-fixed" id="impl-sel-fixed">
-              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;text-align:center;color:var(--s4);">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:.5rem;stroke:var(--s3)"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
-                <p style="font-size:12px;font-weight:600;color:var(--s5);margin-bottom:2px;">No project selected</p>
-                <p style="font-size:11px;">Click any project to view details.</p>
+            <!-- ALERTS PANE -->
+            <div class="impl-rtab-pane" id="itp-alerts">
+              <div class="impl-attn-body" id="impl-attn-body"></div>
+              <div class="impl-attn-legend" id="impl-attn-legend" style="display:none;">
+                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#dc2626;"></div>Overdue</div>
+                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#ea580c;"></div>Due within 7 days</div>
+                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#f59e0b;"></div>Due within 14 days</div>
+                <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#2563eb;"></div>Next phase unscheduled</div>
               </div>
             </div>
-            <div class="impl-sel-scroll" id="impl-sel-scroll" style="display:none;"></div>
+
+            <!-- PROJECT DETAIL PANE -->
+            <div class="impl-rtab-pane" id="itp-project" style="display:none;">
+              <div class="impl-sel-fixed" id="impl-sel-fixed">
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;text-align:center;color:var(--s4);">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:.6rem;stroke:var(--s3)"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
+                  <p style="font-size:12px;font-weight:600;color:var(--s5);margin-bottom:3px;">No project selected</p>
+                  <p style="font-size:11px;">Click any project on the left.</p>
+                </div>
+              </div>
+              <div class="impl-sel-scroll" id="impl-sel-scroll" style="display:none;"></div>
+            </div>
+
+            <!-- STATS PANE -->
+            <div class="impl-rtab-pane" id="itp-stats" style="display:none;">
+              <div style="padding:.6rem 1rem .4rem;font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--s1);display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <span style="width:6px;height:6px;border-radius:50%;background:var(--b);display:inline-block;flex-shrink:0;"></span>
+                Project status by module
+                <span id="impl-status-week" style="font-size:9px;color:var(--s4);font-weight:500;text-transform:none;letter-spacing:0;margin-left:2px;"></span>
+              </div>
+              <div class="impl-mod-body" style="overflow-y:auto;flex:1;">
+                <div class="impl-mod-cols" id="impl-status-list"></div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -2523,13 +2533,15 @@ function renderClients(){
       '</tr>';
     }).join('');
   } else if(CL_TAB==='phases'){
+    var phThPar=document.getElementById('ph-th-par');
+    if(phThPar) phThPar.style.display=CL_TYPE==='ps'?'none':'';
     document.getElementById('cl-body-phases').innerHTML=slice.map(function(d){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'kom',d.kom,d.service,d.komDate||'')+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'sim',d.sim,d.service,d.simDate||'')+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par,d.service,d.parDate||'')+'</td>'+
+        (CL_TYPE==='ps'?'':'<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'par',d.par,d.service,d.parDate||'')+'</td>')+
         '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'live',d.live,d.service,d.liveRun||'')+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clPhaseBox(d.no,'post',d.post,d.service,'')+'</td>'+
       '</tr>';
@@ -2606,6 +2618,17 @@ function renderClients(){
  
 var IMPL_FILTER='all';
 var IMPL_SORT_ASC=true;
+var IMPL_TAB='alerts';
+
+function setImplTab(tab){
+  IMPL_TAB=tab;
+  ['alerts','project','stats'].forEach(function(t){
+    var btn=document.getElementById('irtab-'+t);
+    var pane=document.getElementById('itp-'+t);
+    if(btn)btn.classList.toggle('active',t===tab);
+    if(pane)pane.style.display=t===tab?'flex':'none';
+  });
+}
 
 function implGetColor(initials){
   var colors=[['#dbeafe','#1e3a8a'],['#dcfce7','#14532d'],['#f5f3ff','#3b0764'],['#fff7ed','#7c2d12'],['#fce7f3','#831843'],['#e0f2fe','#0c4a6e'],['#fef9c3','#713f12'],['#f3e8ff','#581c87']];
@@ -3019,6 +3042,7 @@ function selProject(no){
   var scrollEl=document.getElementById('impl-sel-scroll');
   scrollEl.style.display='block';
   scrollEl.innerHTML='<div class="impl-fade">'+scrollHTML+'</div>';
+  setImplTab('project');
 }
 
 function implSearch(){
