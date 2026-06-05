@@ -3,7 +3,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Sprout PYO Implementation Hub</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
@@ -12,14 +12,21 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --g:#16a34a;--g0:#f0fdf4;--g1:#dcfce7;--g2:#86efac;--g4:#14532d;
-  --b:#2563eb;--b0:#eff6ff;--b1:#dbeafe;
-  --o:#ea580c;--o0:#fff7ed;--o1:#fed7aa;
+  /* Sprout brand — Green Apple */
+  --g:#32CE13;--g0:#E9FAE5;--g1:#C9F3BE;--g2:#A6EB93;--g4:#239A0D;
+  /* Sprout brand — Blueberry */
+  --b:#1679FA;--b0:#EEF7FF;--b1:#D8EBFF;
+  /* Sprout brand — Carrot */
+  --o:#FF7F00;--o0:#FFFAEC;--o1:#FFE5A5;
+  /* Red (no Sprout token — keep neutral) */
   --r:#dc2626;--r0:#fef2f2;--r1:#fecaca;
-  --v:#7c3aed;--v0:#f5f3ff;--v1:#ddd6fe;
+  /* Sprout brand — Ubas */
+  --v:#8139EE;--v0:#F5F3FF;--v1:#DED6FE;
+  /* Neutrals (slate) */
   --s0:#f8fafc;--s1:#f1f5f9;--s2:#e2e8f0;--s3:#cbd5e1;
-  --s4:#94a3b8;--s5:#64748b;--s6:#475569;--s7:#334155;--s8:#1e293b;--s9:#0f172a;
-  --bg:#f0f4f8;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --s4:#94a3b8;--s5:#64748b;--s6:#475569;--s7:#334155;--s8:#1e293b;--s9:#092903;
+  /* Sprout brand — BG 01 */
+  --bg:#F7F5F2;--font:'Rubik',sans-serif;--mono:'DM Mono',monospace;
   --r8:8px;--r12:12px;
   --sh:0 1px 3px rgba(0,0,0,.07),0 0 0 1px rgba(0,0,0,.04);
   --shm:0 4px 16px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.05);
@@ -287,8 +294,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-cpanel.collapsed .impl-chev{transform:rotate(-90deg);}
 .impl-cpanel.collapsed .impl-cpanel-body{display:none;}
 /* Alerts panel — priority 1, always open, PROMINENT */
-.impl-alerts-panel{border:1.5px solid #fdba74;box-shadow:0 4px 20px rgba(234,88,12,.2),0 1px 4px rgba(234,88,12,.12);}
-.impl-alerts-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#ea580c 0%,#c2410c 100%);border-bottom:none;}
+.impl-alerts-panel{border:1.5px solid #FFD495;box-shadow:0 4px 20px rgba(255,127,0,.18),0 1px 4px rgba(255,127,0,.12);}
+.impl-alerts-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#FF7F00 0%,#CC5C02 100%);border-bottom:none;}
 .impl-alerts-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
 .impl-alerts-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
 .impl-attn-body{padding:.5rem .85rem;overflow-y:auto;max-height:280px;background:#fffaf7;}
@@ -1244,7 +1251,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <div class="impl-left">
 
           <!-- PRIORITY 1 — Needs Attention (always visible, prominent) -->
-          <div class="impl-alerts-panel impl-cpanel">
+          <div class="impl-alerts-panel impl-cpanel" id="cpanel-attn">
             <div class="impl-alerts-hdr">
               <div class="impl-alerts-title">
                 <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
@@ -1268,7 +1275,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
                 <span id="impl-proj-panel-title">My Projects</span>
               </div>
-              <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span id="impl-kpi-back" style="display:none;font-size:10px;color:var(--g4);font-weight:600;cursor:pointer;padding:2px 9px;border-radius:10px;background:var(--g0);border:1px solid var(--g2);" onclick="event.stopPropagation();implKpiBack()">← Overview</span>
+                <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </div>
             </div>
             <div class="impl-cpanel-body" id="cpbody-projects">
               <div class="impl-filter-row">
@@ -1307,6 +1317,15 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
               <div class="impl-mod-body">
                 <div class="impl-mod-cols" id="impl-status-list"></div>
               </div>
+            </div>
+          </div>
+
+          <!-- Drill mode placeholder — shown when no client selected yet -->
+          <div id="impl-drill-placeholder" class="impl-cpanel" style="display:none;">
+            <div style="padding:2.5rem 1rem;text-align:center;">
+              <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:none;stroke:var(--s3);stroke-width:1.5;stroke-linecap:round;margin-bottom:.6rem;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <div style="font-size:12px;font-weight:600;color:var(--s5);margin-bottom:3px;">Select a client</div>
+              <div style="font-size:11px;color:var(--s4);">Click any row on the left to see their details</div>
             </div>
           </div>
 
@@ -1506,8 +1525,8 @@ var SELECTED_PROJECT=null;
 var CURRENT_ROLE='manager';
 var CURRENT_NAME='';
  
-var SC={Live:'#16a34a',Ongoing:'#2563eb','Not yet started':'#ea580c',Churned:'#dc2626','On-Hold':'#64748b','For Turnover':'#7c3aed','On-Hold Back to Sales':'#92400e'};
-var RC={Ana:'#16a34a',Bea:'#2563eb',Carl:'#7c3aed',Dana:'#ea580c',Eli:'#9d174d'};
+var SC={Live:'#32CE13',Ongoing:'#1679FA','Not yet started':'#FF7F00',Churned:'#dc2626','On-Hold':'#64748b','For Turnover':'#8139EE','On-Hold Back to Sales':'#CC5C02'};
+var RC={Ana:'#32CE13',Bea:'#1679FA',Carl:'#8139EE',Dana:'#FF7F00',Eli:'#D2F612'};
  
 function pct(d){
   if(d.service==='Payroll Starter'){
@@ -2679,27 +2698,48 @@ function implFilter(el,f){
 
 function implKpiClick(filter,label,el){
   var isActive=el.classList.contains('kpi-active');
-  /* Deactivate all KPI segments */
   document.querySelectorAll('.impl-kpi-seg').forEach(function(x){x.classList.remove('kpi-active');});
-  var panel=document.getElementById('cpanel-projects');
-  /* Toggle off if clicking the already-active KPI */
-  if(isActive){
-    if(panel)panel.style.display='none';
-    return;
-  }
-  /* Activate */
+  if(isActive){implSetMode('default');return;}
   el.classList.add('kpi-active');
   IMPL_FILTER=filter;
-  /* Update panel title */
   var titleEl=document.getElementById('impl-proj-panel-title');
   if(titleEl)titleEl.textContent=label;
-  /* Sync filter pills */
   document.querySelectorAll('.impl-fp').forEach(function(x){x.classList.remove('on');});
   var pill=document.querySelector('.impl-fp[data-f="'+filter+'"]');
   if(pill)pill.classList.add('on');
-  /* Show panel */
-  if(panel){panel.style.display='';panel.classList.remove('collapsed');}
+  implSetMode('drill');
   implRenderProjects();
+}
+
+function implSetMode(mode){
+  var attn=document.getElementById('cpanel-attn');
+  var stats=document.getElementById('cpanel-stats');
+  var projs=document.getElementById('cpanel-projects');
+  var proj=document.getElementById('cpanel-project');
+  var ph=document.getElementById('impl-drill-placeholder');
+  var back=document.getElementById('impl-kpi-back');
+  if(mode==='drill'){
+    if(attn)attn.style.display='none';
+    if(stats)stats.style.display='none';
+    if(projs){projs.style.display='';projs.classList.remove('collapsed');}
+    if(proj)proj.style.display='none';
+    if(ph)ph.style.display='';
+    if(back)back.style.display='';
+  } else {
+    if(attn)attn.style.display='';
+    if(stats)stats.style.display='';
+    if(projs)projs.style.display='none';
+    if(proj)proj.style.display='none';
+    if(ph)ph.style.display='none';
+    if(back)back.style.display='none';
+    var titleEl=document.getElementById('impl-proj-panel-title');
+    if(titleEl)titleEl.textContent='My Projects';
+  }
+}
+
+function implKpiBack(){
+  document.querySelectorAll('.impl-kpi-seg').forEach(function(x){x.classList.remove('kpi-active');});
+  implSetMode('default');
 }
 
 function implToggleSort(btn){
@@ -2780,12 +2820,12 @@ function renderImpl(){
   var ch=myD.filter(function(d){return d.remarks==='Churned';}).length;
   var avgP=myD.length?Math.round(myD.reduce(function(a,d){return a+pct(d);},0)/myD.length):0;
   var kpis=[
-    {l:'My projects',v:myD.length,s:'Total assigned',c:'#0f172a',f:'all'},
-    {l:'Live',v:live,s:'Active & running',c:'#16a34a',f:'live'},
-    {l:'Ongoing',v:on,s:'In progress',c:'#2563eb',f:'ongoing'},
-    {l:'Not started',v:nys,s:'Pending kickoff',c:'#ea580c',f:'nys'},
+    {l:'My projects',v:myD.length,s:'Total assigned',c:'#092903',f:'all'},
+    {l:'Live',v:live,s:'Active & running',c:'#32CE13',f:'live'},
+    {l:'Ongoing',v:on,s:'In progress',c:'#1679FA',f:'ongoing'},
+    {l:'Not started',v:nys,s:'Pending kickoff',c:'#FF7F00',f:'nys'},
     {l:'Churned',v:ch,s:'Disengaged',c:'#dc2626',f:'churned'},
-    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#7c3aed',f:'all'}
+    {l:'Avg progress',v:avgP+'%',s:'Across all',c:'#8139EE',f:'all'}
   ];
   document.getElementById('impl-kpis').innerHTML=kpis.map(function(k,i){
     return (i>0?'<div class="impl-kpi-div"></div>':'')
@@ -3014,6 +3054,9 @@ function selProject(no){
   document.querySelectorAll('.impl-prow').forEach(function(el){el.classList.remove('sel');});
   var el=document.getElementById('ac-'+no);
   if(el){el.classList.add('sel');el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  /* Hide drill-mode placeholder once a client is selected */
+  var ph=document.getElementById('impl-drill-placeholder');
+  if(ph)ph.style.display='none';
   if(!SELECTED_PROJECT)return;
   var d=SELECTED_PROJECT;
   var sc=SC[d.remarks]||'#64748b';
