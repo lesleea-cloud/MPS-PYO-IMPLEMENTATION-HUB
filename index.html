@@ -51,6 +51,12 @@ header{
 .role-pill{font-size:10px;font-weight:700;padding:3px 11px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;border:1px solid;}
 .rp-mgr{background:rgba(234,88,12,.18);color:#fb923c;border-color:rgba(234,88,12,.3);}
 .rp-adm{background:rgba(37,99,235,.18);color:#93c5fd;border-color:rgba(37,99,235,.3);}
+.rp-god{background:rgba(124,58,237,.22);color:#c4b5fd;border-color:rgba(124,58,237,.4);}
+.god-switch{display:none;align-items:center;gap:2px;background:rgba(255,255,255,.08);border-radius:20px;padding:3px;}
+.god-switch.visible{display:flex;}
+.god-sw-btn{font-size:9px;font-weight:700;padding:3px 9px;border-radius:16px;border:none;background:transparent;color:rgba(255,255,255,.45);cursor:pointer;font-family:var(--font);letter-spacing:.05em;text-transform:uppercase;transition:all .12s;}
+.god-sw-btn.on{background:rgba(255,255,255,.18);color:#fff;}
+.god-sw-btn:hover:not(.on){color:rgba(255,255,255,.75);}
 .rp-imp{background:rgba(22,163,74,.18);color:#86efac;border-color:rgba(22,163,74,.3);}
  
 /* ══ LAYOUT ══ */
@@ -830,6 +836,11 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
   </div>
   <div class="hdr-right">
     <span class="hdr-date" id="hdr-date">Mar 30, 2026</span>
+    <div class="god-switch" id="god-switch">
+      <button class="god-sw-btn on" data-role="manager" onclick="godSwitch('manager')">MGR</button>
+      <button class="god-sw-btn" data-role="admin" onclick="godSwitch('admin')">ADM</button>
+      <button class="god-sw-btn" data-role="implementer" onclick="godSwitch('implementer')">IMPL</button>
+    </div>
     <span class="role-pill rp-adm" id="role-pill">Admin</span>
     <div class="hdr-user">
       <div class="hdr-avatar" id="hdr-avatar" style="background: rgb(37, 99, 235);">Z</div>
@@ -4741,8 +4752,10 @@ function mfEscXml(s){
 var ROLE_CONFIG={
   manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients']},
   admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients']},
-  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients']}
+  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','clients']},
+  god:{pill:'rp-god',pillText:'God Mode',avatarBg:'#7c3aed',defaultPage:'dashboard',hideNav:[]}
 };
+var _IS_GOD=false;
  
 function toggleUserCreds(){
   var val=document.getElementById('login-user-select').value;
@@ -5122,6 +5135,7 @@ async function onAuthSuccess(user){
     return;
   }
   CURRENT_ROLE=res.data.role;
+  if(user.email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
   CURRENT_NAME=res.data.implementer_name||(user.user_metadata&&user.user_metadata.full_name)||user.email.split('@')[0];
   if(CURRENT_ROLE==='implementer')IMPL_USER=CURRENT_NAME;
   await loadFromSupabase();
@@ -5224,7 +5238,9 @@ function startApp(){
   var luEl=document.getElementById('last-updated');if(luEl)luEl.textContent='As of '+_ds;
   ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
   var adminNavSec=document.getElementById('nav-admin-section');
-  if(adminNavSec)adminNavSec.style.display=CURRENT_ROLE==='implementer'?'flex':'none';
+  if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
+  var godSwitchEl=document.getElementById('god-switch');
+  if(godSwitchEl)godSwitchEl.className='god-switch'+(_IS_GOD?' visible':'');
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-header').style.display='flex';
   document.getElementById('app-body').style.display='flex';
@@ -5238,9 +5254,26 @@ function doSignOut(){
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('app-header').style.display='none';
   document.getElementById('app-body').style.display='none';
-  CURRENT_ROLE='manager';CURRENT_NAME='';SELECTED_PROJECT=null;
+  CURRENT_ROLE='manager';CURRENT_NAME='';SELECTED_PROJECT=null;_IS_GOD=false;
 }
  
+function godSwitch(role){
+  CURRENT_ROLE=role;
+  if(role==='implementer'&&!IMPL_USER)IMPL_USER=TEAM_CONFIG.implementers[0];
+  var cfg=ROLE_CONFIG[CURRENT_ROLE]||ROLE_CONFIG['manager'];
+  document.getElementById('role-pill').className='role-pill '+cfg.pill;
+  document.getElementById('role-pill').textContent=cfg.pillText;
+  document.getElementById('hdr-avatar').style.background=cfg.avatarBg;
+  ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){
+    var el=document.getElementById('nav-'+p);if(!el)return;
+    el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';
+  });
+  var adminNavSec=document.getElementById('nav-admin-section');
+  if(adminNavSec)adminNavSec.style.display=(role==='implementer'||role==='god')?'flex':'none';
+  document.querySelectorAll('.god-sw-btn').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-role')===role);});
+  go(cfg.defaultPage);
+}
+
 function closeProjModal(){var m=document.getElementById('proj-modal');if(m)m.classList.remove('open');}
 
 // ══════════════════════════════════════════════════════
