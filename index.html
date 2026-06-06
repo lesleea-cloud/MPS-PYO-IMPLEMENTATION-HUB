@@ -57,17 +57,33 @@ header{
 .app{display:flex;flex:1;overflow:hidden;}
  
 /* ══ SIDEBAR ══ */
-nav{width:190px;flex-shrink:0;background:#fff;border-right:1px solid var(--s2);display:flex;flex-direction:column;}
-.nav-group{font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1.1rem .3rem;}
+nav{width:210px;flex-shrink:0;background:#0b1e08;border-right:none;display:flex;flex-direction:column;overflow-y:auto;}
+.nav-group{font-size:9px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em;padding:.9rem 1.1rem .3rem;}
 .nav-item{
   display:flex;align-items:center;gap:8px;padding:7px 1.1rem;
-  cursor:pointer;font-size:12px;font-weight:500;color:var(--s5);
+  cursor:pointer;font-size:12px;font-weight:500;color:rgba(255,255,255,.65);
   border-left:2px solid transparent;transition:all .12s;
 }
-.nav-item:hover{background:var(--s0);color:var(--s8);}
-.nav-item.on{background:var(--g0);color:var(--g4);border-left-color:var(--g);font-weight:700;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-item.on{background:var(--g);color:#fff;border-left-color:#fff;font-weight:700;}
 .nav-item svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-.nav-divider{height:1px;background:var(--s1);margin:.4rem 0;}
+.nav-divider{height:1px;background:rgba(255,255,255,.1);margin:.4rem 0;}
+/* Administration inline section */
+.nav-admin-section{display:none;flex-direction:column;}
+.nav-admin-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 1.1rem;cursor:pointer;color:rgba(255,255,255,.65);font-size:12px;font-weight:500;border-left:2px solid transparent;transition:all .12s;gap:8px;}
+.nav-admin-hdr:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-admin-hdr svg.hdr-icon{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.nav-admin-hdr svg.chev{width:10px;height:10px;fill:none;stroke:rgba(255,255,255,.4);stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .2s;}
+.nav-admin-hdr.open svg.chev{transform:rotate(180deg);}
+.nav-admin-body{display:none;padding-bottom:4px;}
+.nav-admin-body.open{display:block;}
+.nav-phase-label{font-size:8.5px;font-weight:700;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;padding:8px 1.1rem 3px;}
+.nav-phase-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:5px;vertical-align:middle;flex-shrink:0;}
+.nav-tool-item{display:flex;align-items:center;gap:7px;width:100%;padding:5px 1.1rem 5px 1.5rem;border:none;background:transparent;font-family:var(--font);font-size:11.5px;font-weight:500;color:rgba(255,255,255,.6);cursor:pointer;text-align:left;transition:all .12s;border-left:2px solid transparent;}
+.nav-tool-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-tool-item.active{color:var(--g);font-weight:600;}
+.nav-tool-item svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.nav-common-band{background:rgba(255,255,255,.05);margin:0 8px;border-radius:6px;padding:2px 0;margin-bottom:4px;}
  
 /* ══ MAIN ══ */
 main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.1rem;}
@@ -983,26 +999,62 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">System</div>
-    <div style="position:relative;" id="nav-admin-tool-wrap">
-      <button class="nav-admin-btn" id="nav-admin-tool-btn" onclick="toggleAdminMenu(event)" style="display:none;">
-        <span style="display:flex;align-items:center;gap:6px;">
-          <svg style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.25l-3 1a1 1 0 01-1.25-1.25l1-3a1 1 0 01.25-.4l8-8a1 1 0 011.4 0z"/><path d="M15 7l2 2"/></svg>
-          Admin Tool
+    <div class="nav-admin-section" id="nav-admin-section">
+      <div class="nav-admin-hdr" id="nav-admin-hdr" onclick="toggleAdminSection()">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg class="hdr-icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Administration
         </span>
-        <svg viewBox="0 0 12 12"><path d="M2.5 4.5L6 8L9.5 4.5"></path></svg>
-      </button>
-      <div id="admin-tool-menu" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--s2);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:999;min-width:230px;overflow:hidden;">
-        <div style="padding:4px;">
-          <div style="font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.07em;padding:8px 10px 4px;">Administration Tools</div>
-          <button onclick="event.stopPropagation();pickTool('masterfile')" class="atm-item">📋 &nbsp;Masterfile Creator</button>
-          <button onclick="event.stopPropagation();pickTool('variance')" class="atm-item">📊 &nbsp;Phase 3 Variance Analysis Bot</button>
-          <button onclick="event.stopPropagation();pickTool('mom')" class="atm-item">📝 &nbsp;MOM Generator</button>
-          <button onclick="event.stopPropagation();pickTool('crf')" class="atm-item">📄 &nbsp;Copy Database CRF Generator (Live Accounts)</button>
-          <button onclick="event.stopPropagation();pickTool('sla')" class="atm-item">⚖️ &nbsp;SLA Generator</button>
-          <button onclick="event.stopPropagation();pickTool('payroll-cal')" class="atm-item">📅 &nbsp;Payroll Calendar Generator</button>
-          <button onclick="event.stopPropagation();pickTool('payroll-acc')" class="atm-item">🏦 &nbsp;Payroll Account Creator</button>
-          <button onclick="event.stopPropagation();pickTool('payroll-repli')" class="atm-item">🔁 &nbsp;Payroll Repli Account Creator</button>
+        <svg class="chev" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;flex-shrink:0;transition:transform .2s;"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="nav-admin-body" id="nav-admin-body">
+        <div class="nav-common-band">
+          <div class="nav-phase-label">Common</div>
+          <button class="nav-tool-item" onclick="openTool('mom')">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            MOM Generator
+          </button>
         </div>
+        <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#f59e0b;"></span>Phase 1 — Setup</div>
+        <button class="nav-tool-item" onclick="openTool('payroll-acc')">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Payroll Account Creator
+        </button>
+        <button class="nav-tool-item" onclick="openTool('masterfile')">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+          Masterfile Creator
+        </button>
+        <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#3b82f6;"></span>Phase 2 — Simulation</div>
+        <button class="nav-tool-item" onclick="openTool('sim-variance')">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Simulation Variance Analysis
+        </button>
+        <button class="nav-tool-item" onclick="openTool('crf')">
+          <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+          CRF Generator (Repli Accts)
+        </button>
+        <button class="nav-tool-item" onclick="openTool('sandbox')">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Sandbox Account Creator
+        </button>
+        <button class="nav-tool-item" onclick="openTool('payroll-cal')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Payroll Calendar Generator
+        </button>
+        <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#a855f7;"></span>Phase 3 — Parallel Run</div>
+        <button class="nav-tool-item" onclick="openTool('variance')">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Parallel Run Variance Analysis
+        </button>
+        <button class="nav-tool-item" onclick="openTool('payroll-policy')">
+          <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          Payroll Policy Excel Generator
+        </button>
+        <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#10b981;"></span>Phase 4 — Go Live</div>
+        <button class="nav-tool-item" onclick="openTool('sla')">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          SLA Generator
+        </button>
       </div>
     </div>
     <div class="nav-item on" id="nav-settings" onclick="go('settings')" style="display: flex;">
@@ -2919,9 +2971,9 @@ function renderImpl(){
   var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
   document.getElementById('impl-name').textContent=IMPL_USER;
 
-  /* Show admin tool button for implementer */
-  var adminBtn=document.getElementById('nav-admin-tool-btn');
-  if(adminBtn)adminBtn.style.display='flex';
+  /* Show admin section for implementer */
+  var adminSec=document.getElementById('nav-admin-section');
+  if(adminSec)adminSec.style.display='flex';
 
   /* Week label */
   var _MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -3306,32 +3358,27 @@ var MF_COLUMNS=[
  
 var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
  
-function toggleAdminMenu(event){
-  if(event)event.stopPropagation();
-  var menu=document.getElementById('admin-tool-menu');
-  if(!menu)return;
-  menu.style.display=menu.style.display==='block'?'none':'block';
+function toggleAdminSection(){
+  var body=document.getElementById('nav-admin-body');
+  var hdr=document.getElementById('nav-admin-hdr');
+  if(!body)return;
+  body.classList.toggle('open');
+  if(hdr)hdr.classList.toggle('open');
 }
-function pickTool(val){
-  var menu=document.getElementById('admin-tool-menu');
-  if(menu)menu.style.display='none';
-  setTimeout(function(){openTool(val);},10);
-}
-document.addEventListener('click',function(e){
-  var wrap=document.getElementById('nav-admin-tool-wrap');
-  if(wrap&&!wrap.contains(e.target)){var menu=document.getElementById('admin-tool-menu');if(menu)menu.style.display='none';}
-});
  
 function openTool(val){
   if(!val)return;
   var TOOLS={
     'masterfile':{name:'Masterfile Creator',icon:'📋',color:'#2563eb'},
-    'variance':{name:'Phase 3 Variance Analysis Bot',icon:'📊',desc:'Automatically compare policy vs register and Sprout vs client payroll data.',color:'#7c3aed'},
+    'variance':{name:'Parallel Run Variance Analysis',icon:'📊',desc:'Automatically compare policy vs register and Sprout vs client payroll data during parallel run.',color:'#7c3aed'},
+    'sim-variance':{name:'Simulation Variance Analysis',icon:'📈',desc:'Compare expected vs actual payroll simulation results to identify discrepancies before parallel run.',color:'#3b82f6'},
     'mom':{name:'MOM Generator',icon:'📝',desc:'Upload a meeting transcript and slide deck to generate a Sprout MPS MOM.',color:'#ea580c'},
-    'crf':{name:'Copy Database CRF Generator (Live Accounts)',icon:'📄',desc:'Upload the Implementation Monitoring Excel file to auto-generate and submit a Change Request Form to Zoho.',color:'#16a34a'},
+    'crf':{name:'Copy Database CRF Generator (Repli Accounts)',icon:'📄',desc:'Auto-generate a Change Request Form for replication accounts during the simulation phase.',color:'#16a34a'},
+    'sandbox':{name:'Sandbox Account Creator',icon:'🖥️',desc:'Set up a sandbox payroll environment for testing and validation during the simulation phase.',color:'#3b82f6'},
     'sla':{name:'SLA Generator',icon:'⚖️',desc:'Create a Service Level Agreement document pre-filled with client details.',color:'#dc2626'},
     'payroll-cal':{name:'Payroll Calendar Generator',icon:'📅',desc:'Generate a payroll processing calendar based on the client\'s cut-off schedule.',color:'#0e7490'},
     'payroll-acc':{name:'Payroll Account Creator',icon:'🏦',desc:'Automate the creation of payroll account entries in Sprout Payroll.',color:'#854d0e'},
+    'payroll-policy':{name:'Payroll Policy Excel Generator',icon:'📋',desc:'Generate a structured Payroll Policy Excel document based on the client\'s payroll policy inputs.',color:'#a855f7'},
     'payroll-repli':{name:'Payroll Repli Account Creator',icon:'🔁',desc:'Create replicated payroll accounts across multiple entities or branches.',color:'#0e7490'}
   };
   var t=TOOLS[val];if(!t)return;
@@ -5172,8 +5219,8 @@ function startApp(){
   var hdEl=document.getElementById('hdr-date');if(hdEl)hdEl.textContent=_ds;
   var luEl=document.getElementById('last-updated');if(luEl)luEl.textContent='As of '+_ds;
   ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
-  var adminNavBtn=document.getElementById('nav-admin-tool-btn');
-  if(adminNavBtn)adminNavBtn.style.display=CURRENT_ROLE==='implementer'?'flex':'none';
+  var adminNavSec=document.getElementById('nav-admin-section');
+  if(adminNavSec)adminNavSec.style.display=CURRENT_ROLE==='implementer'?'flex':'none';
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-header').style.display='flex';
   document.getElementById('app-body').style.display='flex';
