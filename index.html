@@ -5545,7 +5545,7 @@ function startApp(){
   var _ds=_MN[_nd.getMonth()]+' '+_nd.getDate()+', '+_nd.getFullYear();
   var hdEl=document.getElementById('hdr-date');if(hdEl)hdEl.textContent=_ds;
   var luEl=document.getElementById('last-updated');if(luEl)luEl.textContent='As of '+_ds;
-  ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
+  ['dashboard','weekly','clients','impl','my-clients','issues','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
   var adminNavSec=document.getElementById('nav-admin-section');
   if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
@@ -5573,7 +5573,7 @@ function godSwitch(role){
   document.getElementById('role-pill').className='role-pill '+cfg.pill;
   document.getElementById('role-pill').textContent=cfg.pillText;
   document.getElementById('hdr-avatar').style.background=cfg.avatarBg;
-  ['dashboard','weekly','clients','impl','my-clients','settings'].forEach(function(p){
+  ['dashboard','weekly','clients','impl','my-clients','issues','settings'].forEach(function(p){
     var el=document.getElementById('nav-'+p);if(!el)return;
     el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';
   });
