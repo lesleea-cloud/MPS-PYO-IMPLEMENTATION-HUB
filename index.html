@@ -94,7 +94,56 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .nav-tool-item.active{color:var(--g);font-weight:600;}
 .nav-tool-item svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .nav-common-band{background:rgba(255,255,255,.05);margin:0 8px;border-radius:6px;padding:2px 0;margin-bottom:4px;}
- 
+
+/* ══ ISSUE LOG ══ */
+.il-wrap{padding:.85rem 1rem;}
+.il-add-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;}
+.il-add-btn{display:flex;align-items:center;gap:5px;padding:5px 13px;border-radius:8px;border:1.5px solid var(--g);background:#fff;color:var(--g4);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;}
+.il-add-btn:hover{background:var(--g0);}
+.il-add-btn svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;}
+.il-form{background:var(--s0);border:1px solid var(--s2);border-radius:10px;padding:.85rem;margin-bottom:.85rem;display:none;}
+.il-form-row{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;}
+.il-form select,.il-form input[type=text],.il-form textarea{padding:6px 9px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;}
+.il-form textarea{flex:1;min-width:200px;resize:none;height:60px;line-height:1.5;}
+.il-form-actions{display:flex;gap:6px;margin-top:8px;}
+.il-save-btn{padding:6px 16px;border-radius:7px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.il-cancel-btn{padding:6px 12px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s5);font-size:12px;cursor:pointer;font-family:var(--font);}
+.il-pri{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.il-pri-high{background:#fecaca;color:#991b1b;}
+.il-pri-medium{background:#fed7aa;color:#9a3412;}
+.il-pri-low{background:#fef9c3;color:#854d0e;}
+.il-status{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;border:none;font-family:var(--font);}
+.il-open{background:#dbeafe;color:#1d4ed8;}
+.il-resolved{background:#dcfce7;color:#15803d;}
+.il-row{display:grid;grid-template-columns:140px 80px 70px 1fr 90px 28px;align-items:start;gap:8px;padding:.55rem .5rem;border-bottom:1px solid var(--s1);font-size:12px;}
+.il-row:last-child{border-bottom:none;}
+.il-row:hover{background:var(--g0);}
+.il-row-hdr{font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;padding:.4rem .5rem;border-bottom:1px solid var(--s2);display:grid;grid-template-columns:140px 80px 70px 1fr 90px 28px;gap:8px;}
+.il-res-inp{font-size:11px;color:var(--s5);border:none;border-bottom:1px dashed var(--s2);background:transparent;font-family:var(--font);outline:none;width:100%;}
+.il-del-btn{color:var(--s3);background:none;border:none;cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;}
+.il-del-btn:hover{background:#fee2e2;color:#dc2626;}
+/* ══ PENDING ITEMS BANK ══ */
+.pib-wrap{display:flex;flex-direction:column;gap:0;}
+.pib-tabs{display:flex;gap:0;border-bottom:1px solid var(--s2);margin-bottom:1rem;}
+.pib-tab{padding:7px 18px;font-size:12px;font-weight:500;color:var(--s5);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;}
+.pib-tab.on{color:var(--g4);border-bottom-color:var(--g);font-weight:700;}
+.pib-section-lbl{font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px;}
+.pib-item{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;border:1px solid var(--s1);margin-bottom:4px;background:#fff;font-size:12px;color:var(--s7);}
+.pib-item:hover{border-color:var(--s2);background:var(--s0);}
+.pib-phase-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.pib-cat{font-size:9px;color:var(--s4);background:var(--s1);padding:1px 6px;border-radius:4px;white-space:nowrap;}
+.pib-del{margin-left:auto;color:var(--s3);font-size:13px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;border:none;background:transparent;}
+.pib-del:hover{background:#fee2e2;color:#dc2626;}
+.pib-check-item{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid var(--s1);margin-bottom:4px;background:#fff;}
+.pib-check-item.done{opacity:.5;}
+.pib-check-item.done .pib-check-label{text-decoration:line-through;color:var(--s4);}
+.pib-check-label{font-size:12px;color:var(--s7);flex:1;line-height:1.45;}
+.pib-check-cb{width:14px;height:14px;accent-color:var(--g);margin-top:2px;flex-shrink:0;cursor:pointer;}
+.pib-add-inp{display:flex;gap:6px;margin-top:6px;}
+.pib-add-inp input,.pib-add-inp select{padding:5px 8px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;}
+.pib-add-inp input{flex:1;}
+.pib-add-inp button{padding:5px 14px;border-radius:7px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+
 /* ══ MAIN ══ */
 main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.1rem;}
 /* #page-impl override moved to new implementer dashboard styles below */
@@ -1029,6 +1078,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             MOM Generator
           </button>
+          <button class="nav-tool-item" onclick="openTool('pending-bank')">
+            <svg viewBox="0 0 24 24"><rect x="9" y="11" width="13" height="13" rx="2"/><path d="M5 7H4a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-1"/><line x1="12" y1="15" x2="18" y2="15"/><line x1="12" y1="19" x2="16" y2="19"/></svg>
+            Pending Items Bank
+          </button>
         </div>
         <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#f59e0b;"></span>Phase 1 — Setup</div>
         <button class="nav-tool-item" onclick="openTool('payroll-acc')">
@@ -1233,6 +1286,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div id="ctab-addons" onclick="switchClientTab('addons')" class="ctab">Add On Services Availed <span class="ctab-count" id="ctc-addons">0</span></div>
           <div id="ctab-milestones" onclick="switchClientTab('milestones')" class="ctab">Milestone Dates <span class="ctab-count" id="ctc-milestones">29</span></div>
           <div id="ctab-afterho" onclick="switchClientTab('afterho')" class="ctab ctab-on">After Hand Over <span class="ctab-count" id="ctc-afterho">17</span></div>
+          <div id="ctab-issues" onclick="switchClientTab('issues')" class="ctab">Issue Log <span class="ctab-count" id="ctc-issues">0</span></div>
           <div class="tab-edit-actions" id="tab-edit-actions" style="display:none;">
             <div class="lock-badge is-locked" id="tab-lock-badge">
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="7" width="10" height="7" rx="1.5"></rect><path d="M5 7V5a3 3 0 016 0v2"></path></svg>
@@ -1297,6 +1351,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
               </tr></thead>
               <tbody id="cl-body-afterho"><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">1</td><td class="ctd"><span class="cl-link">Brandfox Digital</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(1,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Tiara" placeholder="—" onblur="ahUpdateField(1,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">2</td><td class="ctd"><span class="cl-link">Appen Services Philippines</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(2,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Jaysel" placeholder="—" onblur="ahUpdateField(2,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">3</td><td class="ctd"><span class="cl-link">DIS TECH PHILIPPINES, LLC</span></td><td class="ctd"><input type="text" value="Jerry San Pedro" placeholder="—" onblur="ahUpdateField(3,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Rez-ann" placeholder="—" onblur="ahUpdateField(3,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">4</td><td class="ctd"><span class="cl-link">Evermere Food Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">5</td><td class="ctd"><span class="cl-link">Powers Technical Services OPC</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">6</td><td class="ctd"><span class="cl-link">Wilmar Sugar Philippines Inc.</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(6,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(6,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">7</td><td class="ctd"><span class="cl-link">Glowify Aesthetic Clinic</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">8</td><td class="ctd"><span class="cl-link">Kuh Meal</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">9</td><td class="ctd"><span class="cl-link">Q&amp;A Consulting OPC/ Arden Consult</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">10</td><td class="ctd"><span class="cl-link">Exter Philippines Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr></tbody>
             </table>
+          </div>
+          <!-- ISSUE LOG TAB -->
+          <div id="ctab-body-issues" style="display:none;">
+            <div id="cl-body-issues"></div>
           </div>
         </div>
         <div style="display:flex;align-items:center;padding:.6rem 1rem;border-top:1px solid var(--s1);gap:6px;flex-shrink:0;" id="cl-pag"><span style="font-size:12px;color:var(--s4);margin-right:auto">36 records</span><button onclick="clPg=1;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--g);background:var(--g);color:#fff;cursor:pointer;font-size:12px;font-family:var(--font);font-weight:700">1</button><button onclick="clPg=2;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;color:var(--s6);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:400">2</button><button onclick="clPg=3;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;color:var(--s6);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:400">3</button><button onclick="clPg=4;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;color:var(--s6);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:400">4</button></div>
@@ -1985,6 +2043,9 @@ var SVC_SELECTED=[];  // multi-select state for service filter
 var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
+var CL_ISSUES=(function(){try{var s=localStorage.getItem('pyo_issues');return s?JSON.parse(s):[];}catch(e){return [];}})();
+var PENDING_BANK=(function(){try{var s=localStorage.getItem('pyo_pending_bank');if(s)return JSON.parse(s);var def=[{id:'pb1',label:'Complete Employee Masterfile',phase:'1',category:'Data'},{id:'pb2',label:'Submit Government IDs (SSS, PhilHealth, HDMF)',phase:'1',category:'Document'},{id:'pb3',label:'CRF submission and approval',phase:'2',category:'Approval'},{id:'pb4',label:'Sandbox account setup confirmation',phase:'2',category:'Account'},{id:'pb5',label:'Simulation result sign-off',phase:'2',category:'Approval'},{id:'pb6',label:'Parallel run variance resolved',phase:'3',category:'Data'},{id:'pb7',label:'Final payroll register sign-off',phase:'3',category:'Approval'},{id:'pb8',label:'SLA signed and submitted',phase:'4',category:'Document'},{id:'pb9',label:'Go-live confirmation from client',phase:'4',category:'Approval'}];localStorage.setItem('pyo_pending_bank',JSON.stringify(def));return def;}catch(e){return [];}})();
+var CLIENT_PENDING=(function(){try{var s=localStorage.getItem('pyo_client_pending');return s?JSON.parse(s):{};}catch(e){return {};}})();
 
 // Restore data on load — prefer localStorage, fall back to baked defaults
 // Version check only applies when DATA_VERSION>0 (i.e. after a GitHub commit).
@@ -2059,7 +2120,7 @@ function switchClientTab(tab){
   }
   CL_TAB=tab;
   clPg=1;
-  ['overview','phases','addons','milestones','afterho'].forEach(function(t){
+  ['overview','phases','addons','milestones','afterho','issues'].forEach(function(t){
     document.getElementById('ctab-'+t).classList.remove('ctab-on');
     document.getElementById('ctab-body-'+t).style.display='none';
   });
@@ -2740,6 +2801,8 @@ function renderClients(){
   document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.sd||a.std||a.otk;}).length;
   document.getElementById('ctc-milestones').textContent=rows.filter(function(d){return d.komDate||d.handOver||d.liveRun;}).length;
   document.getElementById('ctc-afterho').textContent=rows.filter(function(d){var a=CL_AFTERHO[d.no]||{};return a.csm||d.remarks==='Live';}).length;
+  var clientNosInView=rows.map(function(d){return d.no;});
+  document.getElementById('ctc-issues').textContent=CL_ISSUES.filter(function(i){return clientNosInView.indexOf(i.clientNo)>=0&&i.status==='open';}).length;
 
   var slice=rows.slice((clPg-1)*PS,clPg*PS);
 
@@ -2847,12 +2910,104 @@ function renderClients(){
         '<td class="ctd">'+bdg(ahRemark)+'</td>'+
       '</tr>';
     }).join('');
+  } else if(CL_TAB==='issues'){
+    renderIssueLog(rows);
   }
 
   clPaginate(rows);
   tabUpdateControls();
 }
- 
+
+/* ══ ISSUE LOG ══ */
+function ilSaveToStorage(){try{localStorage.setItem('pyo_issues',JSON.stringify(CL_ISSUES));}catch(e){}}
+
+function renderIssueLog(rows){
+  var clientNos=rows.map(function(d){return d.no;});
+  var issues=CL_ISSUES.filter(function(i){return clientNos.indexOf(i.clientNo)>=0;});
+  issues.sort(function(a,b){
+    var po={high:0,medium:1,low:2};
+    if(a.status==='resolved'&&b.status!=='resolved')return 1;
+    if(b.status==='resolved'&&a.status!=='resolved')return -1;
+    return (po[a.priority]||1)-(po[b.priority]||1);
+  });
+  var clientOpts=rows.map(function(d){return '<option value="'+d.no+'">'+d.client+'</option>';}).join('');
+  var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');var todayStr=_m+'/'+_d+'/'+today.getFullYear();
+  var html='<div class="il-wrap">'
+    +'<div class="il-add-bar">'
+    +'<span style="font-size:12px;font-weight:600;color:var(--s6);">'+issues.length+' issue'+(issues.length!==1?'s':'')+' &nbsp;<span style="color:var(--s4);font-weight:400;">('+(issues.filter(function(i){return i.status==='open';}).length)+' open)</span></span>'
+    +'<button class="il-add-btn" onclick="ilShowForm()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Issue</button>'
+    +'</div>'
+    +'<div class="il-form" id="il-form">'
+    +'<div class="il-form-row">'
+    +'<select id="il-client" style="min-width:160px;"><option value="">Select client…</option>'+clientOpts+'</select>'
+    +'<select id="il-priority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select>'
+    +'<textarea id="il-desc" placeholder="Describe the issue or concern…"></textarea>'
+    +'</div>'
+    +'<div class="il-form-actions">'
+    +'<button class="il-save-btn" onclick="ilSave()">Add Issue</button>'
+    +'<button class="il-cancel-btn" onclick="ilHideForm()">Cancel</button>'
+    +'</div></div>';
+  if(issues.length){
+    html+='<div class="il-row-hdr"><span>Client</span><span>Date</span><span>Priority</span><span>Description</span><span>Status</span><span></span></div>';
+    html+=issues.map(function(i){
+      var priCls='il-pri-'+i.priority;
+      var stCls=i.status==='open'?'il-open':'il-resolved';
+      var stLbl=i.status==='open'?'Open':'Resolved';
+      var safeRes=(i.resolution||'').replace(/"/g,'&quot;');
+      var resRow=i.status==='resolved'?'<div><input class="il-res-inp" placeholder="Resolution notes…" value="'+safeRes+'" onblur="ilUpdateRes(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/></div>':'';
+      return '<div class="il-row">'
+        +'<span style="font-size:11.5px;font-weight:500;color:var(--s7);">'+i.clientName+'</span>'
+        +'<span style="font-size:11px;color:var(--s4);">'+i.date+'</span>'
+        +'<span><span class="il-pri '+priCls+'">'+i.priority+'</span></span>'
+        +'<span style="font-size:12px;color:var(--s7);">'+i.description+resRow+'</span>'
+        +'<span><button class="il-status '+stCls+'" onclick="ilToggleStatus(\''+i.id+'\')">'+stLbl+'</button></span>'
+        +'<span><button class="il-del-btn" onclick="ilDelete(\''+i.id+'\')" title="Delete">✕</button></span>'
+        +'</div>';
+    }).join('');
+  } else {
+    html+='<div style="text-align:center;padding:2rem 0;font-size:12px;color:var(--s4);">No issues logged yet. Click <strong>Log Issue</strong> to add one.</div>';
+  }
+  html+='</div>';
+  document.getElementById('cl-body-issues').innerHTML=html;
+}
+
+function ilShowForm(){var f=document.getElementById('il-form');if(f)f.style.display='block';}
+function ilHideForm(){var f=document.getElementById('il-form');if(f)f.style.display='none';}
+
+function ilSave(){
+  var no=parseInt(document.getElementById('il-client').value);
+  var desc=(document.getElementById('il-desc').value||'').trim();
+  var pri=document.getElementById('il-priority').value;
+  if(!no){alert('Please select a client.');return;}
+  if(!desc){alert('Please enter a description.');return;}
+  var clientRow=D.find(function(d){return d.no===no;});
+  var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');
+  CL_ISSUES.push({id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:_m+'/'+_d+'/'+today.getFullYear(),description:desc,priority:pri,status:'open',resolution:'',createdBy:IMPL_USER||CURRENT_NAME});
+  ilSaveToStorage();
+  ilHideForm();
+  renderClients();
+  if(typeof implRenderAttention==='function')implRenderAttention();
+}
+
+function ilToggleStatus(id){
+  var issue=CL_ISSUES.find(function(i){return i.id===id;});
+  if(!issue)return;
+  issue.status=issue.status==='open'?'resolved':'open';
+  ilSaveToStorage();
+  renderClients();
+  if(typeof implRenderAttention==='function')implRenderAttention();
+}
+
+function ilUpdateRes(id,val){
+  var issue=CL_ISSUES.find(function(i){return i.id===id;});
+  if(issue){issue.resolution=val;ilSaveToStorage();}
+}
+
+function ilDelete(id){
+  var idx=CL_ISSUES.findIndex(function(i){return i.id===id;});
+  if(idx>=0){CL_ISSUES.splice(idx,1);ilSaveToStorage();renderClients();if(typeof implRenderAttention==='function')implRenderAttention();}
+}
+
 var IMPL_FILTER='all';
 var IMPL_SORT_ASC=true;
 function toggleCPanel(id){
@@ -3193,6 +3348,14 @@ function implRenderAttention(myD){
     }
   });
 
+  /* ── Open issues from Issue Log ── */
+  var myNos=myD.map(function(d){return d.no;});
+  CL_ISSUES.filter(function(i){return i.status==='open'&&myNos.indexOf(i.clientNo)>=0;}).forEach(function(i){
+    var priMap={high:{p:0,color:'#dc2626',badgeBg:'#fecaca',badgeTxt:'#991b1b'},medium:{p:1,color:'#ea580c',badgeBg:'#fed7aa',badgeTxt:'#9a3412'},low:{p:2,color:'#f59e0b',badgeBg:'#fef9c3',badgeTxt:'#854d0e'}};
+    var pm=priMap[i.priority]||priMap['medium'];
+    alerts.push({no:i.clientNo,priority:-1+pm.p,color:pm.color,name:i.clientName,sub:i.description,dateLabel:'Logged',dateVal:i.date,dateColor:'',badge:i.priority.charAt(0).toUpperCase()+i.priority.slice(1),badgeCls:'background:'+pm.badgeBg+';color:'+pm.badgeTxt,phase:'Issue',daysLabel:'',daysColor:''});
+  });
+
   /* Sort by priority */
   alerts.sort(function(a,b){return a.priority-b.priority;});
 
@@ -3393,6 +3556,7 @@ function openTool(val){
     'sla':{name:'SLA Generator',icon:'⚖️',desc:'Create a Service Level Agreement document pre-filled with client details.',color:'#dc2626'},
     'payroll-cal':{name:'Payroll Calendar Generator',icon:'📅',desc:'Generate a payroll processing calendar based on the client\'s cut-off schedule.',color:'#0e7490'},
     'payroll-acc':{name:'Payroll Account Creator',icon:'🏦',desc:'Automate the creation of payroll account entries in Sprout Payroll.',color:'#854d0e'},
+    'pending-bank':{name:'Pending Items Bank',icon:'📋',desc:'Manage a reusable bank of standard pending items and track them per client.',color:'#0e7490'},
     'payroll-policy':{name:'Payroll Policy Excel Generator',icon:'📋',desc:'Generate a structured Payroll Policy Excel document based on the client\'s payroll policy inputs.',color:'#a855f7'},
     'payroll-repli':{name:'Payroll Repli Account Creator',icon:'🔁',desc:'Create replicated payroll accounts across multiple entities or branches.',color:'#0e7490'}
   };
@@ -3418,6 +3582,9 @@ function openTool(val){
     document.getElementById('tool-modal-box').style.maxWidth='760px';
     PAC_STATE={file:null,records:[]};
     renderPACUI();
+  } else if(val==='pending-bank'){
+    document.getElementById('tool-modal-box').style.maxWidth='820px';
+    renderPendingBankUI('bank');
   } else {
     document.getElementById('tool-modal-box').style.maxWidth='480px';
     document.getElementById('tool-modal-body').innerHTML='<div style="display:flex;align-items:center;gap:14px;padding:1rem;background:var(--s0);border-radius:10px;border:1px solid var(--s1);margin-bottom:1.25rem;"><div style="font-size:32px;flex-shrink:0;">'+t.icon+'</div><div><div style="font-size:13px;font-weight:600;color:var(--s8);margin-bottom:4px;">'+t.name+'</div><div style="font-size:12px;color:var(--s5);line-height:1.6;">'+(t.desc||'')+'</div></div></div><div style="background:'+t.color+'0d;border:1.5px dashed '+t.color+'40;border-radius:10px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;"><div style="font-size:28px;margin-bottom:.5rem;">🚧</div><div style="font-size:13px;font-weight:700;color:'+t.color+';margin-bottom:4px;">Coming soon</div><div style="font-size:12px;color:var(--s4);">This module is currently under development.</div></div><div style="display:flex;justify-content:flex-end;"><button onclick="closeTool()" style="padding:9px 22px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button></div>';
@@ -3425,6 +3592,129 @@ function openTool(val){
   document.getElementById('tool-modal').classList.add('open');
 }
  
+/* ══ PENDING ITEMS BANK ══ */
+var PIB_TAB='bank';
+var PIB_CLIENT=0;
+var PIB_PHASE_COLORS={'1':'#f59e0b','2':'#3b82f6','3':'#a855f7','4':'#10b981','Common':'#64748b'};
+
+function pibSave(){try{localStorage.setItem('pyo_pending_bank',JSON.stringify(PENDING_BANK));}catch(e){}}
+function pibSavePending(){try{localStorage.setItem('pyo_client_pending',JSON.stringify(CLIENT_PENDING));}catch(e){}}
+
+function renderPendingBankUI(tab){
+  PIB_TAB=tab||PIB_TAB;
+  var phaseMap={'1':'Phase 1 — Setup','2':'Phase 2 — Simulation','3':'Phase 3 — Parallel Run','4':'Phase 4 — Go Live','Common':'Common'};
+  var clientOpts='<option value="0">Select client…</option>'+D.map(function(d){return '<option value="'+d.no+'"'+(PIB_CLIENT===d.no?' selected':'')+'>'+d.client+'</option>';}).join('');
+
+  var bankHtml='';
+  if(PIB_TAB==='bank'){
+    ['Common','1','2','3','4'].forEach(function(ph){
+      var items=PENDING_BANK.filter(function(i){return i.phase===ph;});
+      if(!items.length&&ph!=='Common')return;
+      var dot='<span class="pib-phase-dot" style="background:'+(PIB_PHASE_COLORS[ph]||'#64748b')+';"></span>';
+      bankHtml+='<div class="pib-section-lbl">'+dot+' '+phaseMap[ph]+'</div>';
+      bankHtml+=items.map(function(item){
+        return '<div class="pib-item">'
+          +'<span style="flex:1;font-size:12px;color:var(--s7);">'+item.label+'</span>'
+          +'<span class="pib-cat">'+item.category+'</span>'
+          +'<button class="pib-del" onclick="pibDeleteTemplate(\''+item.id+'\')">✕</button>'
+          +'</div>';
+      }).join('');
+    });
+    bankHtml+='<div class="pib-section-lbl" style="margin-top:14px;">Add new template</div>'
+      +'<div class="pib-add-inp">'
+      +'<input type="text" id="pib-new-label" placeholder="Pending item label…"/>'
+      +'<select id="pib-new-phase"><option value="Common">Common</option><option value="1">Phase 1</option><option value="2">Phase 2</option><option value="3">Phase 3</option><option value="4">Phase 4</option></select>'
+      +'<select id="pib-new-cat"><option>Data</option><option>Document</option><option>Approval</option><option>Account</option><option>Other</option></select>'
+      +'<button onclick="pibAddTemplate()">Add</button>'
+      +'</div>';
+  } else {
+    var pending=PIB_CLIENT>0?(CLIENT_PENDING[PIB_CLIENT]||[]):[];
+    bankHtml+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'
+      +'<select style="flex:1;padding:6px 9px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;" onchange="PIB_CLIENT=parseInt(this.value);renderPendingBankUI(\'tracker\')">'
+      +clientOpts+'</select>'
+      +(PIB_CLIENT>0?'<button onclick="pibAddFromBank()" style="padding:6px 13px;border-radius:7px;border:1.5px solid var(--g);background:#fff;color:var(--g4);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">+ From Bank</button>':'')
+      +'</div>';
+    if(PIB_CLIENT>0){
+      if(pending.length){
+        bankHtml+=pending.map(function(item,idx){
+          var doneCls=item.done?'done':'';
+          var safeLbl=item.label.replace(/"/g,'&quot;');
+          return '<div class="pib-check-item '+doneCls+'">'
+            +'<input type="checkbox" class="pib-check-cb"'+(item.done?' checked':'')
+            +' onchange="pibToggleItem('+PIB_CLIENT+','+idx+',this.checked)"/>'
+            +'<span class="pib-check-label">'+item.label+'</span>'
+            +'<button class="pib-del" onclick="pibDeleteItem('+PIB_CLIENT+','+idx+')">✕</button>'
+            +'</div>';
+        }).join('');
+      } else {
+        bankHtml+='<div style="font-size:12px;color:var(--s4);padding:1rem 0;text-align:center;">No pending items for this client. Click <strong>+ From Bank</strong> to assign standard items or add a custom one below.</div>';
+      }
+      bankHtml+='<div class="pib-add-inp" style="margin-top:10px;">'
+        +'<input type="text" id="pib-custom-label" placeholder="Add custom pending item…"/>'
+        +'<button onclick="pibAddCustom()">Add</button>'
+        +'</div>';
+    }
+  }
+
+  document.getElementById('tool-modal-body').innerHTML=
+    '<div class="pib-wrap">'
+    +'<div class="pib-tabs">'
+    +'<div class="pib-tab'+(PIB_TAB==='bank'?' on':'')+'" onclick="renderPendingBankUI(\'bank\')">Item Bank</div>'
+    +'<div class="pib-tab'+(PIB_TAB==='tracker'?' on':'')+'" onclick="renderPendingBankUI(\'tracker\')">Client Tracker</div>'
+    +'</div>'
+    +'<div style="max-height:420px;overflow-y:auto;padding-right:4px;">'+bankHtml+'</div>'
+    +'<div style="display:flex;justify-content:flex-end;margin-top:12px;">'
+    +'<button onclick="closeTool()" style="padding:8px 20px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button>'
+    +'</div>'
+    +'</div>';
+}
+
+function pibAddTemplate(){
+  var label=(document.getElementById('pib-new-label').value||'').trim();
+  var phase=document.getElementById('pib-new-phase').value;
+  var cat=document.getElementById('pib-new-cat').value;
+  if(!label)return;
+  PENDING_BANK.push({id:'pb'+Date.now(),label:label,phase:phase,category:cat});
+  pibSave();renderPendingBankUI('bank');
+}
+
+function pibDeleteTemplate(id){
+  var idx=PENDING_BANK.findIndex(function(i){return i.id===id;});
+  if(idx>=0){PENDING_BANK.splice(idx,1);pibSave();renderPendingBankUI('bank');}
+}
+
+function pibToggleItem(clientNo,idx,done){
+  if(!CLIENT_PENDING[clientNo])return;
+  CLIENT_PENDING[clientNo][idx].done=done;
+  pibSavePending();
+}
+
+function pibDeleteItem(clientNo,idx){
+  if(!CLIENT_PENDING[clientNo])return;
+  CLIENT_PENDING[clientNo].splice(idx,1);
+  pibSavePending();renderPendingBankUI('tracker');
+}
+
+function pibAddCustom(){
+  var label=(document.getElementById('pib-custom-label').value||'').trim();
+  if(!label||!PIB_CLIENT)return;
+  if(!CLIENT_PENDING[PIB_CLIENT])CLIENT_PENDING[PIB_CLIENT]=[];
+  CLIENT_PENDING[PIB_CLIENT].push({label:label,done:false});
+  pibSavePending();renderPendingBankUI('tracker');
+}
+
+function pibAddFromBank(){
+  if(!PIB_CLIENT)return;
+  if(!CLIENT_PENDING[PIB_CLIENT])CLIENT_PENDING[PIB_CLIENT]=[];
+  var existing=CLIENT_PENDING[PIB_CLIENT].map(function(i){return i.label;});
+  var added=0;
+  PENDING_BANK.forEach(function(t){
+    if(existing.indexOf(t.label)<0){CLIENT_PENDING[PIB_CLIENT].push({label:t.label,done:false});added++;}
+  });
+  pibSavePending();renderPendingBankUI('tracker');
+  if(!added)alert('All bank items are already assigned to this client.');
+}
+
 function closeTool(){
   document.getElementById('tool-modal').classList.remove('open');
   MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
