@@ -1794,8 +1794,122 @@ function renderWeekly(){
   document.getElementById('weekly-greeting').textContent='Hi '+CURRENT_NAME+'!';
   var sk=['Live','Ongoing','Not yet started','Churned'];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var rl=['Ana','Bea','Carl','Dana','Eli'];
+  var rl=(TEAM_CONFIG.implementers||[]).filter(Boolean);
+  if(!rl.length)rl=['Ana','Bea','Carl','Dana','Eli'];
   var h='';
+
+  /* ── WEEKLY MEETING REPORT TABLE ── */
+  function isStar(d){return /payroll starter/i.test(d.service||'');}
+  function isPYO(d){return /pyo/i.test(d.service||'')&&!/payroll starter/i.test(d.service||'');}
+  function isActive(d){return ['Ongoing','Not yet started','On-Hold','For Turnover'].indexOf(d.remarks)>=0;}
+  function addon(d,key){return (CL_ADDONS[d.no]||{})[key];}
+
+  var SECTIONS=[
+    {lbl:'Starter',rows:[
+      {lbl:'Starter - On going implem',         fn:function(d){return isStar(d)&&d.remarks==='Ongoing';}},
+      {lbl:'Starter - Not yet started / On Hold',fn:function(d){return isStar(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
+      {lbl:'# of accounts you process Starter', fn:function(d){return isStar(d)&&isActive(d);}},
+      {lbl:'Need to turnover Starter - still unassigned',fn:function(d){return isStar(d)&&d.remarks==='For Turnover';}},
+    ]},
+    {lbl:'PYO',rows:[
+      {lbl:'PYO - on going Implem',              fn:function(d){return isPYO(d)&&d.remarks==='Ongoing';}},
+      {lbl:'PYO - not yet started / on hold Implem',fn:function(d){return isPYO(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
+      {lbl:'# of accounts you process PYO',      fn:function(d){return isPYO(d)&&isActive(d);}},
+      {lbl:'Need to turnover PYO - still unassigned',fn:function(d){return isPYO(d)&&d.remarks==='For Turnover';}},
+    ]},
+    {lbl:'For Turnover',rows:[
+      {lbl:'Assigned clients For Pending Turnover PYO',    fn:function(d){return isPYO(d)&&d.remarks==='For Turnover'&&d.resource;}},
+      {lbl:'Assigned clients For Pending Turnover Starter',fn:function(d){return isStar(d)&&d.remarks==='For Turnover'&&d.resource;}},
+    ]},
+    {lbl:'Gov',rows:[
+      {lbl:'Sprout Gov (with PYO) under Implem', fn:function(d){return isPYO(d)&&addon(d,'sg')&&isActive(d);}},
+      {lbl:'Sprout Gov stand alone under Implem', fn:function(d){return /sprout gov/i.test(d.service||'')&&!isPYO(d)&&isActive(d);}},
+    ]},
+    {lbl:'BenAd',rows:[
+      {lbl:'BenAd Under Implem',fn:function(d){return !!addon(d,'ba')&&isActive(d);}},
+    ]},
+    {lbl:'Disbursement',rows:[
+      {lbl:'Disbursement under Implem',fn:function(d){var a=CL_ADDONS[d.no]||{};return !!(a.sd||a.std)&&isActive(d);}},
+    ]},
+    {lbl:'OTK',rows:[
+      {lbl:'OTK Under Implem',fn:function(d){return !!addon(d,'otk')&&isActive(d);}},
+      {lbl:'OTK Under Live',   fn:function(d){return !!addon(d,'otk')&&d.remarks==='Live';}},
+    ]},
+  ];
+
+  var TH='background:#fef08a;color:#713f12;font-weight:700;font-size:11.5px;padding:7px 10px;border:1px solid #fde047;text-align:center;white-space:nowrap;';
+  var TH1='background:#fef08a;color:#713f12;font-weight:700;font-size:11.5px;padding:7px 12px;border:1px solid #fde047;text-align:left;';
+  var TSEC='background:#f1f5f9;color:#334155;font-weight:700;font-size:11px;padding:6px 12px;border:1px solid #e2e8f0;';
+  var TD='padding:6px 10px;border:1px solid #e2e8f0;font-size:12px;color:var(--s8);text-align:left;';
+  var TDN='padding:6px 10px;border:1px solid #e2e8f0;font-size:12px;font-weight:600;text-align:center;font-family:var(--mono);';
+
+  h+='<div class="panel">';
+  h+='<div class="panel-title" style="margin-bottom:.85rem;">Weekly Implementation Meeting Report</div>';
+  h+='<div style="overflow-x:auto;">';
+  h+='<table style="width:100%;border-collapse:collapse;">';
+  // Header
+  h+='<thead><tr>';
+  h+='<th style="'+TH1+'min-width:260px;">Data</th>';
+  rl.forEach(function(r){h+='<th style="'+TH+'min-width:70px;">'+r+'</th>';});
+  h+='</tr></thead>';
+  h+='<tbody>';
+  SECTIONS.forEach(function(sec){
+    // Section label row
+    h+='<tr><td colspan="'+(rl.length+1)+'" style="'+TSEC+'">'+sec.lbl+'</td></tr>';
+    sec.rows.forEach(function(row){
+      h+='<tr>';
+      h+='<td style="'+TD+'padding-left:20px;">'+row.lbl+'</td>';
+      rl.forEach(function(impl){
+        var cnt=D.filter(function(d){return d.resource===impl&&row.fn(d);}).length;
+        var style=TDN+'color:'+(cnt>0?'#15803d':'#94a3b8')+';';
+        h+='<td style="'+style+'">'+(cnt>0?cnt:'—')+'</td>';
+      });
+      h+='</tr>';
+    });
+  });
+  h+='</tbody></table></div>';
+
+  /* ── ISSUE LIST ── */
+  h+='<div style="margin-top:1.5rem;">';
+  h+='<div style="font-size:11px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;">';
+  h+='<span style="display:flex;align-items:center;gap:6px;"><span style="width:6px;height:6px;border-radius:50%;background:#fbbf24;display:inline-block;"></span>Issue List</span>';
+  h+='<span onclick="go(\'issues\')" style="font-size:10px;font-weight:600;color:var(--b);cursor:pointer;">Open Issue Log →</span>';
+  h+='</div>';
+  h+='<div style="overflow-x:auto;">';
+  h+='<table style="width:100%;border-collapse:collapse;">';
+  h+='<thead><tr>';
+  ['#','Summary','Raised By','Status','Remarks'].forEach(function(col,i){
+    h+='<th style="background:#fef08a;color:#713f12;font-weight:700;font-size:11px;padding:6px 10px;border:1px solid #fde047;text-align:'+(i===0?'center':'left')+';white-space:nowrap;">'+col+'</th>';
+  });
+  h+='</tr></thead>';
+  h+='<tbody>';
+  if(CL_ISSUES&&CL_ISSUES.length){
+    CL_ISSUES.forEach(function(iss,i){
+      var resolved=iss.status==='resolved';
+      var statusColor=resolved?'background:#dcfce7;color:#15803d;':'background:#dbeafe;color:#1d4ed8;';
+      var statusLbl=resolved?'Resolved':'Open';
+      h+='<tr style="background:'+(i%2?'#f8fafc':'#fff')+'">';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:11px;color:var(--s5);text-align:center;font-family:var(--mono);">'+(i+1)+'</td>';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:12px;color:var(--s8);">'+(iss.description||'')+'<div style="font-size:10px;color:var(--s4);margin-top:2px;">'+(iss.clientName||'')+'</div></td>';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:12px;color:var(--s6);">'+(iss.createdBy||CURRENT_NAME)+'</td>';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;"><span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;'+statusColor+'">'+statusLbl+'</span></td>';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:11px;color:var(--s5);">'+(iss.resolution||'')+'</td>';
+      h+='</tr>';
+    });
+  } else {
+    // Empty rows like the spreadsheet
+    [1,2,3,4,5].forEach(function(n){
+      h+='<tr style="background:'+(n%2?'#f8fafc':'#fff')+'">';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;font-size:11px;color:var(--s3);text-align:center;font-family:var(--mono);">'+n+'</td>';
+      h+='<td style="padding:6px 10px;border:1px solid #e2e8f0;" colspan="4"></td>';
+      h+='</tr>';
+    });
+  }
+  h+='</tbody></table></div>';
+  h+='</div>';
+  h+='</div>'; // end panel
+
+  /* ── EXISTING SNAP + BREAKDOWN BELOW ── */
   h+='<div class="snap-row">';
   [{l:'Live',c:'#16a34a',k:'Live'},{l:'Ongoing',c:'#2563eb',k:'Ongoing'},{l:'Not Yet Started',c:'#ea580c',k:'Not yet started'},{l:'Churned',c:'#dc2626',k:'Churned'}].forEach(function(w){var v=D.filter(function(d){return d.remarks===w.k;}).length;h+='<div class="snap-card" style="--c:'+w.c+'"><div class="snap-label">'+w.l+'</div><div class="snap-val">'+v+'</div></div>';});
   h+='</div>';
