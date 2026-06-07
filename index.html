@@ -1804,22 +1804,25 @@ function renderWeekly(){
   function isActive(d){return ['Ongoing','Not yet started','On-Hold','For Turnover'].indexOf(d.remarks)>=0;}
   function addon(d,key){return (CL_ADDONS[d.no]||{})[key];}
 
+  function notTurnedOver(d){return !(CL_AFTERHO[d.no]||{}).turnedOver;}
+  function noCSM(d){return !(CL_AFTERHO[d.no]||{}).csm;}
+
   var SECTIONS=[
     {lbl:'Starter',rows:[
-      {lbl:'Starter - On going implem',         fn:function(d){return isStar(d)&&d.remarks==='Ongoing';}},
-      {lbl:'Starter - Not yet started / On Hold',fn:function(d){return isStar(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
-      {lbl:'# of accounts you process Starter', fn:function(d){return isStar(d)&&isActive(d);}},
-      {lbl:'Need to turnover Starter - still unassigned',fn:function(d){return isStar(d)&&d.remarks==='For Turnover';}},
+      {lbl:'Starter - On going implem',                    fn:function(d){return isStar(d)&&d.remarks==='Ongoing';}},
+      {lbl:'Starter - Not yet started / On Hold',          fn:function(d){return isStar(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
+      {lbl:'# of accounts you process Starter',           fn:function(d){return isStar(d)&&d.remarks==='Live';}},
+      {lbl:'Need to turnover Starter - still unassigned',  fn:function(d){return isStar(d)&&d.remarks==='Live'&&notTurnedOver(d)&&noCSM(d);}},
     ]},
     {lbl:'PYO',rows:[
-      {lbl:'PYO - on going Implem',              fn:function(d){return isPYO(d)&&d.remarks==='Ongoing';}},
-      {lbl:'PYO - not yet started / on hold Implem',fn:function(d){return isPYO(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
-      {lbl:'# of accounts you process PYO',      fn:function(d){return isPYO(d)&&isActive(d);}},
-      {lbl:'Need to turnover PYO - still unassigned',fn:function(d){return isPYO(d)&&d.remarks==='For Turnover';}},
+      {lbl:'PYO - on going Implem',                        fn:function(d){return isPYO(d)&&d.remarks==='Ongoing';}},
+      {lbl:'PYO - not yet started / on hold Implem',       fn:function(d){return isPYO(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
+      {lbl:'# of accounts you process PYO',               fn:function(d){return isPYO(d)&&d.remarks==='Live';}},
+      {lbl:'Need to turnover PYO - still unassigned',      fn:function(d){return isPYO(d)&&d.remarks==='Live'&&notTurnedOver(d)&&noCSM(d);}},
     ]},
     {lbl:'For Turnover',rows:[
-      {lbl:'Assigned clients For Pending Turnover PYO',    fn:function(d){return isPYO(d)&&d.remarks==='For Turnover'&&d.resource;}},
-      {lbl:'Assigned clients For Pending Turnover Starter',fn:function(d){return isStar(d)&&d.remarks==='For Turnover'&&d.resource;}},
+      {lbl:'Assigned clients For Pending Turnover PYO',    fn:function(d){return isPYO(d)&&d.remarks==='Live'&&notTurnedOver(d);}},
+      {lbl:'Assigned clients For Pending Turnover Starter',fn:function(d){return isStar(d)&&d.remarks==='Live'&&notTurnedOver(d);}},
     ]},
     {lbl:'Gov',rows:[
       {lbl:'Sprout Gov (with PYO) under Implem', fn:function(d){return isPYO(d)&&addon(d,'sg')&&isActive(d);}},
