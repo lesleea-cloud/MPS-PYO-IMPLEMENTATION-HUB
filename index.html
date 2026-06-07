@@ -3745,8 +3745,8 @@ function closeTool(){
 var MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:'',sproutStaff:[],reviewItems:null,extracted:null};
 
 function renderMOMUI(){
-  // Default staff list from implementer list
-  var defaultStaff=['Ana','Bea','Carl','Dana','Eli'];
+  var defaultStaff=(TEAM_CONFIG.implementers||[]).concat(TEAM_CONFIG.pms||[]).filter(Boolean);
+  if(!defaultStaff.length) defaultStaff=['Ana','Bea','Carl','Dana','Eli'];
   if(!MOM_STATE.sproutStaff||!MOM_STATE.sproutStaff.length) MOM_STATE.sproutStaff=defaultStaff.slice();
 
   document.getElementById('tool-modal-body').innerHTML=
@@ -3768,13 +3768,13 @@ function renderMOMUI(){
       +'<span style="font-size:20px;flex-shrink:0;">📝</span>'
       +'<div>'
         +'<div style="font-size:12px;font-weight:700;color:#c2410c;margin-bottom:2px;">Sprout MPS — MOM Generator</div>'
-        +'<div style="font-size:11px;color:#ea580c;line-height:1.6;">Upload your <strong>meeting transcript (.docx)</strong> and <strong>slide deck (.pdf)</strong>. Claude AI will extract key information and generate a ready-to-send MOM in Sprout MPS format.</div>'
+        +'<div style="font-size:11px;color:#ea580c;line-height:1.6;">Upload your <strong>meeting transcript (.docx)</strong> — required. Slide deck <strong>(.pdf)</strong> is optional but improves extraction accuracy.</div>'
       +'</div>'
     +'</div>'
     // Two upload cards
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">'
       +momUploadCard('transcript','📄','Meeting Transcript <span style=\'color:#dc2626\'>*</span>','Zoom / Teams / Meet export<br>(.docx format)','#ea580c','.docx')
-      +momUploadCard('slides','📊','Meeting Slides <span style=\'color:#dc2626\'>*</span>','Slide deck presented during meeting<br>(.pdf format)','#7c3aed','.pdf')
+      +momUploadCard('slides','📊','Meeting Slides <span style=\'color:#94a3b8\'>(optional)</span>','Slide deck — improves extraction<br>(.pdf format)','#7c3aed','.pdf')
     +'</div>'
     // Client name + date
     +'<div style="margin-bottom:.75rem;display:flex;gap:10px;">'
@@ -3816,6 +3816,7 @@ function renderMOMUI(){
       +'<button onclick="closeTool()" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Cancel</button>'
       +'<div style="display:flex;gap:8px;">'
         +'<button id="mom-generate-btn" onclick="momGenerate()" disabled style="padding:9px 22px;border-radius:9px;border:none;background:#ea580c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:.4;display:inline-flex;align-items:center;gap:6px;" title="Upload both files first">✨ Generate MOM</button>'
+        +'<button id="mom-copy-btn" onclick="momCopyToClipboard()" style="display:none;padding:9px 16px;border-radius:9px;border:1px solid #d1d5db;background:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);color:var(--s6);align-items:center;gap:6px;">📋 Copy</button>'
         +'<button id="mom-download-btn" onclick="momDownload()" style="display:none;padding:9px 22px;border-radius:9px;border:none;background:var(--g);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);align-items:center;gap:6px;">⬇️ Download .docx</button>'
       +'</div>'
     +'</div>';
@@ -3924,10 +3925,10 @@ function momCheckReady(){
   var hasTranscript=!!MOM_STATE.transcript;
   var hasSlides=!!MOM_STATE.slides;
   var btn=document.getElementById('mom-generate-btn');
-  var ready=hasTranscript&&hasSlides;
+  var ready=hasTranscript;
   btn.disabled=!ready;
   btn.style.opacity=ready?'1':'0.4';
-  btn.title=ready?'':'Upload both files first';
+  btn.title=ready?'':'Upload the transcript first';
 }
 
 function momSetStatus(msg,type){
@@ -4302,7 +4303,7 @@ function momRenderReviewPanel(extracted){
       var badgeColor=isLow?'#991b1b':isMed?'#c2410c':'#15803d';
       html+='<div id="mom-item-'+bucket+'-'+idx+'" style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:'+bg+';border-radius:7px;border-left:3px solid '+border+';margin-bottom:3px;">';
       html+='<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:'+badgeBg+';color:'+badgeColor+';flex-shrink:0;">'+item.label+(isLow?' ⚠':'')+'</span>';
-      html+='<span style="font-size:11px;color:'+(isLow?'#94a3b8':'#334155')+';flex:1;'+(isLow?'font-style:italic;':'')+'">'+item.text+'</span>';
+      html+='<span contenteditable="true" onblur="this.style.borderBottomColor=\'transparent\';momSaveItemEdit(\''+bucket+'\','+idx+',this.textContent)" onfocus="this.style.borderBottomColor=\'#ea580c\'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="font-size:11px;color:'+(isLow?'#94a3b8':'#334155')+';flex:1;'+(isLow?'font-style:italic;':'')+'outline:none;border-bottom:1px dotted transparent;cursor:text;" title="Click to edit">'+item.text+'</span>';
       if(item.source&&item.source!=='auto'){
         html+='<span style="font-size:10px;color:'+(item.source.indexOf('Slide')!==-1?'#7c3aed':'#16a34a')+';font-weight:500;flex-shrink:0;white-space:nowrap;">'+item.source+'</span>';
       }
@@ -4314,6 +4315,10 @@ function momRenderReviewPanel(extracted){
       }
       html+='</div>';
     });
+    html+='<div style="display:flex;gap:5px;margin-top:5px;">'
+      +'<input type="text" id="mom-add-'+bucket+'" placeholder="Add item…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();momAddManualItem(\''+bucket+'\');}" style="flex:1;padding:5px 9px;border-radius:6px;border:1px dashed var(--s2);font-size:11px;font-family:var(--font);color:var(--s7);outline:none;background:var(--s0);"/>'
+      +'<button onclick="momAddManualItem(\''+bucket+'\')" style="padding:5px 10px;border-radius:6px;border:none;background:'+color+';color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">+</button>'
+      +'</div>';
     html+='</div>';
     return html;
   }
@@ -4339,6 +4344,39 @@ function momRemoveReviewItem(bucket,idx){
   momRenderReviewPanel(MOM_STATE.extracted);
 }
 
+function momSaveItemEdit(bucket,idx,text){
+  text=(text||'').trim();
+  if(!text||!MOM_STATE.extracted||!MOM_STATE.extracted.reviewItems)return;
+  if(MOM_STATE.extracted.reviewItems[bucket]&&MOM_STATE.extracted.reviewItems[bucket][idx]){
+    MOM_STATE.extracted.reviewItems[bucket][idx].text=text;
+  }
+}
+
+function momAddManualItem(bucket){
+  var inp=document.getElementById('mom-add-'+bucket);
+  if(!inp)return;
+  var text=inp.value.trim();
+  if(!text)return;
+  if(!MOM_STATE.extracted||!MOM_STATE.extracted.reviewItems)return;
+  MOM_STATE.extracted.reviewItems[bucket].push({text:text,conf:3,label:'HIGH',source:'✍️ Manual'});
+  inp.value='';
+  momRenderReviewPanel(MOM_STATE.extracted);
+}
+
+function momCopyToClipboard(){
+  if(!MOM_STATE.result){momSetStatus('⚠️ Please generate and build the MOM first.','error');return;}
+  var btn=document.getElementById('mom-copy-btn');
+  var prev=btn?btn.innerHTML:'';
+  function flash(){if(btn){btn.innerHTML='✅ Copied!';setTimeout(function(){btn.innerHTML=prev;},1800);}}
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(MOM_STATE.result).then(flash).catch(function(){
+      var ta=document.createElement('textarea');ta.value=MOM_STATE.result;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();
+    });
+  } else {
+    var ta=document.createElement('textarea');ta.value=MOM_STATE.result;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();
+  }
+}
+
 function momConfirmAndBuild(){
   if(!MOM_STATE.extracted) return;
   var m=momBuildFromConfirmed(MOM_STATE.extracted);
@@ -4350,13 +4388,13 @@ function momConfirmAndBuild(){
   document.getElementById('mom-preview').style.display='block';
   momSetStatus('✅ MOM built from confirmed items! Review the preview below, then download.','success');
   document.getElementById('mom-download-btn').style.display='inline-flex';
+  var _cpb=document.getElementById('mom-copy-btn');if(_cpb)_cpb.style.display='inline-flex';
 }
 
 async function momGenerate(){
   var clientName=(document.getElementById('mom-client-name').value||'').trim()||'[Client]';
   var meetingDate=(document.getElementById('mom-meeting-date').value||'').trim()||'[Date]';
   if(!MOM_STATE.transcript){momSetStatus('⚠️ Please upload the meeting transcript (.docx).','error');return;}
-  if(!MOM_STATE.slides){momSetStatus('⚠️ Please upload the meeting slides (.pdf).','error');return;}
 
   document.getElementById('mom-preview').style.display='none';
   document.getElementById('mom-review-panel').style.display='none';
@@ -4372,7 +4410,7 @@ async function momGenerate(){
     // Step 2 — extract raw text
     momShowOverlay(2,'Extracting text from files…');
     var transcriptText=await momReadDocxText(MOM_STATE.transcript);
-    var pdfText=await momReadPdfText(MOM_STATE.slides);
+    var pdfText=MOM_STATE.slides?await momReadPdfText(MOM_STATE.slides):'';
 
     // Step 3 — parse speakers, clean lines, resolve context
     momShowOverlay(3,'Parsing speakers and cleaning transcript lines…');
