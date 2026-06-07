@@ -1047,8 +1047,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
       Weekly Status
     </div>
-    <div class="nav-item" id="nav-monthly" onclick="go('monthly')" style="display: flex; padding-left: 2rem;">
-      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+    <div class="nav-item" id="nav-monthly" onclick="go('monthly')" style="display:flex;padding:5px 1.1rem 5px 2.6rem;font-size:11.5px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
       Monthly Stats
     </div>
     <div class="nav-divider"></div>
@@ -3019,8 +3019,9 @@ function renderClients(){
     document.getElementById('cl-page-title').textContent=typeLabel+' Clients — 2026';
     document.getElementById('cl-page-sub').textContent=CL_TYPE==='ps'?'Payroll Starter implementation projects':'PYO and complex implementation projects';
     document.getElementById('cr').style.display='';
-    if(addBtn)addBtn.style.display='flex';
-    if(impGrp)impGrp.style.display='flex';
+    var canAddDel=(CURRENT_ROLE!=='manager');
+    if(addBtn)addBtn.style.display=canAddDel?'flex':'none';
+    if(impGrp)impGrp.style.display=canAddDel?'flex':'none';
   }
 
   var rows=fdFull(baseData);
@@ -3038,6 +3039,8 @@ function renderClients(){
   if(CL_TAB==='overview'){
     var thStyle='padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;';
     document.getElementById('cl-head').innerHTML='<tr style="background:var(--s0)"><th style="'+thStyle+'">#</th><th style="'+thStyle+'">Month</th><th style="'+thStyle+';min-width:180px;">Client Name</th><th style="'+thStyle+'">Resource</th><th style="'+thStyle+'">Gov Resource</th><th style="'+thStyle+'">PM</th><th style="'+thStyle+'">HR-I</th><th style="'+thStyle+'">Status</th><th style="'+thStyle+';min-width:140px;">Service</th><th style="'+thStyle+'">Days</th><th style="'+thStyle+'">Progress</th><th style="'+thStyle+'"></th></tr>';
+    var ovRO=(CURRENT_ROLE==='manager');
+    var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
     document.getElementById('cl-body').innerHTML=slice.map(function(d){
       var p=pct(d);
       var monOpts=CL_MONTHS.map(function(m){return '<option'+(d.month===m?' selected':'')+'>'+m+'</option>';}).join('');
@@ -3046,23 +3049,27 @@ function renderClients(){
       var stOpts=statuses.map(function(s){return '<option'+(d.remarks===s?' selected':'')+' value="'+s+'">'+s+'</option>';}).join('');
       var a=CL_ADDONS[d.no]||{};
       var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg||a.ba||a.std);
-      var govCell=isGov?'<td class="ctd"><input type="text" value="'+(d.gov||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdateGov('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>':'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
+      var inpStyle='border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;';
+      var govCell=isGov
+        ?(ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.gov||'—')+'</span></td>':'<td class="ctd"><input type="text" value="'+(d.gov||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdateGov('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="'+inpStyle+'" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>')
+        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
-        '<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>'+
+        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.month+'</span></td>':'<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>')+
         '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd">'+rChip(d.resource)+'</td>'+
         govCell+
-        '<td class="ctd"><input type="text" value="'+(d.pm||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdatePm('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>'+
-        '<td class="ctd"><input type="text" value="'+(d.hri||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdateHrI('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>'+
-        '<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>'+
+        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><input type="text" value="'+(d.pm||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdatePm('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="'+inpStyle+'" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>')+
+        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><input type="text" value="'+(d.hri||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdateHrI('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="'+inpStyle+'" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>')+
+        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.remarks+'</span></td>':'<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>')+
         '<td class="ctd" style="white-space:nowrap;">'+
-          '<div id="sc-'+d.no+'" class="svc-chips-wrap" onclick="svcEditStart('+d.no+')" title="Click to change" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'">'+svcChips(d.service)+'</div>'+
-          '<select id="ss-'+d.no+'" class="cl-svc-sel" style="display:none;padding:3px 6px;border-radius:6px;border:1px solid var(--g);font-size:11px;font-family:var(--font);outline:none;background:#fff;" onchange="clUpdateSvc('+d.no+',this.value)" onblur="svcEditEnd('+d.no+')">'+svcOpts+'</select>'+
+          (ovRO
+            ?'<div>'+svcChips(d.service)+'</div>'
+            :'<div id="sc-'+d.no+'" class="svc-chips-wrap" onclick="svcEditStart('+d.no+')" title="Click to change" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'">'+svcChips(d.service)+'</div><select id="ss-'+d.no+'" class="cl-svc-sel" style="display:none;padding:3px 6px;border-radius:6px;border:1px solid var(--g);font-size:11px;font-family:var(--font);outline:none;background:#fff;" onchange="clUpdateSvc('+d.no+',this.value)" onblur="svcEditEnd('+d.no+')">'+svcOpts+'</select>')+
         '</td>'+
-        (function(){var daysOpts=[0,15,30,60,90,120,150];var canEdit=(CURRENT_ROLE==='manager'||CURRENT_ROLE==='admin');if(!canEdit){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+( d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+ 
+        (function(){var daysOpts=[0,15,30,60,90,120,150];var canEditDays=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='god');if(!canEditDays){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+(d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+
         '<td class="ctd">'+pbar(p)+'</td>'+
-        '<td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow('+d.no+')" title="Remove">✕</span></td>'+
+        (ovRO?'<td class="ctd"></td>':'<td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow('+d.no+')" title="Remove">✕</span></td>')+
       '</tr>';
     }).join('');
   } else if(CL_TAB==='phases'){
@@ -5949,7 +5956,7 @@ function doSignOut(){
  
 function godSwitch(role){
   CURRENT_ROLE=role;
-  if(role==='implementer')IMPL_USER=CURRENT_NAME;
+  if(role==='implementer')IMPL_USER=TEAM_CONFIG.implementers[0]||CURRENT_NAME;
   var cfg=ROLE_CONFIG[CURRENT_ROLE]||ROLE_CONFIG['manager'];
   document.getElementById('role-pill').className='role-pill '+cfg.pill;
   document.getElementById('role-pill').textContent=cfg.pillText;
