@@ -3532,6 +3532,127 @@ function selFromSearch(no){document.getElementById('impl-search').value='';docum
  
 // ══════════════ ADMINISTRATION TOOLS ══════════════
 
+/* ── SHARED SAMPLE TEMPLATE DOWNLOAD HELPERS ── */
+
+function adminDownloadSampleTranscript(){
+  if(typeof docx==='undefined'){alert('docx library not loaded.');return;}
+  var d=docx;
+  function txt(s,opts){return new d.TextRun(Object.assign({text:s,font:'Arial',size:24},opts||{}));}
+  function para(runs,opts){return new d.Paragraph(Object.assign({children:Array.isArray(runs)?runs:[runs]},opts||{}));}
+  function hdr(s){return para([txt(s,{bold:true,size:26})],{spacing:{after:120}});}
+  function line(speaker,text,color){return para([txt(speaker,{bold:true,color:color||'1d4ed8'}),txt(': '+text)]);}
+  var paras=[
+    para([txt('Sample Meeting Transcript — Sprout PYO',{bold:true,size:32,color:'092903'})],{spacing:{after:160}}),
+    para([txt('Instructions: Replace this content with your actual meeting transcript. Keep the Speaker: Dialogue format so the MOM Generator can detect who said what.',{color:'7c3aed',size:20,italics:true})],{spacing:{after:240}}),
+    hdr('Meeting Details'),
+    para([txt('Meeting Type: ',{bold:true}),txt('Kickoff / Simulation / Parallel Run / Go-Live (delete as appropriate)')]),
+    para([txt('Client: ',{bold:true}),txt('Example Corp Inc.')]),
+    para([txt('Date: ',{bold:true}),txt('March 26, 2026')]),
+    para([txt('Time: ',{bold:true}),txt('10:00 AM – 11:00 AM')]),
+    para([txt('Platform: ',{bold:true}),txt('Google Meet / Zoom / MS Teams')],{spacing:{after:200}}),
+    hdr('Participants'),
+    para([txt('Sprout PYO:',{bold:true})]),
+    para([txt('  • Maria Santos (Implementer)')]),
+    para([txt('  • Lesley Reyes (HR Implementer)')],{spacing:{after:120}}),
+    para([txt('Client:',{bold:true})]),
+    para([txt('  • Juan dela Cruz (HR Manager)')]),
+    para([txt('  • Ana Reyes (Payroll Officer)')],{spacing:{after:240}}),
+    hdr('Transcript'),
+    line('Maria','Good morning everyone, thank you for joining us today.'),
+    line('Juan','Good morning, we are excited to get started.','854d0e'),
+    line('Maria','Today we will be discussing the go-live timeline, required documents, and next steps.'),
+    line('Ana','We have a few questions about the payroll calendar.','854d0e'),
+    line('Maria','Great, we will cover that. First, let us align on the cut-off dates.'),
+    line('Juan','Our current cut-off is every 15th and 30th of the month.','854d0e'),
+    line('Maria','Perfect, we will configure that in the system. We will also need the complete employee masterfile by March 31.'),
+    line('Juan','Understood, Ana will prepare that.','854d0e'),
+    line('Ana','Yes, I can send it by March 28 to give buffer time.','854d0e'),
+    line('Maria','That works perfectly. Let me also confirm that we will be doing a parallel run for the month of April.'),
+    line('Juan','Agreed. Can we start the simulation next week?','854d0e'),
+    line('Maria','Yes, we can schedule the simulation for April 2. I will send a calendar invite after this call.'),
+    para([txt('')],{spacing:{after:200}}),
+    hdr('Action Items'),
+    para([txt('Client:',{bold:true})]),
+    para([txt('  1. Submit complete employee masterfile by March 28, 2026')]),
+    para([txt('  2. Confirm payroll cut-off dates with HR team')]),
+    para([txt('  3. Prepare list of employees for parallel run')],{spacing:{after:120}}),
+    para([txt('Sprout PYO:',{bold:true})]),
+    para([txt('  1. Send calendar invite for simulation on April 2')]),
+    para([txt('  2. Configure payroll cut-off dates in system')]),
+    para([txt('  3. Share payroll policy template for client review')],{spacing:{after:240}}),
+    hdr('Next Meeting'),
+    para([txt('Simulation Review — April 2, 2026, 10:00 AM via Google Meet')]),
+  ];
+  var doc=new d.Document({
+    styles:{default:{document:{run:{font:'Arial',size:24}}}},
+    sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1440,right:1440,bottom:1440,left:1440}}},children:paras}]
+  });
+  d.Packer.toBlob(doc).then(function(blob){
+    var url=URL.createObjectURL(blob);var a=document.createElement('a');
+    a.href=url;a.download='Sample_Meeting_Transcript.docx';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  });
+}
+
+function adminDownloadSampleImplemenMonitoring(){
+  if(typeof XLSX==='undefined'){alert('SheetJS not loaded.');return;}
+  var wb=XLSX.utils.book_new();
+  var headers=['Client Name','Resource First Name','Resource Last Name','Resource Email Address','Resource Mobile Number','CSM Email Address','Live Payroll Codes','PY Subscription Payroll Code'];
+  var sample1=['Example Corp Inc.','Maria','Santos','maria.santos@sprout.ph','09171234567','juan.csm@sprout.ph','EXC-LIVE-001','EXC-SUB-001'];
+  var sample2=['Another Company Ltd.','Lesley','Reyes','lesley.reyes@sprout.ph','09189876543','ana.csm@sprout.ph','ANO-LIVE-002','ANO-SUB-002'];
+  var ws=XLSX.utils.aoa_to_sheet([headers,sample1,sample2]);
+  ws['!cols']=headers.map(function(h){return {wch:Math.max(h.length,20)};});
+  XLSX.utils.book_append_sheet(wb,ws,'2026 Implem');
+  XLSX.writeFile(wb,'Sample_Implementation_Monitoring.xlsx');
+}
+
+function adminDownloadSampleSourceFile(){
+  if(typeof XLSX==='undefined'){alert('SheetJS not loaded.');return;}
+  var wb=XLSX.utils.book_new();
+  var headers=['Employee ID','Last Name','First Name','Middle Name','Gender','Date of Birth','Civil Status','Home Address','Zip Code','Contact No.','Email Address','Job Title','Department','Cost Center','Hire Date','Employment Status','TIN','SSS No.','PhilHealth No.','HDMF No.','Bank','Bank Account Type','Bank Account No.','Minimum Wage Earner','Basic Salary','De Minimis','Work Hours per Day','Pay Group'];
+  var sample1=['EMP-001','Santos','Maria','Reyes','Female','06/15/1990','Single','123 Rizal St, Makati City','1200','09171234567','maria.santos@example.com','HR Manager','Human Resources','','01/15/2020','Regular','123-456-789-000','34-1234567-8','12-345678901-2','1234-5678-9012','BDO','Savings','001234567890','No',45000,2000,8,'Rank and File'];
+  var sample2=['EMP-002','dela Cruz','Juan','','Male','03/22/1985','Married','456 Mabini Ave, Quezon City','1100','09189876543','juan.delacruz@example.com','Finance Officer','Finance','','05/01/2018','Regular','987-654-321-000','34-9876543-2','12-987654321-0','9876-5432-1098','Metrobank','Savings','009876543210','No',38000,'',8,'Rank and File'];
+  var ws=XLSX.utils.aoa_to_sheet([headers,sample1,sample2]);
+  ws['!cols']=headers.map(function(){return {wch:20};});
+  XLSX.utils.book_append_sheet(wb,ws,'Employee Information');
+  XLSX.writeFile(wb,'Sample_Sprout_HR_Source_File.xlsx');
+}
+
+function adminDownloadSampleOutputTemplate(){
+  if(typeof XLSX==='undefined'){alert('SheetJS not loaded.');return;}
+  var wb=XLSX.utils.book_new();
+  var cols=typeof MF_COLUMNS!=='undefined'?MF_COLUMNS:['Status','Employee ID*','Last Name*','First Name*','Middle Name','Gender*','Date of Birth (mm/dd/yyyy)*','Civil Status*','Home Address','Zip Code','Contact No.','Email Address*','Job Title','Department','Cost Center','Hire Date (mm/dd/yyyy)*','Employment Status*','Status Date (mm/dd/yyyy)*','ROHQ (Yes/No)','TIN*','RDO','PhilHealth No.','SSS No.','HDMF No.','Bank','Bank Account Type','Bank Account No.','Minimum Wage Earner (Yes/No)','Basic Salary*','De Minimis','Daily Allowance','Work Hours per Day','OT Computation Table*','Work Days Per Year*','Pay Group*','Payroll ID'];
+  var ws=XLSX.utils.aoa_to_sheet([cols,cols.map(function(){return '';})]);
+  ws['!cols']=cols.map(function(c){return {wch:Math.max(c.length+2,18)};});
+  XLSX.utils.book_append_sheet(wb,ws,'PayrollPie Import');
+  XLSX.writeFile(wb,'Sample_PayrollPie_Output_Template.xlsx');
+}
+
+function adminDownloadSamplePayrollCSV(type){
+  var isClient=(type==='client');
+  var filename=isClient?'Sample_Client_Payroll_Register.csv':'Sample_Sprout_Payroll_Register.csv';
+  var headers=isClient
+    ?['Employee ID','Employee Name','Department','Position','Days Worked','Basic Pay','Allowances','Overtime Pay','13th Month','Gross Pay','SSS','PhilHealth','HDMF','Withholding Tax','Total Deductions','Net Pay']
+    :['Employee ID','Employee Name','Department','Position','Days Worked','Basic Pay','Allowances','Overtime Pay','13th Month Accrual','Gross Pay','SSS Contribution','PhilHealth Contribution','HDMF Contribution','Withholding Tax','Total Deductions','Net Pay'];
+  var rows=[
+    headers,
+    isClient
+      ?['EMP-001','Santos, Maria','Human Resources','HR Manager',22,22500,2000,0,0,24500,581.30,400,100,3500,4581.30,19918.70]
+      :['EMP-001','Maria Santos','Human Resources','HR Manager',22,22500,2000,0,1875,24500,581.30,400,100,3500,4581.30,19918.70],
+    isClient
+      ?['EMP-002','dela Cruz, Juan','Finance','Finance Officer',22,19000,0,500,0,19500,581.30,400,100,2500,3581.30,15918.70]
+      :['EMP-002','Juan dela Cruz','Finance','Finance Officer',22,19000,0,500,1583.33,19500,581.30,400,100,2500,3581.30,15918.70],
+    isClient
+      ?['EMP-003','Reyes, Ana','Operations','Operations Associate',20,15000,1500,0,0,16500,363.30,300,100,1800,2563.30,13936.70]
+      :['EMP-003','Ana Reyes','Operations','Operations Associate',20,15000,1500,0,1250,16500,363.30,300,100,1800,2563.30,13936.70],
+  ];
+  var csv=rows.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
 // ══════════════ MASTERFILE CREATOR ══════════════
 // Exact 49 PayrollPie output columns (from template)
 var MF_COLUMNS=[
@@ -3769,6 +3890,7 @@ function renderMOMUI(){
       +'<div>'
         +'<div style="font-size:12px;font-weight:700;color:#c2410c;margin-bottom:2px;">Sprout MPS — MOM Generator</div>'
         +'<div style="font-size:11px;color:#ea580c;line-height:1.6;">Upload your <strong>meeting transcript (.docx)</strong> — required. Slide deck <strong>(.pdf)</strong> is optional but improves extraction accuracy.</div>'
+        +'<div style="margin-top:6px;"><button onclick="adminDownloadSampleTranscript()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #fed7aa;background:#fff7ed;color:#c2410c;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Download sample transcript (.docx)</button></div>'
       +'</div>'
     +'</div>'
     // Two upload cards
@@ -4593,6 +4715,7 @@ function renderMasterfileUI(){
       +'<div>'
         +'<div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:2px;">PayrollPie Employee Import — Masterfile Creator</div>'
         +'<div style="font-size:11px;color:#3b82f6;line-height:1.6;">Upload your <strong>Sprout HR source file</strong> and the <strong>PayrollPie output template</strong>. Data is mapped and downloaded instantly — no internet needed.</div>'
+        +'<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;"><button onclick="adminDownloadSampleSourceFile()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Sample source file (.xlsx)</button><button onclick="adminDownloadSampleOutputTemplate()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #ddd6fe;background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Sample output template (.xlsx)</button></div>'
       +'</div>'
     +'</div>'
     // Two upload cards
@@ -5684,9 +5807,13 @@ function vaRenderStep(){
 function vaRenderUpload(){
   var c=document.getElementById('va-content');
   c.innerHTML=
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">'
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.5rem;">'
       +vaUpCard('client','🏢','Client Payroll Register','Client-side payroll register<br><strong style="color:#7c3aed">CSV only</strong> &nbsp;·&nbsp; <span style="font-size:9px;">In Excel: File → Save As → CSV</span>','#7c3aed')
       +vaUpCard('sprout','🌱','Sprout Payroll Register','Sprout payroll register export<br><strong style="color:#16a34a">CSV only</strong> &nbsp;·&nbsp; <span style="font-size:9px;">Export from Sprout as CSV</span>','#16a34a')
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.85rem;text-align:center;">'
+      +'<div><button onclick="adminDownloadSamplePayrollCSV(\'client\')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #ddd6fe;background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Download sample client CSV</button></div>'
+      +'<div><button onclick="adminDownloadSamplePayrollCSV(\'sprout\')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Download sample Sprout CSV</button></div>'
     +'</div>'
     +'<div id="va-upload-status" style="display:none;"></div>';
   ['client','sprout'].forEach(function(k){
@@ -6655,6 +6782,7 @@ function renderCRFUI(){
     +'<div style="font-size:13px;font-weight:600;color:var(--s6);margin-bottom:4px;">Drag & drop or click to upload</div>'
     +'<div style="font-size:11px;color:var(--s4);">.xlsx files only &nbsp;·&nbsp; 2026 Implem sheet &nbsp;·&nbsp; Row 2</div>'
     +'<input type="file" id="crf-file-input" accept=".xlsx" style="display:none;" onchange="crfHandleFile(this)">'
+    +'<div style="margin-top:10px;"><button onclick="event.stopPropagation();adminDownloadSampleImplemenMonitoring()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Download sample template</button></div>'
     +'</div>'
     +'<div id="crf-file-info" style="display:none;align-items:center;gap:10px;padding:.7rem 1rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;margin-bottom:1.25rem;">'
     +'<span style="font-size:16px;">✅</span>'
@@ -6844,6 +6972,7 @@ function renderPACUI(){
     '<div style="font-size:13px;font-weight:600;color:var(--s6);margin-bottom:4px;">Drag & drop or click to upload</div>'+
     '<div style="font-size:11px;color:var(--s4);">.xlsx files only &nbsp;·&nbsp; 2026 Implem sheet &nbsp;·&nbsp; Row 2 onwards</div>'+
     '<input type="file" id="pac-file-input" accept=".xlsx" style="display:none;" onchange="pacHandleFile(this)">'+
+    '<div style="margin-top:10px;"><button onclick="event.stopPropagation();adminDownloadSampleImplemenMonitoring()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Download sample template</button></div>'+
     '</div>'+
     '<div id="pac-file-info" style="display:none;align-items:center;gap:10px;padding:.7rem 1rem;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;margin-bottom:1.25rem;">'+
     '<span style="font-size:16px;">✅</span>'+
