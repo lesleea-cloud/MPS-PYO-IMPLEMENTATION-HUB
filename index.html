@@ -1047,8 +1047,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
       Weekly Status
     </div>
-    <div class="nav-item" id="nav-monthly" onclick="go('monthly')" style="display:flex;padding:5px 1.1rem 5px 2.6rem;font-size:11.5px;">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+    <div class="nav-item" id="nav-monthly" onclick="go('monthly')" style="display:flex;">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
       Monthly Stats
     </div>
     <div class="nav-divider"></div>
@@ -1797,7 +1797,9 @@ function renderWeekly(){
   document.getElementById('weekly-greeting').textContent='Hi '+CURRENT_NAME+'!';
   var sk=['Live','Ongoing','Not yet started','Churned'];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var rl=(TEAM_CONFIG.implementers||[]).filter(Boolean);
+  var isImpl=CURRENT_ROLE==='implementer';
+  var myD=isImpl?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var rl=isImpl?[IMPL_USER]:(TEAM_CONFIG.implementers||[]).filter(Boolean);
   if(!rl.length)rl=['Ana','Bea','Carl','Dana','Eli'];
 
   /* shared helpers */
@@ -1908,8 +1910,9 @@ function renderWeekly(){
       h+='<th style="background:#fef08a;color:#713f12;font-weight:700;font-size:11px;padding:6px 10px;border:1px solid #fde047;text-align:'+(i===0?'center':'left')+';white-space:nowrap;">'+col+'</th>';
     });
     h+='</tr></thead><tbody>';
-    if(CL_ISSUES&&CL_ISSUES.length){
-      CL_ISSUES.forEach(function(iss,i){
+    var visibleIssues=CL_ISSUES&&CL_ISSUES.length?CL_ISSUES.filter(function(iss){return!isImpl||myD.some(function(d){return d.no===iss.clientNo;});}):[];
+    if(visibleIssues.length){
+      visibleIssues.forEach(function(iss,i){
         var resolved=iss.status==='resolved';
         var sc=resolved?'background:#dcfce7;color:#15803d;':'background:#dbeafe;color:#1d4ed8;';
         h+='<tr style="background:'+(i%2?'#f8fafc':'#fff')+'">';
@@ -1948,7 +1951,7 @@ function renderWeekly(){
   if(WK_TAB==='dates'){
     var ev=[];
     var DAY=86400000;
-    D.forEach(function(d){
+    myD.forEach(function(d){
       if(d.handOver){var dt=new Date(d.handOver);dt.setHours(0,0,0,0);if(dt>=TODAY)ev.push({dt:dt,date:d.handOver,type:'Hand Over',abbr:'HO',client:d.client,resource:d.resource,color:'#2563eb'});}
       if(d.liveRun){var dt=new Date(d.liveRun);dt.setHours(0,0,0,0);if(dt>=TODAY)ev.push({dt:dt,date:d.liveRun,type:'Live Run',abbr:'LR',client:d.client,resource:d.resource,color:'#16a34a'});}
       if(d.komDate){var dt=new Date(d.komDate);dt.setHours(0,0,0,0);if(dt>=TODAY)ev.push({dt:dt,date:d.komDate,type:'KOM',abbr:'KOM',client:d.client,resource:d.resource,color:'#7c3aed'});}
@@ -2008,12 +2011,13 @@ function renderWeekly(){
 function renderMonthlyStats(){
   var sk=['Live','Ongoing','Not yet started','Churned'];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
   var h='';
 
   /* Snap totals */
   h+='<div class="snap-row">';
   [{l:'Live',c:'#16a34a',k:'Live'},{l:'Ongoing',c:'#2563eb',k:'Ongoing'},{l:'Not Yet Started',c:'#ea580c',k:'Not yet started'},{l:'Churned',c:'#dc2626',k:'Churned'}].forEach(function(w){
-    var v=D.filter(function(d){return d.remarks===w.k;}).length;
+    var v=myD.filter(function(d){return d.remarks===w.k;}).length;
     h+='<div class="snap-card" style="--c:'+w.c+'"><div class="snap-label">'+w.l+'</div><div class="snap-val">'+v+'</div></div>';
   });
   h+='</div>';
@@ -2021,7 +2025,7 @@ function renderMonthlyStats(){
   /* Monthly breakdown */
   h+='<div class="panel"><div class="panel-title">Monthly Breakdown</div><div style="display:flex;flex-direction:column;gap:14px">';
   months.forEach(function(m){
-    var md=D.filter(function(d){return d.month===m;});if(!md.length)return;
+    var md=myD.filter(function(d){return d.month===m;});if(!md.length)return;
     h+='<div>';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
     h+='<span style="font-size:12px;font-weight:700;color:var(--s8)">'+m+'</span>';
@@ -5462,7 +5466,7 @@ function mfEscXml(s){
 var ROLE_CONFIG={
   manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','issues']},
   admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients','issues']},
-  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','weekly','monthly','clients']},
+  implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','clients']},
   god:{pill:'rp-god',pillText:'God Mode',avatarBg:'#7c3aed',defaultPage:'dashboard',hideNav:[]}
 };
 var _IS_GOD=false;
