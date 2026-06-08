@@ -2010,42 +2010,92 @@ function renderWeekly(){
 }
 
 function renderMonthlyStats(){
-  var sk=['Live','Ongoing','Not yet started','Churned'];
+  var STATUSES=[
+    {k:'Live',          label:'Live',        c:SC['Live']},
+    {k:'Ongoing',       label:'Ongoing',     c:SC['Ongoing']},
+    {k:'Not yet started',label:'Not Started',c:SC['Not yet started']},
+    {k:'On-Hold',       label:'On-Hold',     c:SC['On-Hold']},
+    {k:'For Turnover',  label:'For Turnover',c:SC['For Turnover']},
+    {k:'Churned',       label:'Churned',     c:SC['Churned']},
+  ];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
-  var h='';
 
-  /* Snap totals */
-  h+='<div class="snap-row">';
-  [{l:'Live',c:'#16a34a',k:'Live'},{l:'Ongoing',c:'#2563eb',k:'Ongoing'},{l:'Not Yet Started',c:'#ea580c',k:'Not yet started'},{l:'Churned',c:'#dc2626',k:'Churned'}].forEach(function(w){
-    var v=myD.filter(function(d){return d.remarks===w.k;}).length;
-    h+='<div class="snap-card" style="--c:'+w.c+'"><div class="snap-label">'+w.l+'</div><div class="snap-val">'+v+'</div></div>';
-  });
-  h+='</div>';
-
-  /* Monthly breakdown */
-  h+='<div class="panel"><div class="panel-title">Monthly Breakdown</div><div style="display:flex;flex-direction:column;gap:14px">';
+  /* Build row data — only months that have clients */
+  var rows=[];
   months.forEach(function(m){
-    var md=myD.filter(function(d){return d.month===m;});if(!md.length)return;
-    h+='<div>';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-    h+='<span style="font-size:12px;font-weight:700;color:var(--s8)">'+m+'</span>';
-    h+='<span style="font-size:11px;color:var(--s4);font-family:var(--mono)">'+md.length+' total</span>';
-    h+='</div>';
-    h+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
-    sk.forEach(function(s){
-      var cnt=md.filter(function(d){return d.remarks===s;}).length;
-      if(!cnt)return;
-      var pct2=Math.round(cnt/md.length*100);
-      h+='<div style="flex:1;min-width:80px;background:'+SC[s]+'14;border:1px solid '+SC[s]+'30;border-radius:8px;padding:8px 10px;border-left:3px solid '+SC[s]+'">';
-      h+='<div style="font-size:10px;font-weight:700;color:'+SC[s]+';text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">'+s+'</div>';
-      h+='<div style="font-size:20px;font-weight:700;color:'+SC[s]+';font-family:var(--mono);line-height:1">'+cnt+'</div>';
-      h+='<div style="font-size:10px;color:var(--s4);margin-top:2px">'+pct2+'%</div>';
-      h+='</div>';
-    });
-    h+='</div></div>';
+    var md=myD.filter(function(d){return d.month===m;});
+    if(!md.length)return;
+    var counts={};
+    STATUSES.forEach(function(s){counts[s.k]=md.filter(function(d){return d.remarks===s.k;}).length;});
+    var avgPct=md.length?Math.round(md.reduce(function(acc,d){return acc+pct(d);},0)/md.length):0;
+    rows.push({month:m,total:md.length,counts:counts,avgPct:avgPct});
   });
-  h+='</div></div>';
+
+  /* Totals row */
+  var totals={};
+  STATUSES.forEach(function(s){totals[s.k]=myD.filter(function(d){return d.remarks===s.k;}).length;});
+  var grandTotal=myD.length;
+  var grandAvg=grandTotal?Math.round(myD.reduce(function(acc,d){return acc+pct(d);},0)/grandTotal):0;
+
+  /* Only show status columns that have at least one client */
+  var visibleStatuses=STATUSES.filter(function(s){return totals[s.k]>0;});
+
+  /* Styles */
+  var TH='padding:8px 12px;font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--s2);white-space:nowrap;text-align:center;background:var(--s0);';
+  var THL='padding:8px 12px;font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--s2);background:var(--s0);text-align:left;';
+  var TD='padding:8px 12px;border-bottom:1px solid var(--s1);text-align:center;font-family:var(--mono);font-size:13px;font-weight:600;';
+  var TDL='padding:8px 12px;border-bottom:1px solid var(--s1);font-size:12px;font-weight:700;color:var(--s8);';
+  var TDF='padding:9px 12px;font-size:12px;font-weight:700;background:var(--s0);border-top:2px solid var(--s2);text-align:center;font-family:var(--mono);';
+
+  var h='<div class="panel" style="padding:0;overflow:hidden;">';
+  h+='<div style="padding:.85rem 1.2rem .6rem;display:flex;align-items:center;justify-content:space-between;">';
+  h+='<div class="panel-title" style="margin-bottom:0;">Client Status by Month</div>';
+  h+='<div style="font-size:11px;color:var(--s4);font-family:var(--mono);">'+grandTotal+' total clients</div>';
+  h+='</div>';
+  h+='<div style="overflow-x:auto;">';
+  h+='<table style="width:100%;border-collapse:collapse;">';
+
+  /* Header */
+  h+='<thead><tr>';
+  h+='<th style="'+THL+'min-width:110px;">Month</th>';
+  h+='<th style="'+TH+'min-width:60px;">Total</th>';
+  visibleStatuses.forEach(function(s){
+    h+='<th style="'+TH+'min-width:80px;color:'+s.c+';">'+s.label+'</th>';
+  });
+  h+='<th style="'+TH+'min-width:70px;">Avg %</th>';
+  h+='</tr></thead>';
+
+  /* Data rows */
+  h+='<tbody>';
+  rows.forEach(function(r,i){
+    var rowBg=i%2===0?'background:#fff;':'background:var(--s0);';
+    h+='<tr style="'+rowBg+'" onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\''+(i%2===0?'#fff':'var(--s0)')+'\'">';
+    h+='<td style="'+TDL+rowBg+'">'+r.month+'</td>';
+    h+='<td style="'+TD+rowBg+'color:var(--s7);">'+r.total+'</td>';
+    visibleStatuses.forEach(function(s){
+      var cnt=r.counts[s.k]||0;
+      var style=TD+rowBg+'color:'+(cnt>0?s.c:'var(--s3)')+';';
+      h+='<td style="'+style+'">'+(cnt>0?cnt:'—')+'</td>';
+    });
+    var pctColor=r.avgPct>=75?'#16a34a':r.avgPct>=40?'#2563eb':'var(--s5)';
+    h+='<td style="'+TD+rowBg+'color:'+pctColor+';">'+r.avgPct+'%</td>';
+    h+='</tr>';
+  });
+  h+='</tbody>';
+
+  /* Totals footer */
+  h+='<tfoot><tr>';
+  h+='<td style="'+TDF+'text-align:left;color:var(--s8);">Total</td>';
+  h+='<td style="'+TDF+'color:var(--s8);">'+grandTotal+'</td>';
+  visibleStatuses.forEach(function(s){
+    var cnt=totals[s.k]||0;
+    h+='<td style="'+TDF+'color:'+(cnt>0?s.c:'var(--s3)')+';">'+(cnt>0?cnt:'—')+'</td>';
+  });
+  h+='<td style="'+TDF+'color:var(--s5);">'+grandAvg+'%</td>';
+  h+='</tr></tfoot>';
+
+  h+='</table></div></div>';
 
   document.getElementById('monthly-out').innerHTML=h;
 }
