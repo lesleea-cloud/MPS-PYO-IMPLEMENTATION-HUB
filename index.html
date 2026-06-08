@@ -794,6 +794,30 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .cl-type-btn:not(.active):hover{color:var(--s8);}
 .cl-type-count{font-size:11px;color:var(--s4);font-family:var(--mono);}
 
+/* ══ IMPLEMENTATION VAULT ══ */
+.vault-fp{font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--s2);color:var(--s5);background:#fff;cursor:pointer;font-family:var(--font);transition:all .1s;white-space:nowrap;}
+.vault-fp:hover{background:var(--s0);}
+.vault-fp.on{background:var(--g0);color:var(--g4);border-color:var(--g2);font-weight:700;}
+.vault-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.vault-card{background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s;}
+.vault-card:hover{box-shadow:var(--shm);}
+.vault-card-top{display:flex;align-items:flex-start;gap:10px;}
+.vault-cat-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.vault-cat-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.vault-name{font-size:12px;font-weight:700;color:var(--s9);line-height:1.4;flex:1;}
+.vault-cat-badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;margin-top:3px;}
+.vault-notes{font-size:11px;color:var(--s5);line-height:1.5;}
+.vault-meta{font-size:10px;color:var(--s4);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.vault-actions{display:flex;gap:6px;margin-top:2px;}
+.vault-open-btn{flex:1;padding:6px;border-radius:7px;border:1px solid var(--g2);background:var(--g0);color:var(--g4);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px;transition:background .1s;}
+.vault-open-btn:hover{background:var(--g1);}
+.vault-del-btn{padding:6px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s4);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .1s;}
+.vault-del-btn:hover{border-color:var(--r1);background:var(--r0);color:var(--r);}
+.vault-empty{text-align:center;padding:3rem 1rem;color:var(--s4);}
+.vault-empty svg{width:40px;height:40px;stroke:var(--s2);margin-bottom:.75rem;}
+.vault-empty-title{font-size:14px;font-weight:600;color:var(--s5);margin-bottom:4px;}
+.vault-empty-sub{font-size:12px;}
+
 </style>
 </head>
 <body>
@@ -1069,6 +1093,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     <div class="nav-item" id="nav-issues" style="display:none" onclick="go('issues')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       Issue Log
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-group">Resources</div>
+    <div class="nav-item" id="nav-vault" onclick="go('vault')" style="display:flex;">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      Implementation Vault
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">System</div>
@@ -1376,6 +1406,75 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       </div>
     </div>
  
+    <!-- ══ IMPLEMENTATION VAULT ══ -->
+    <div class="page" id="page-vault">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Implementation Vault</div>
+          <div class="sec-sub" id="vault-sub">Central reference bank for all implementation files and links.</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button id="vault-add-btn" onclick="vaultShowForm()" style="display:none;padding:7px 16px;border-radius:8px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add File
+          </button>
+        </div>
+      </div>
+      <!-- Add form -->
+      <div class="panel" id="vault-form" style="display:none;">
+        <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:1rem;">New Entry</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Name <span style="color:var(--r)">*</span></div>
+            <input id="vf-name" type="text" placeholder="e.g. ACME Corp Proposal Q1 2026" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          </div>
+          <div>
+            <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Category <span style="color:var(--r)">*</span></div>
+            <select id="vf-cat" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+              <option value="">— Select category —</option>
+              <option>Proposals</option><option>MOMs</option><option>Decks</option>
+              <option>Payroll Policy</option><option>Templates</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Type</div>
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="link" checked onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Link (URL)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="file" onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Upload File</label>
+          </div>
+          <div id="vf-link-row">
+            <input id="vf-url" type="url" placeholder="https://..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          </div>
+          <div id="vf-file-row" style="display:none;">
+            <input id="vf-file" type="file" style="font-size:12px;font-family:var(--font);color:var(--s7);">
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Notes <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <textarea id="vf-notes" placeholder="e.g. Used for RACH NET-SEC KOM, June 2026" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;resize:none;height:56px;line-height:1.5;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="vaultSaveItem()" style="padding:7px 18px;border-radius:8px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save</button>
+          <button onclick="vaultHideForm()" style="padding:7px 14px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s5);font-size:12px;cursor:pointer;font-family:var(--font);">Cancel</button>
+          <div id="vf-error" style="display:none;font-size:11px;color:var(--r);align-self:center;"></div>
+        </div>
+      </div>
+      <!-- Filter pills -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <button class="vault-fp on" onclick="vaultFilter('all',this)">All</button>
+        <button class="vault-fp" onclick="vaultFilter('Proposals',this)">Proposals</button>
+        <button class="vault-fp" onclick="vaultFilter('MOMs',this)">MOMs</button>
+        <button class="vault-fp" onclick="vaultFilter('Decks',this)">Decks</button>
+        <button class="vault-fp" onclick="vaultFilter('Payroll Policy',this)">Payroll Policy</button>
+        <button class="vault-fp" onclick="vaultFilter('Templates',this)">Templates</button>
+        <button class="vault-fp" onclick="vaultFilter('Other',this)">Other</button>
+        <span id="vault-count" style="margin-left:auto;font-size:11px;color:var(--s4);font-family:var(--mono);"></span>
+      </div>
+      <!-- Cards grid -->
+      <div id="vault-grid"></div>
+    </div>
+
     <!-- ══ ISSUE LOG PAGE ══ -->
     <div class="page" id="page-issues" style="display:none;">
       <div class="sec-hdr">
@@ -1694,8 +1793,157 @@ var ST_PREVIEW = null;
 var USERS_DEFAULT=/*USERS_DATA*/[{"username":"Leslee","email":"lesleea@sprout.ph","password":"Leslee09151992","role":"implementer"},{"username":"Zona","email":"zmerto@sprout.ph","password":"Password1234","role":"admin"},{"username":"Denise","email":"mgonowon@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Armie","email":"armiev@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Pau","email":"pvaflor@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Mhae","email":"alorenzo@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Arianne","email":"arianneo@sprout.ph","password":"Password1234","role":"manager"}]/*END_USERS_DATA*/;
 var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){return JSON.parse(s);}if(USERS_DEFAULT.length){localStorage.setItem('pyo_users',JSON.stringify(USERS_DEFAULT));}return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}catch(e){return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}})();
 
+// ══════════════ IMPLEMENTATION VAULT ══════════════
+var VAULT_ITEMS=(function(){try{var s=localStorage.getItem('pyo_vault');return s?JSON.parse(s):[];}catch(e){return [];}})();
+var VAULT_FILTER='all';
+
+var VAULT_CAT={
+  'Proposals':    {c:'#1679FA',bg:'#EEF7FF',label:'Proposals'},
+  'MOMs':         {c:'#239A0D',bg:'#E9FAE5',label:'MOMs'},
+  'Decks':        {c:'#8139EE',bg:'#F5F3FF',label:'Decks'},
+  'Payroll Policy':{c:'#FF7F00',bg:'#FFFAEC',label:'Payroll Policy'},
+  'Templates':    {c:'#0891b2',bg:'#ecfeff',label:'Templates'},
+  'Other':        {c:'#64748b',bg:'#f1f5f9',label:'Other'},
+};
+
+function vaultCatIcon(cat){
+  var icons={
+    'Proposals':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+    'MOMs':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>',
+    'Decks':'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+    'Payroll Policy':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 13 12 16 15 13"/><line x1="12" y1="10" x2="12" y2="16"/>',
+    'Templates':'<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/>',
+    'Other':'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>',
+  };
+  return icons[cat]||icons['Other'];
+}
+
+function vaultSaveToStorage(){try{localStorage.setItem('pyo_vault',JSON.stringify(VAULT_ITEMS));}catch(e){}}
+
+function vaultShowForm(){
+  document.getElementById('vault-form').style.display='block';
+  document.getElementById('vf-name').focus();
+}
+function vaultHideForm(){
+  document.getElementById('vault-form').style.display='none';
+  ['vf-name','vf-url','vf-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('vf-cat').value='';
+  var fi=document.getElementById('vf-file');if(fi)fi.value='';
+  var radios=document.querySelectorAll('input[name="vf-type"]');
+  radios.forEach(function(r){r.checked=r.value==='link';});
+  vaultTypeToggle();
+  var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
+}
+function vaultTypeToggle(){
+  var type=document.querySelector('input[name="vf-type"]:checked').value;
+  document.getElementById('vf-link-row').style.display=type==='link'?'block':'none';
+  document.getElementById('vf-file-row').style.display=type==='file'?'block':'none';
+}
+function vaultSaveItem(){
+  var name=(document.getElementById('vf-name').value||'').trim();
+  var cat=document.getElementById('vf-cat').value;
+  var type=document.querySelector('input[name="vf-type"]:checked').value;
+  var notes=(document.getElementById('vf-notes').value||'').trim();
+  var err=document.getElementById('vf-error');
+  if(!name||!cat){err.textContent='Name and category are required.';err.style.display='inline';return;}
+  if(type==='link'){
+    var url=(document.getElementById('vf-url').value||'').trim();
+    if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
+    var item={id:'v_'+Date.now(),name:name,category:cat,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
+    VAULT_ITEMS.unshift(item);
+    vaultSaveToStorage();
+    vaultHideForm();
+    renderVault();
+  } else {
+    var file=document.getElementById('vf-file').files[0];
+    if(!file){err.textContent='Please select a file.';err.style.display='inline';return;}
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var item={id:'v_'+Date.now(),name:name,category:cat,type:'file',fileName:file.name,fileData:e.target.result,fileType:file.type,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
+      VAULT_ITEMS.unshift(item);
+      vaultSaveToStorage();
+      vaultHideForm();
+      renderVault();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+function _vaultToday(){
+  var d=new Date();
+  return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear();
+}
+function vaultDelete(id){
+  var item=VAULT_ITEMS.find(function(v){return v.id===id;});
+  if(!item)return;
+  var canDelete=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&item.uploadedBy===CURRENT_NAME);
+  if(!canDelete)return;
+  if(!confirm('Delete "'+item.name+'"?'))return;
+  VAULT_ITEMS=VAULT_ITEMS.filter(function(v){return v.id!==id;});
+  vaultSaveToStorage();
+  renderVault();
+}
+function vaultFilter(cat,btn){
+  VAULT_FILTER=cat;
+  document.querySelectorAll('.vault-fp').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  renderVault();
+}
+function renderVault(){
+  var canAdd=CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god';
+  var addBtn=document.getElementById('vault-add-btn');
+  if(addBtn)addBtn.style.display=canAdd?'flex':'none';
+
+  var items=VAULT_FILTER==='all'?VAULT_ITEMS:VAULT_ITEMS.filter(function(v){return v.category===VAULT_FILTER;});
+  var countEl=document.getElementById('vault-count');
+  if(countEl)countEl.textContent=items.length+' file'+(items.length!==1?'s':'');
+
+  var grid=document.getElementById('vault-grid');
+  if(!grid)return;
+  if(!items.length){
+    grid.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><div class="vault-empty-title">No files yet</div><div class="vault-empty-sub">'+(canAdd?'Click "Add File" to upload your first entry.':'No entries in this category.')+'</div></div>';
+    return;
+  }
+  var h='<div class="vault-grid">';
+  items.forEach(function(v){
+    var cfg=VAULT_CAT[v.category]||VAULT_CAT['Other'];
+    var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&v.uploadedBy===CURRENT_NAME);
+    var openHref=v.type==='link'?v.url:'javascript:vaultOpenFile(\''+v.id+'\')';
+    var openTarget=v.type==='link'?' target="_blank" rel="noopener"':'';
+    h+='<div class="vault-card">';
+    h+='<div class="vault-card-top">';
+    h+='<div class="vault-cat-icon" style="background:'+cfg.bg+';color:'+cfg.c+'"><svg viewBox="0 0 24 24">'+vaultCatIcon(v.category)+'</svg></div>';
+    h+='<div style="flex:1;min-width:0;">';
+    h+='<div class="vault-name">'+v.name+'</div>';
+    h+='<span class="vault-cat-badge" style="background:'+cfg.bg+';color:'+cfg.c+';">'+cfg.label+'</span>';
+    h+='</div></div>';
+    if(v.notes)h+='<div class="vault-notes">'+v.notes+'</div>';
+    h+='<div class="vault-meta">';
+    h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+v.uploadedBy;
+    h+='<span style="color:var(--s2)">·</span>';
+    h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+v.uploadedAt;
+    h+='<span style="color:var(--s2)">·</span>';
+    h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+(v.type==='link'?'<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>')+'</svg>'+(v.type==='link'?'Link':'File');
+    if(v.fileName)h+='<span style="color:var(--s3)">· '+v.fileName+'</span>';
+    h+='</div>';
+    h+='<div class="vault-actions">';
+    h+='<a class="vault-open-btn" href="'+openHref+'"'+openTarget+'><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+(v.type==='link'?'<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>':'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>')+'</svg>'+(v.type==='link'?'Open Link':'Download')+'</a>';
+    if(canDel)h+='<button class="vault-del-btn" onclick="vaultDelete(\''+v.id+'\')">Delete</button>';
+    h+='</div></div>';
+  });
+  h+='</div>';
+  grid.innerHTML=h;
+}
+function vaultOpenFile(id){
+  var item=VAULT_ITEMS.find(function(v){return v.id===id;});
+  if(!item||!item.fileData)return;
+  var a=document.createElement('a');
+  a.href=item.fileData;
+  a.download=item.fileName||item.name;
+  a.click();
+}
+
 function go(page){
-  ['dashboard','weekly','monthly','clients','impl','settings','issues'].forEach(function(p){
+  ['dashboard','weekly','monthly','clients','impl','settings','issues','vault'].forEach(function(p){
     var pg=document.getElementById('page-'+p);
     var ni=document.getElementById('nav-'+p);
     if(pg)pg.classList.remove('active');
@@ -1733,6 +1981,7 @@ function go(page){
   else if(page==='impl')renderImpl();
   else if(page==='settings')renderSettings();
   else if(page==='issues')renderIssuesPage();
+  else if(page==='vault')renderVault();
 }
  
 function renderDashboard(){
@@ -5996,7 +6245,7 @@ function startApp(){
   var _ds=_MN[_nd.getMonth()]+' '+_nd.getDate()+', '+_nd.getFullYear();
   var hdEl=document.getElementById('hdr-date');if(hdEl)hdEl.textContent=_ds;
   var luEl=document.getElementById('last-updated');if(luEl)luEl.textContent='As of '+_ds;
-  ['dashboard','weekly','monthly','clients','impl','my-clients','issues','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
+  ['dashboard','weekly','monthly','clients','impl','my-clients','issues','vault','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
   var adminNavSec=document.getElementById('nav-admin-section');
   if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
@@ -6024,7 +6273,7 @@ function godSwitch(role){
   document.getElementById('role-pill').className='role-pill '+cfg.pill;
   document.getElementById('role-pill').textContent=cfg.pillText;
   document.getElementById('hdr-avatar').style.background=cfg.avatarBg;
-  ['dashboard','weekly','monthly','clients','impl','my-clients','issues','settings'].forEach(function(p){
+  ['dashboard','weekly','monthly','clients','impl','my-clients','issues','vault','settings'].forEach(function(p){
     var el=document.getElementById('nav-'+p);if(!el)return;
     el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';
   });
