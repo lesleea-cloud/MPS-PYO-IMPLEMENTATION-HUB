@@ -1284,8 +1284,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </button>
         </div>
       </div>
-      <!-- Client type toggle -->
-      <div class="cl-type-bar">
+      <!-- Client type toggle — hidden; sidebar dropdown handles PYO/PS switching -->
+      <div class="cl-type-bar" style="display:none;">
         <div class="cl-type-toggle">
           <button class="cl-type-btn active" id="ctb-pyo" onclick="setClType('pyo')">PYO</button>
           <button class="cl-type-btn" id="ctb-ps" onclick="setClType('ps')">Payroll Starter</button>
