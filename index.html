@@ -5956,7 +5956,7 @@ function doSignOut(){
  
 function godSwitch(role){
   CURRENT_ROLE=role;
-  if(role==='implementer')IMPL_USER=TEAM_CONFIG.implementers[0]||CURRENT_NAME;
+  if(role==='implementer')IMPL_USER=CURRENT_NAME||TEAM_CONFIG.implementers[0];
   var cfg=ROLE_CONFIG[CURRENT_ROLE]||ROLE_CONFIG['manager'];
   document.getElementById('role-pill').className='role-pill '+cfg.pill;
   document.getElementById('role-pill').textContent=cfg.pillText;
