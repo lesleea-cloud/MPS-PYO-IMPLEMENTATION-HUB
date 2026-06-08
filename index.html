@@ -1800,8 +1800,16 @@ function renderWeekly(){
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var isImpl=CURRENT_ROLE==='implementer';
   var myD=isImpl?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
-  var rl=isImpl?[IMPL_USER]:(TEAM_CONFIG.implementers||[]).filter(Boolean);
-  if(!rl.length)rl=['Ana','Bea','Carl','Dana','Eli'];
+  var rl;
+  if(isImpl){
+    rl=[IMPL_USER];
+  } else {
+    var _seen={};
+    D.forEach(function(d){if(d.resource&&d.resource.trim())_seen[d.resource.trim()]=true;});
+    rl=Object.keys(_seen).sort();
+    if(!rl.length)rl=(TEAM_CONFIG.implementers||[]).filter(Boolean);
+    if(!rl.length)rl=['Ana','Bea','Carl','Dana','Eli'];
+  }
 
   /* shared helpers */
   function isStar(d){return /payroll starter/i.test(d.service||'');}
