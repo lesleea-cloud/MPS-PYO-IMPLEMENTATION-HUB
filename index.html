@@ -880,24 +880,15 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div class="lf-title">Sign in to continue</div>
           <div class="lf-sub">Use your Sprout work account. You'll land on your role's dashboard automatically.</div>
           <div class="lf-error" id="login-error" style="display:none;"></div>
-          <div id="lf-local-form" style="width:100%;display:flex;flex-direction:column;gap:10px;">
-            <div style="position:relative;width:100%;">
-              <button class="lf-btn" id="lf-dark-btn" onclick="handleSignInClick()">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                Sign in with Google
-              </button>
-              <div id="google-signin-btn" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:2;opacity:0.001;"></div>
-            </div>
-            <input id="ll-email" type="email" style="display:none;">
-            <div id="ll-local-fallback" style="display:none;flex-direction:column;gap:5px;width:100%;">
-              <button onclick="llPickUser('lesleea@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Leslee</span><span style="font-size:10px;color:#9ab890;">lesleea@sprout.ph</span></button>
-              <button onclick="llPickUser('zmerto@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Zona</span><span style="font-size:10px;color:#9ab890;">zmerto@sprout.ph</span></button>
-              <button onclick="llPickUser('mgonowon@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Denise</span><span style="font-size:10px;color:#9ab890;">mgonowon@sprout.ph</span></button>
-              <button onclick="llPickUser('armiev@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Armie</span><span style="font-size:10px;color:#9ab890;">armiev@sprout.ph</span></button>
-              <button onclick="llPickUser('pvaflor@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Pau</span><span style="font-size:10px;color:#9ab890;">pvaflor@sprout.ph</span></button>
-              <button onclick="llPickUser('alorenzo@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Mhae</span><span style="font-size:10px;color:#9ab890;">alorenzo@sprout.ph</span></button>
-              <button onclick="llPickUser('arianneo@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Arianne</span><span style="font-size:10px;color:#9ab890;">arianneo@sprout.ph</span></button>
-            </div>
+          <div id="lf-local-form" style="width:100%;display:flex;flex-direction:column;gap:6px;">
+            <div style="font-size:11px;color:#5a7a50;margin-bottom:2px;">Select your name to continue:</div>
+            <button onclick="llPickUser('lesleea@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Leslee</span><span style="font-size:10px;color:#9ab890;">lesleea@sprout.ph</span></button>
+            <button onclick="llPickUser('zmerto@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Zona</span><span style="font-size:10px;color:#9ab890;">zmerto@sprout.ph</span></button>
+            <button onclick="llPickUser('mgonowon@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Denise</span><span style="font-size:10px;color:#9ab890;">mgonowon@sprout.ph</span></button>
+            <button onclick="llPickUser('armiev@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Armie</span><span style="font-size:10px;color:#9ab890;">armiev@sprout.ph</span></button>
+            <button onclick="llPickUser('pvaflor@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Pau</span><span style="font-size:10px;color:#9ab890;">pvaflor@sprout.ph</span></button>
+            <button onclick="llPickUser('alorenzo@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Mhae</span><span style="font-size:10px;color:#9ab890;">alorenzo@sprout.ph</span></button>
+            <button onclick="llPickUser('arianneo@sprout.ph')" style="width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;" onmouseover="this.style.borderColor='#32CE13'" onmouseout="this.style.borderColor='#d4e8cc'"><span style="font-weight:600;">Arianne</span><span style="font-size:10px;color:#9ab890;">arianneo@sprout.ph</span></button>
           </div>
           <div class="lf-note">2026 · Sprout Solutions</div>
           <div style="display:none;">
@@ -6480,51 +6471,25 @@ function handleGoogleCredential(response){
   }catch(e){showLoginError('Sign-in failed. Please try again.');}
 }
 
-function initGoogleSignIn(){
-  if(window.location.protocol==='file:'){return;}
-  if(typeof google==='undefined'||!google.accounts){setTimeout(initGoogleSignIn,100);return;}
-  google.accounts.id.initialize({
-    client_id:'645223084491-2ai2av0bql15nr0hstnln461usjohfpj.apps.googleusercontent.com',
-    callback:handleGoogleCredential,
-    hd:'sprout.ph'
-  });
-  // Overlay technique: render the real GIS button invisibly on top of the dark button.
-  // User sees/clicks the dark button, but the GIS iframe receives the click and handles OAuth.
-  var overlay=document.getElementById('google-signin-btn');
-  var darkBtn=document.getElementById('lf-dark-btn');
-  if(overlay){
-    var w=overlay.offsetWidth||324;
-    google.accounts.id.renderButton(overlay,{theme:'outline',size:'large',width:w,text:'signin_with'});
-    overlay.style.display='block';
-    if(darkBtn)darkBtn.style.pointerEvents='none';
-  }
-}
-function handleSignInClick(){
-  // Only reached on file:// (Vercel clicks go to the GIS overlay instead)
-  var fb=document.getElementById('ll-local-fallback');
-  if(fb){fb.style.display=(fb.style.display==='flex'?'none':'flex');fb.style.flexDirection='column';}
-}
 function llPickUser(email){
-  var emailEl=document.getElementById('ll-email');
-  if(emailEl)emailEl.value=email;
   var user=USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===email;})
         ||USERS.find(function(u){return (u.email||'').toLowerCase()===email;});
-  if(!user){showLoginError('Your account ('+email+') is not authorized.');return;}
+  if(!user){showLoginError('Account not found: '+email);return;}
   localStorage.setItem('pyo_last_email',email);
-  var errEl=document.getElementById('login-error');
-  if(errEl){errEl.style.display='none';errEl.classList.remove('show');}
   CURRENT_ROLE=user.role||'implementer';
   if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
   CURRENT_NAME=user.username;
   if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
   startApp();
 }
-// Call directly — script is at end of body so DOM is ready, no need to wait for window.load.
-// For Vercel, the GIS retry (setTimeout) inside the function handles async script loading.
 (function(){
-  var ready=document.getElementById('ll-local-fallback');
-  if(ready){initGoogleSignIn();}
-  else{window.addEventListener('load',initGoogleSignIn);}
+  var saved=localStorage.getItem('pyo_last_email');
+  if(saved){
+    var user=USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===saved;})
+            ||USERS.find(function(u){return (u.email||'').toLowerCase()===saved;});
+    if(user){llPickUser(saved);return;}
+  }
+  // No saved session — show the name picker
 })();
 
 async function loadFromSupabase(){
