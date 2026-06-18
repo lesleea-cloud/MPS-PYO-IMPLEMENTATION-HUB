@@ -1344,13 +1344,17 @@ The Add New Client modal now sources its assignee fields from live `TEAM_CONFIG`
 | Function | Purpose |
 |---|---|
 | `openAddClientModal()` | Rebuilt to repopulate all dropdowns from `TEAM_CONFIG` on every open; resets conditional rows to hidden |
-| `acmCheckGov()` | Shows/hides `acm-gov-row` based on service containing "gov" or Sprout Gov checkbox ticked |
+| `acmCheckGov()` | Shows/hides `acm-gov-row` based on service containing "gov", OR any of: Sprout Gov, Benefits Admin, Statutory Disbursement checkboxes ticked |
 | `acmCheckOtk()` | Shows/hides `acm-otk-row` based on Outsourced Timekeeping checkbox |
 | `submitAddClient()` | Reads `acm-gov` and `acm-otk-impl` and writes `gov` and `otkImpl` to new client record |
 
 #### Overview tab HR-I cell
 
 Changed from inline text input to a `<select>` populated from `TEAM_CONFIG.implHR`. Uses `clUpdateHrI()` on change.
+
+#### Overview tab Gov Resource cell (June 18, 2026)
+
+Changed from inline text input to a `<select class="cl-gov-sel">` populated from `TEAM_CONFIG.implGov`. Only rendered when `isGov` is true. Pre-selects the current `d.gov` value. Uses `clUpdateGov()` on change. Read-only roles see plain text. CSS class `.cl-gov-sel` added (identical style to `.cl-hri-sel`).
 
 ---
 
