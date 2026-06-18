@@ -2901,7 +2901,7 @@ function ahToggleCb(no,field,curVal){
   var ahLbl={turnedOver:'Turned Over'};
   logAudit(no,'After Hand Over',field,ahLbl[field]||field,curVal?'Yes':'No',newVal?'Yes':'No');
   CL_AFTERHO[no][field]=newVal;
-  autoSave();renderClients();
+  autoSave();_supaFlush();renderClients();
 }
 
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -6311,7 +6311,8 @@ function tlHandleFiles(e){
 function tlParseFile(binaryStr,filename){
   var wb=XLSX.read(binaryStr,{type:'binary',cellDates:false});
   var ws=wb.Sheets[wb.SheetNames[0]];
-  var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,dateNF:'MM/DD/YYYY'});
+  // raw:true keeps date serials as numbers so parseImportDate can handle them
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:true});
   // Extract client name from filename: strip " - Project Timeline[...].xlsx"
   var clientName=filename.replace(/\s*[-–—]\s*Project\s*Timeline.*$/i,'').replace(/\.xlsx$/i,'').trim();
   // Match client in D[] — exact first, then substring
@@ -6323,7 +6324,8 @@ function tlParseFile(binaryStr,filename){
     var colA=String(row[0]||'').trim();
     var colB=String(row[1]||'').trim();
     var task=colA||colB;
-    var tgtStart=String(row[4]||'').trim();
+    // Pass raw value (number or string) directly — do NOT String() it first
+    var tgtStart=(row[4]!==undefined&&row[4]!==null&&row[4]!=='') ? row[4] : '';
     if(/PHASE\s*1|KICK.?OFF/i.test(colA)){phase='kom';return;}
     if(/PHASE\s*3|SIMULATION/i.test(colA)){phase='sim';return;}
     if(/PHASE\s*6|PARALLEL.?RUN/i.test(colA)){phase='par';return;}
@@ -6684,7 +6686,7 @@ async function loadFromSupabase(){
     var rm=await _supa.from('client_milestones').select('*');
     if(rm.data){CL_MILESTONES={};rm.data.forEach(function(m){CL_MILESTONES[m.client_no]={churnDate:m.churn_date||'',billingMonth:m.billing_month||'',monthCompleted:m.month_completed||''};});}
     var rh=await _supa.from('client_afterho').select('*');
-    if(rh.data){CL_AFTERHO={};rh.data.forEach(function(a){CL_AFTERHO[a.client_no]={csm:a.csm||'',processor:a.processor||''};});}
+    if(rh.data){CL_AFTERHO={};rh.data.forEach(function(a){CL_AFTERHO[a.client_no]={csm:a.csm||'',processor:a.processor||'',turnedOver:a.turned_over?1:0};});}
     var rt=await _supa.from('team_config').select('*').eq('id',1).maybeSingle();
     if(rt.data){
       if(rt.data.impl_pyo)TEAM_CONFIG.implPYO=rt.data.impl_pyo;
@@ -6727,7 +6729,7 @@ async function _supaFlush(){
     }
     var changedAfterho=Object.keys(CL_AFTERHO).filter(function(k){return JSON.stringify(CL_AFTERHO[k])!==_snap.afterho[k];});
     if(changedAfterho.length){
-      var hr=changedAfterho.map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||''};});
+      var hr=changedAfterho.map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||'',turned_over:!!a.turnedOver};});
       var r4=await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
       if(r4.error){console.warn('afterho save error:',r4.error.message);}
       else{changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});}
