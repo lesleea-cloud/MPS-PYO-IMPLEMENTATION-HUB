@@ -6482,15 +6482,15 @@ function llPickUser(email){
   if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
   startApp();
 }
-(function(){
+setTimeout(function(){
   var saved=localStorage.getItem('pyo_last_email');
   if(saved){
     var user=USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===saved;})
             ||USERS.find(function(u){return (u.email||'').toLowerCase()===saved;});
     if(user){llPickUser(saved);return;}
   }
-  // No saved session — show the name picker
-})();
+  // No saved session — login screen already visible with name picker
+},50);
 
 async function loadFromSupabase(){
   try{
