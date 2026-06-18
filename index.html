@@ -6563,37 +6563,38 @@ async function loadFromSupabase(){
 }
 
 var _supaSaveTimer=null;
+async function _supaFlush(){
+  try{
+    // Only upsert rows that changed vs the Supabase snapshot — never overwrite other users' edits
+    var changedClients=D.filter(function(d){return JSON.stringify(d)!==_snap.clients[d.no];});
+    if(changedClients.length){
+      var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,par:d.par,live:d.live,post:d.post,updated_at:new Date().toISOString()};});
+      await _supa.from('clients').upsert(rows,{onConflict:'no'});
+      changedClients.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});
+    }
+    var changedAddons=Object.keys(CL_ADDONS).filter(function(k){return JSON.stringify(CL_ADDONS[k])!==_snap.addons[k];});
+    if(changedAddons.length){
+      var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk,payroll_disbursement:!!a.pd};});
+      await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
+      changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});
+    }
+    var changedMilestones=Object.keys(CL_MILESTONES).filter(function(k){return JSON.stringify(CL_MILESTONES[k])!==_snap.milestones[k];});
+    if(changedMilestones.length){
+      var mr=changedMilestones.map(function(k){var m=CL_MILESTONES[k];return{client_no:parseInt(k),churn_date:m.churnDate||'',billing_month:m.billingMonth||'',month_completed:m.monthCompleted||''};});
+      await _supa.from('client_milestones').upsert(mr,{onConflict:'client_no'});
+      changedMilestones.forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});
+    }
+    var changedAfterho=Object.keys(CL_AFTERHO).filter(function(k){return JSON.stringify(CL_AFTERHO[k])!==_snap.afterho[k];});
+    if(changedAfterho.length){
+      var hr=changedAfterho.map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||''};});
+      await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
+      changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});
+    }
+  }catch(e){console.warn('Supabase save failed (localStorage backup preserved):',e);}
+}
 function supabaseSave(){
   clearTimeout(_supaSaveTimer);
-  _supaSaveTimer=setTimeout(async function(){
-    try{
-      // Only upsert rows that changed vs the Supabase snapshot — never overwrite other users' edits
-      var changedClients=D.filter(function(d){return JSON.stringify(d)!==_snap.clients[d.no];});
-      if(changedClients.length){
-        var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,par:d.par,live:d.live,post:d.post,updated_at:new Date().toISOString()};});
-        await _supa.from('clients').upsert(rows,{onConflict:'no'});
-        changedClients.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});
-      }
-      var changedAddons=Object.keys(CL_ADDONS).filter(function(k){return JSON.stringify(CL_ADDONS[k])!==_snap.addons[k];});
-      if(changedAddons.length){
-        var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk,payroll_disbursement:!!a.pd};});
-        await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
-        changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});
-      }
-      var changedMilestones=Object.keys(CL_MILESTONES).filter(function(k){return JSON.stringify(CL_MILESTONES[k])!==_snap.milestones[k];});
-      if(changedMilestones.length){
-        var mr=changedMilestones.map(function(k){var m=CL_MILESTONES[k];return{client_no:parseInt(k),churn_date:m.churnDate||'',billing_month:m.billingMonth||'',month_completed:m.monthCompleted||''};});
-        await _supa.from('client_milestones').upsert(mr,{onConflict:'client_no'});
-        changedMilestones.forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});
-      }
-      var changedAfterho=Object.keys(CL_AFTERHO).filter(function(k){return JSON.stringify(CL_AFTERHO[k])!==_snap.afterho[k];});
-      if(changedAfterho.length){
-        var hr=changedAfterho.map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||''};});
-        await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
-        changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});
-      }
-    }catch(e){console.warn('Supabase save failed (localStorage backup preserved):',e);}
-  },1500);
+  _supaSaveTimer=setTimeout(_supaFlush,1500);
 }
 
 function doGoogleLogin(){
@@ -6716,7 +6717,11 @@ function startApp(){
   go(cfg.defaultPage);
 }
  
-function doSignOut(){
+async function doSignOut(){
+  // Cancel the debounce timer and flush any unsaved changes to Supabase before signing out
+  clearTimeout(_supaSaveTimer);
+  _supaSaveTimer=null;
+  try{await _supaFlush();}catch(e){}
   _authHandled=false;_IS_GOD=false;
   CURRENT_ROLE='manager';CURRENT_NAME='';SELECTED_PROJECT=null;
   try{_supa.auth.signOut();}catch(e){}

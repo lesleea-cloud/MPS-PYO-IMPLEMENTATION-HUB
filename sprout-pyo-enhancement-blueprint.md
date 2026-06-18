@@ -320,7 +320,8 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 - `#login-screen` CSS hardened — added `flex-direction:row`, `min-height:100vh`, `width:100vw` to prevent layout collapse
 - `.login-right` CSS hardened — added `min-width:0`, `height:100%` to ensure right panel always fills its flex space and centers the card correctly
 - `autoSave()` now calls `supabaseSave()` after localStorage save
-- `doSignOut()` simplified — calls `_supa.auth.signOut()`, hides app, shows login screen (old form-reset code removed since role cards no longer exist in DOM)
+- `supabaseSave()` debounces 1500ms to avoid hammering Supabase on rapid edits. Save logic extracted into `_supaFlush()` (async) so it can be called directly when needed (June 19, 2026)
+- `doSignOut()` is now async — cancels the debounce timer and calls `await _supaFlush()` before signing out, so no edits (new clients, status changes, etc.) are ever lost on logout (June 19, 2026)
 
 ---
 
