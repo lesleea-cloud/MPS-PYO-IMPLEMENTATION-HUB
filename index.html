@@ -880,12 +880,22 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div class="lf-title">Sign in to continue</div>
           <div class="lf-sub">Use your Sprout work account. You'll land on your role's dashboard automatically.</div>
           <div class="lf-error" id="login-error" style="display:none;"></div>
-          <div id="lf-local-form" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:12px;">
+          <div id="lf-local-form" style="width:100%;display:flex;flex-direction:column;gap:10px;">
             <div id="google-signin-btn"></div>
-            <button id="gsi-fallback-btn" onclick="triggerGoogleSignIn()" style="display:flex;width:300px;height:40px;border:1px solid #dadce0;border-radius:4px;background:#fff;align-items:center;justify-content:center;gap:10px;cursor:pointer;font-family:'Roboto',sans-serif;font-size:14px;color:#3c4043;padding:0 12px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">
-              <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"/><path fill="#FBBC05" d="M3.964 10.706A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.962L3.964 6.294C4.672 4.169 6.656 3.58 9 3.58z"/></svg>
-              Sign in with Google
-            </button>
+            <div id="lf-email-form" style="display:flex;flex-direction:column;gap:8px;">
+              <div id="ll-acct-row" style="display:none;font-size:12px;color:#5a7a50;text-align:center;padding:2px 0 2px;">
+                Signing in as <strong id="ll-acct-label" style="color:#092903;"></strong>
+                &nbsp;·&nbsp;<span onclick="llSwitchAccount()" style="color:#32CE13;cursor:pointer;text-decoration:underline;">Not you?</span>
+              </div>
+              <input id="ll-email" type="email" placeholder="your@sprout.ph"
+                style="width:100%;padding:10px 13px;border-radius:9px;border:1.5px solid #d4e8cc;background:#fff;font-size:13px;font-family:'Rubik',sans-serif;color:#092903;outline:none;transition:border-color .15s;box-sizing:border-box;"
+                onfocus="this.style.borderColor='#32CE13'" onblur="this.style.borderColor='#d4e8cc'"
+                onkeydown="if(event.key==='Enter')doEmailSignIn()">
+              <button id="gsi-fallback-btn" class="lf-btn" onclick="doEmailSignIn()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#D2F612" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#D2F612" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#D2F612" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#D2F612" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Sign in with Google
+              </button>
+            </div>
           </div>
           <div class="lf-note">2026 · Sprout Solutions</div>
           <div style="display:none;">
@@ -6468,13 +6478,8 @@ function handleGoogleCredential(response){
   }catch(e){showLoginError('Sign-in failed. Please try again.');}
 }
 
-var _gsiRetries=0;
 function initGoogleSignIn(){
-  if(typeof google==='undefined'||!google.accounts){
-    _gsiRetries++;
-    if(_gsiRetries>30){var fb=document.getElementById('gsi-fallback-btn');if(fb)fb.style.display='flex';}
-    setTimeout(initGoogleSignIn,100);return;
-  }
+  if(typeof google==='undefined'||!google.accounts){setTimeout(initGoogleSignIn,100);return;}
   google.accounts.id.initialize({
     client_id:'645223084491-7c5foosn9d8kfc5lvos4l6etgc7fe8k3.apps.googleusercontent.com',
     callback:handleGoogleCredential,
@@ -6484,17 +6489,50 @@ function initGoogleSignIn(){
     document.getElementById('google-signin-btn'),
     {theme:'outline',size:'large',width:300,text:'signin_with'}
   );
+  // On authorized HTTPS origins (Vercel), GSI renders a real iframe — hide the email form and use it instead
   setTimeout(function(){
-    var btn=document.getElementById('google-signin-btn');
-    var fb=document.getElementById('gsi-fallback-btn');
-    var iframe=btn&&btn.querySelector('iframe');
-    if(iframe&&iframe.offsetHeight>0){if(fb)fb.style.display='none';}
+    var gsiBtn=document.getElementById('google-signin-btn');
+    var iframe=gsiBtn&&gsiBtn.querySelector('iframe');
+    if(iframe&&iframe.offsetHeight>0){
+      var ef=document.getElementById('lf-email-form');
+      if(ef)ef.style.display='none';
+      gsiBtn.style.display='block';
+    }
   },1500);
 }
-function triggerGoogleSignIn(){
-  if(typeof google!=='undefined'&&google.accounts&&google.accounts.id)google.accounts.id.prompt();
+function doEmailSignIn(){
+  var email=(document.getElementById('ll-email').value||'').trim().toLowerCase();
+  if(!email){showLoginError('Please enter your work email.');return;}
+  var user=USERS.find(function(u){return (u.email||'').toLowerCase()===email;});
+  if(!user){showLoginError('Your account ('+email+') is not authorized. Contact your administrator.');return;}
+  localStorage.setItem('pyo_last_email',email);
+  var errEl=document.getElementById('login-error');
+  if(errEl){errEl.style.display='none';errEl.classList.remove('show');}
+  CURRENT_ROLE=user.role||'implementer';
+  if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
+  CURRENT_NAME=user.username;
+  if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
+  startApp();
 }
-window.addEventListener('load',initGoogleSignIn);
+function initLoginState(){
+  var saved=localStorage.getItem('pyo_last_email');
+  if(!saved)return;
+  var emailEl=document.getElementById('ll-email');
+  if(emailEl){emailEl.value=saved;emailEl.style.display='none';}
+  var user=USERS.find(function(u){return (u.email||'').toLowerCase()===saved;});
+  var lbl=document.getElementById('ll-acct-label');
+  var row=document.getElementById('ll-acct-row');
+  if(lbl)lbl.textContent=user?user.username:saved;
+  if(row)row.style.display='block';
+}
+function llSwitchAccount(){
+  localStorage.removeItem('pyo_last_email');
+  var emailEl=document.getElementById('ll-email');
+  if(emailEl){emailEl.value='';emailEl.style.display='';}
+  var row=document.getElementById('ll-acct-row');
+  if(row)row.style.display='none';
+}
+window.addEventListener('load',function(){initGoogleSignIn();initLoginState();});
 
 async function loadFromSupabase(){
   try{
