@@ -6472,24 +6472,26 @@ function handleGoogleCredential(response){
 }
 
 function llPickUser(email){
-  var user=USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===email;})
-        ||USERS.find(function(u){return (u.email||'').toLowerCase()===email;});
-  if(!user){showLoginError('Account not found: '+email);return;}
-  localStorage.setItem('pyo_last_email',email);
-  CURRENT_ROLE=user.role||'implementer';
-  if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
-  CURRENT_NAME=user.username;
-  if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
-  startApp();
+  try{
+    var user=USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===email;})
+          ||USERS.find(function(u){return (u.email||'').toLowerCase()===email;});
+    if(!user){showLoginError('Account not found: '+email);return;}
+    localStorage.setItem('pyo_last_email',email);
+    CURRENT_ROLE=user.role||'implementer';
+    if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
+    CURRENT_NAME=user.username;
+    if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
+    startApp();
+  }catch(e){
+    var errEl=document.getElementById('login-error');
+    if(errEl){errEl.textContent='Error: '+e.message;errEl.style.display='block';}
+  }
 }
 setTimeout(function(){
-  var saved=localStorage.getItem('pyo_last_email');
-  if(saved){
-    var user=USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===saved;})
-            ||USERS.find(function(u){return (u.email||'').toLowerCase()===saved;});
-    if(user){llPickUser(saved);return;}
-  }
-  // No saved session — login screen already visible with name picker
+  try{
+    var saved=localStorage.getItem('pyo_last_email')||'lesleea@sprout.ph';
+    llPickUser(saved);
+  }catch(e){}
 },50);
 
 async function loadFromSupabase(){
