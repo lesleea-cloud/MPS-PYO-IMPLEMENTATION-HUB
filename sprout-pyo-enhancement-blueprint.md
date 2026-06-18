@@ -169,14 +169,14 @@ The full dashboard was redesigned with these principles:
 |---|---|---|
 | Overview | Green | Implementor, PM, Status, Service, Duration |
 | Implementation phases | Blue | KOM, Simulation, Parallel Run, Live Run, Post Live — Done/Pending |
-| Add-on services | Purple | Sprout Gov, Benefits Admin, Salary Disbursement, Statutory Disbursement, Outsourced Timekeeping |
+| Add-on services | Purple | Sprout Gov, Benefits Admin, Salary Disbursement, Statutory Disbursement, Outsourced Timekeeping, Payroll Disbursement |
 | Milestone dates | Orange | KOM date, Hand over date, Live run date, Churn date, Billing month, Month completed |
 | After hand over | Gray | CSM, Processor |
 
 **Interaction:**
 - Clicking a row in **My Projects** highlights it + fades in that client's details
 - Clicking a row in **Needs Attention** does the same, and syncs the highlight in My Projects
-- First Ongoing project is auto-selected on page load — panel is never empty
+- No project is auto-selected on login — right panel shows a "Select a client" placeholder until the user clicks a row in My Projects
 - Transition: fade-in (`@keyframes implFadeIn`)
 
 ---
@@ -266,6 +266,8 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 
 | Fix | Files | Details |
 |---|---|---|
+| **`_snap` undefined on page load** | index.html | `var _snap` was declared after the IIFE that calls `_takeFullSnapshot()` — moved declaration above the IIFE so it is initialized before use (June 19, 2026) |
+| **`_supa` undefined on Google Sign-In click** | index.html | Supabase CDN URL changed from `@supabase/supabase-js@2` (resolves to ESM) to explicit UMD path `/dist/umd/supabase.js`; null guard added in `doGoogleLogin()` (June 19, 2026) |
 | **Header date shows "Mar 30, 2026"** | Both HTML | `startApp()` now sets `#hdr-date` and `#last-updated` dynamically using `new Date()` on every login. HTML placeholders are overwritten at runtime. |
 | **Masterfile data missing in output** | Both HTML | Three root causes fixed: (1) `colMap` header row detection is now dynamic (scans for the row with 'Status'+'Employee ID') instead of hardcoded `r:1`; (2) `mfInjectRows` now handles namespace-prefixed XML tags (`</x:sheetData>`, `<x:row>`) from Excel-generated templates; (3) `colMap` now built directly from `xlRaw[hdrIdx]` array instead of `xlRange` cell lookup — ensures column indices match exactly. |
 | **Generated file has no source data + header formatting not preserved** | index.html | Reverted all `mfDownload` rewrites back to original 8PM code. `mfInjectRows`, `mfColLetter`, `mfEscXml`, and `mapped['Previous Employer Taxable Salaries']` all restored to original. |
@@ -295,14 +297,14 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 | Table | Purpose |
 |---|---|
 | `clients` | Main D[] array — all client records |
-| `client_addons` | CL_ADDONS (sg, ba, sd, std, otk) |
+| `client_addons` | CL_ADDONS (sg, ba, sd, std, otk, pd) — Supabase column: `payroll_disbursement` |
 | `client_milestones` | CL_MILESTONES (churnDate, billingMonth, monthCompleted) |
 | `client_afterho` | CL_AFTERHO (csm, processor) |
 | `team_config` | TEAM_CONFIG implementers + pms arrays |
 | `user_roles` | Maps @sprout.ph email → role + implementer_name |
 
 ### Login flow
-- Login screen replaced with "Sign in with Google" button
+- Login screen replaced with "Sign in with Google" button — dark green-black background (`#0f1f0c`), Sprout green text and G icon (`#32CE13`), matching the sidebar aesthetic
 - On auth: looks up user email in `user_roles` to get role + name
 - Unauthorized emails shown error; Supabase session signed out
 
@@ -344,8 +346,10 @@ Inserted between the **Data Management** panel and the **Team Configuration** pa
 ### Behavior
 - The panel contains a green **"Add Client" button** that opens the existing `#add-client-modal`.
 - The modal is already fully featured: Month, PM, Company Name, Availed Service, Implementer, Days, Add-on Services checkboxes.
-- For **Implementer** logins, `openAddClientModal()` now auto-selects and disables the Implementer dropdown, locking it to `IMPL_USER` — implementers can only add clients assigned to themselves.
+- Both **Admin** and **Implementer** roles can see and use the Add Client button (June 19, 2026). **Manager** role cannot.
+- For **Implementer** logins, `openAddClientModal()` auto-selects and disables the Implementer dropdown, locking it to `IMPL_USER` — implementers can only add clients assigned to themselves.
 - For **Admin** logins, the Implementer dropdown remains editable.
+- Implementers still cannot Import — that button remains hidden for their role.
 
 ### Changes made
 | Area | Change |
@@ -475,7 +479,7 @@ Two scrollable columns side by side:
 
 **Right column:**
 - Project Status by Module — collapsible (default open), bar chart breakdown by service
-- Selected Project — ✅ restored (June 18, 2026); auto-selects first project on load
+- Selected Project — ✅ restored (June 18, 2026); hidden on login, shown only when user clicks a project from My Projects (June 19, 2026)
 
 ### KPI bar — clickable drill-down (June 6, 2026)
 Each KPI segment (My Projects, Live, Ongoing, Not Started, Churned, Avg Progress) is now clickable with a two-mode dashboard:
@@ -624,7 +628,7 @@ Applied Sprout's official design system (https://sprout-design.figma.site/) acro
   - `PYO` → green chip
   - `+HR` → blue chip
   - `+Gov` / `Gov` → purple chip
-  - `PS` (Payroll Starter) → gray chip
+  - `Payroll Starter` (full label, not abbreviated) → gray chip
   - `Stat.` (Statutory Disbursement) → orange chip
 - Added `svcEditStart(no)` / `svcEditEnd(no)` functions: click-to-edit pattern — chips show normally, clicking reveals the hidden `<select>` to change the value, blur hides it again
 - Row rendering updated: chips `<div id="sc-{no}">` + hidden `<select id="ss-{no}">`; on `onchange` → `clUpdateSvc()` → `renderClients()` re-renders with updated chips automatically

@@ -373,7 +373,9 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-cpanel.collapsed .impl-chev{transform:rotate(-90deg);}
 .impl-cpanel.collapsed .impl-cpanel-body{display:none;}
 /* Alerts panel — priority 1, always open, PROMINENT */
+@keyframes attn-pulse{0%,100%{box-shadow:0 4px 20px rgba(255,127,0,.18),0 1px 4px rgba(255,127,0,.12);}50%{box-shadow:0 0 0 4px rgba(255,127,0,.18),0 6px 28px rgba(255,127,0,.38);}}
 .impl-alerts-panel{border:1.5px solid #FFD495;box-shadow:0 4px 20px rgba(255,127,0,.18),0 1px 4px rgba(255,127,0,.12);}
+.impl-alerts-panel.has-alerts{border-color:#FF7F00;animation:attn-pulse 2.4s ease-in-out infinite;}
 .impl-alerts-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#FF7F00 0%,#CC5C02 100%);border-bottom:none;}
 .impl-alerts-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
 .impl-alerts-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
@@ -1026,6 +1028,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sd" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Salary Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-std" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Statutory Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-otk" onchange="acmCheckOtk()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Outsourced Timekeeping</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pd" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll Disbursement</label>
         </div>
       </div>
       <div id="acm-gov-row" style="display:none;">
@@ -1428,7 +1431,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth" title="Sprout Gov">S. Gov</th><th class="cth" title="Benefits Administration">Benefits</th><th class="cth" title="Salary Disbursement">Salary</th><th class="cth" title="Statutory Disbursement">Statutory</th><th class="cth" title="Outsourced Timekeeping">Timekeep.</th>
+                <th class="cth" title="Sprout Gov">S. Gov</th><th class="cth" title="Benefits Administration">Benefits</th><th class="cth" title="Salary Disbursement">Salary</th><th class="cth" title="Statutory Disbursement">Statutory</th><th class="cth" title="Outsourced Timekeeping">Timekeep.</th><th class="cth" title="Payroll Disbursement">Pay. Disb.</th>
               </tr></thead>
               <tbody id="cl-body-addons"></tbody>
             </table>
@@ -2648,14 +2651,14 @@ function tabTriggerDownload(fname){
     XLSX.utils.book_append_sheet(wb, ovSheet, 'Overview');
 
     // Sheet 2: Add-on Services
-    var aoHeaders = ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Salary Disbursement','Statutory Disbursement','Outsourced Timekeeping'];
+    var aoHeaders = ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Salary Disbursement','Statutory Disbursement','Outsourced Timekeeping','Payroll Disbursement'];
     var aoRows = [aoHeaders];
     exportData.forEach(function(d){
       var a = CL_ADDONS[d.no]||{};
-      aoRows.push([d.no, d.client, d.resource, a.sg||0, a.ba||0, a.sd||0, a.std||0, a.otk||0]);
+      aoRows.push([d.no, d.client, d.resource, a.sg||0, a.ba||0, a.sd||0, a.std||0, a.otk||0, a.pd||0]);
     });
     var aoSheet = XLSX.utils.aoa_to_sheet(aoRows);
-    setColWidths(aoSheet, [5, 38, 12, 14, 26, 24, 26, 26]);
+    setColWidths(aoSheet, [5, 38, 12, 14, 26, 24, 26, 26, 24]);
     XLSX.utils.book_append_sheet(wb, aoSheet, 'Add-on Services');
 
     // Sheet 3: Milestone Dates
@@ -2693,7 +2696,7 @@ var CL_SERVICES=['Payroll Disbursement','Payroll Starter','PYO','PYO + HR','PYO 
 var MON_SELECTED=[];  // multi-select state for month filter
 var SVC_SELECTED=[];  // multi-select state for service filter
 // Extended data for add-on services and after handover (keyed by client no)
-var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk}} 0=empty,1=yes,-1=no
+var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk,pd}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
 var CL_ISSUES=(function(){try{var s=localStorage.getItem('pyo_issues');return s?JSON.parse(s):[];}catch(e){return [];}})();
@@ -2834,7 +2837,7 @@ function clCbox(no,field,val){
 function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.month;d.month=val;logAudit(no,'Overview','month','Month',old,val);}autoSave();renderClients();}
 function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.service;d.service=val;logAudit(no,'Overview','service','Service',old,val);}autoSave();renderClients();}
 function svcChips(svc){
-  if(svc==='Payroll Starter')return '<span class="svc-chip" style="color:var(--s6);background:var(--s1);">PS</span>';
+  if(svc==='Payroll Starter')return '<span class="svc-chip" style="color:var(--s6);background:var(--s1);">Payroll Starter</span>';
   if(svc==='Payroll Disbursement')return '<span class="svc-chip" style="color:var(--b);background:var(--b0);">PD</span>';
   if(svc==='Statutory Disbursement')return '<span class="svc-chip" style="color:var(--o);background:var(--o0);">Stat.</span>';
   var c=[];
@@ -2928,7 +2931,7 @@ function openAddClientModal(){
   document.getElementById('acm-otk-row').style.display='none';
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
-  ['acm-sg','acm-ba','acm-sd','acm-std','acm-otk'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
+  ['acm-sg','acm-ba','acm-sd','acm-std','acm-otk','acm-pd'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   var err=document.getElementById('acm-error');if(err){err.style.display='none';err.textContent='';}
   // For implementer logins, lock the implementer field to their own name
   if(implEl&&CURRENT_ROLE==='implementer'&&IMPL_USER){
@@ -2989,9 +2992,10 @@ function submitAddClient(){
     ba: document.getElementById('acm-ba').checked?1:0,
     sd: document.getElementById('acm-sd').checked?1:0,
     std:document.getElementById('acm-std').checked?1:0,
-    otk:document.getElementById('acm-otk').checked?1:0
+    otk:document.getElementById('acm-otk').checked?1:0,
+    pd: document.getElementById('acm-pd').checked?1:0
   };
-  if(addons.sg||addons.ba||addons.sd||addons.std||addons.otk)CL_ADDONS[newNo]=addons;
+  if(addons.sg||addons.ba||addons.sd||addons.std||addons.otk||addons.pd)CL_ADDONS[newNo]=addons;
   autoSave();
   closeAddClientModal();
   clPg=1;
@@ -3418,7 +3422,8 @@ function handleImport(e){
             ba: parseInt(row['Benefits Administration'])||0,
             sd: parseInt(row['Salary Disbursement'])||0,
             std:parseInt(row['Statutory Disbursement'])||0,
-            otk:parseInt(row['Outsourced Timekeeping'])||0
+            otk:parseInt(row['Outsourced Timekeeping'])||0,
+            pd: parseInt(row['Payroll Disbursement'])||0
           };
         });
       }
@@ -3531,7 +3536,7 @@ function renderClients(){
     document.getElementById('cl-page-title').textContent='My Clients — 2026';
     document.getElementById('cl-page-sub').textContent='Projects assigned to '+IMPL_USER+' only';
     document.getElementById('cr').style.display='none';
-    if(addBtn)addBtn.style.display='none';
+    if(addBtn)addBtn.style.display='flex';
     if(impGrp)impGrp.style.display='none';
   } else {
     var typeLabel=CL_TYPE==='ps'?'Payroll Starter':'PYO';
@@ -3550,7 +3555,7 @@ function renderClients(){
   document.getElementById('ctc-overview').textContent=rows.length;
   document.getElementById('ctc-resource').textContent=rows.length;
   document.getElementById('ctc-phases').textContent=rows.filter(function(d){return d.kom||d.sim||d.par||d.live||d.post;}).length;
-  document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.sd||a.std||a.otk;}).length;
+  document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.sd||a.std||a.otk||a.pd;}).length;
   document.getElementById('ctc-milestones').textContent=rows.filter(function(d){return d.komDate||d.handOver||d.liveRun;}).length;
   document.getElementById('ctc-afterho').textContent=rows.filter(function(d){var a=CL_AFTERHO[d.no]||{};return a.csm||d.remarks==='Live';}).length;
 
@@ -3654,7 +3659,7 @@ function renderClients(){
     }).join('');
   } else if(CL_TAB==='addons'){
     document.getElementById('cl-body-addons').innerHTML=slice.map(function(d){
-      var a=CL_ADDONS[d.no]||{sg:0,ba:0,sd:0,std:0,otk:0};
+      var a=CL_ADDONS[d.no]||{sg:0,ba:0,sd:0,std:0,otk:0,pd:0};
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
@@ -3663,6 +3668,7 @@ function renderClients(){
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'sd',a.sd||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'std',a.std||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'otk',a.otk||0)+'</td>'+
+        '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'pd',a.pd||0)+'</td>'+
       '</tr>';
     }).join('');
   } else if(CL_TAB==='milestones'){
@@ -4036,8 +4042,12 @@ function renderImpl(){
   /* Project list */
   implRenderProjects();
 
-  /* Auto-select first ongoing project on load */
-  if(myD.length)selProject(myD[0].no);
+  /* Show placeholder until user clicks a project */
+  var ph=document.getElementById('impl-drill-placeholder');
+  if(ph)ph.style.display='';
+  var proj=document.getElementById('cpanel-project');
+  if(proj)proj.style.display='none';
+  SELECTED_PROJECT=null;
 }
 
 function implRenderAttention(myD){
@@ -4211,11 +4221,16 @@ function implRenderAttention(myD){
 
   document.getElementById('impl-attn-body').innerHTML=html;
 
-  /* Update count badge */
+  /* Update count badge + prominence pulse */
   var countEl=document.getElementById('impl-attn-count');
+  var attnPanel=document.getElementById('cpanel-attn');
   if(countEl){
     if(alerts.length){countEl.textContent=alerts.length+' alert'+(alerts.length===1?'':'s');countEl.style.display='';}
     else{countEl.style.display='none';}
+  }
+  if(attnPanel){
+    if(alerts.length)attnPanel.classList.add('has-alerts');
+    else attnPanel.classList.remove('has-alerts');
   }
 
   /* Show legend only when there are alerts */
@@ -6216,7 +6231,7 @@ function stHandleFile(e){
         newD.push({no:no,month:row['Month']||'January',client:row['Client Name']||row['Client']||'',resource:row['Resource']||'',pm:row['Project Manager']||row['PM']||'',hri:row['HR-I']||'',remarks:row['Status']||'Not yet started',service:row['Service']||'',days:parseInt(row['Days'])||0,komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',kom:parseInt(row['KOM'])||0,sim:parseInt(row['Simulation'])||0,par:parseInt(row['Parallel Run'])||0,live:parseInt(row['Live Run'])||0,post:parseInt(row['Post Live'])||0});
       });
       var aoSheet=wb.Sheets['Add-on Services'];
-      if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,sd:parseInt(row['Salary Disbursement'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0};});
+      if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,sd:parseInt(row['Salary Disbursement'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0,pd:parseInt(row['Payroll Disbursement'])||0};});
       var mlSheet=wb.Sheets['Milestone Dates'];
       if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);if(row['Simulation Date'])d.simDate=parseImportDate(row['Simulation Date']);if(row['Parallel Run Date'])d.parDate=parseImportDate(row['Parallel Run Date']);if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=parseImportDate(row['Churn Date']);if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
       var newAfterho={};
@@ -6527,7 +6542,7 @@ async function loadFromSupabase(){
         liveRun:r.live_run||'',otkImpl:r.otk_impl||'',kom:r.kom||0,sim:r.sim||0,par:r.par||0,live:r.live||0,post:r.post||0});
     });
     var ra=await _supa.from('client_addons').select('*');
-    if(ra.data){CL_ADDONS={};ra.data.forEach(function(a){CL_ADDONS[a.client_no]={sg:a.sprout_gov?1:0,ba:a.benefits_admin?1:0,sd:a.salary_disbursement?1:0,std:a.statutory_disbursement?1:0,otk:a.outsourced_timekeeping?1:0};});}
+    if(ra.data){CL_ADDONS={};ra.data.forEach(function(a){CL_ADDONS[a.client_no]={sg:a.sprout_gov?1:0,ba:a.benefits_admin?1:0,sd:a.salary_disbursement?1:0,std:a.statutory_disbursement?1:0,otk:a.outsourced_timekeeping?1:0,pd:a.payroll_disbursement?1:0};});}
     var rm=await _supa.from('client_milestones').select('*');
     if(rm.data){CL_MILESTONES={};rm.data.forEach(function(m){CL_MILESTONES[m.client_no]={churnDate:m.churn_date||'',billingMonth:m.billing_month||'',monthCompleted:m.month_completed||''};});}
     var rh=await _supa.from('client_afterho').select('*');
@@ -6561,7 +6576,7 @@ function supabaseSave(){
       }
       var changedAddons=Object.keys(CL_ADDONS).filter(function(k){return JSON.stringify(CL_ADDONS[k])!==_snap.addons[k];});
       if(changedAddons.length){
-        var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk};});
+        var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk,payroll_disbursement:!!a.pd};});
         await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
         changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});
       }
