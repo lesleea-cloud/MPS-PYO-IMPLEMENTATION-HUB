@@ -1668,6 +1668,21 @@ var _snap = { clients:{}, addons:{}, milestones:{}, afterho:{} };
 
 ### Result
 
+## Section 36 — Local File Login (file:// fallback) ✅ Coded (June 18, 2026)
+
+Google OAuth requires an `http://` or `https://` redirect URL. When the app is opened directly from the filesystem (`file://`), `window.location.origin` returns `"null"` in Chrome, making the redirect URL invalid — the Google button silently fails.
+
+### Fix
+
+`initLoginMode()` runs immediately on page load. If `window.location.protocol === 'file:'`:
+- Hides the Google Sign In button (`lf-google-btn`)
+- Shows `lf-local-form` — a user dropdown + password field
+- Populates the dropdown from the `USERS` array (sorted alphabetically, shows username · Role)
+
+`doLocalLogin()` authenticates against the `USERS` array (username + password match), sets `CURRENT_ROLE` and `CURRENT_NAME`, triggers `loadFromSupabase()` to pull latest cloud data, then calls `startApp()`.
+
+When served via HTTP/HTTPS (e.g. GitHub Pages, localhost), the Google button shows as normal and local form is hidden — no behaviour change for web deployments.
+
 Each user's save touches **only the records they actually changed**. Two users can edit different clients simultaneously with zero collision. Feature updates by Claude never affect Supabase, so implementer changes always survive code updates.
 
 ### Supabase schema fix also applied
