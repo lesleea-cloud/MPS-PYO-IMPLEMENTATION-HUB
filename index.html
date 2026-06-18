@@ -2902,11 +2902,13 @@ function clearAudit(){
 
 function clDeleteRow(no){
   var idx=D.findIndex(function(x){return x.no===no;});
-  if(idx>=0){
-    if(!confirm('Remove "'+D[idx].client+'" from the list?'))return;
-    D.splice(idx,1);
-  }
+  if(idx<0)return;
+  var clientName=D[idx].client;
+  if(!confirm('Remove "'+clientName+'" from the list?'))return;
+  logAudit(no,'Overview','client','Client Removed',clientName,'—');
+  D.splice(idx,1);
   autoSave();
+  _supaFlush();
   renderClients();
 }
 function clAddRow(){openAddClientModal();}
@@ -2986,6 +2988,7 @@ function submitAddClient(){
   var newNo=maxNo+1;
   var days=parseInt(document.getElementById('acm-days').value)||0;
   D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,gov:gov,otkImpl:otkImpl,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,par:0,live:0,post:0});
+  logAudit(newNo,'Overview','client','Client Added','—',name+' ('+service+', '+month+', Implementer: '+impl+')');
   // Save add-on services
   var addons={
     sg: document.getElementById('acm-sg').checked?1:0,

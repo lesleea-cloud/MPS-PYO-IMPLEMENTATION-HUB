@@ -323,6 +323,8 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 - `supabaseSave()` debounces 800ms; save logic is in `_supaFlush()` (async, called directly for critical ops)
 - All upserts now check `result.error` before updating `_snap` — if Supabase returns an error silently (no throw), the snapshot is NOT updated so the next save retries the data (June 19, 2026)
 - Removed `updated_at` from clients upsert payload — if that column didn't exist in Supabase, it was silently rejecting every single client write (June 19, 2026)
+- `submitAddClient` now logs an audit entry: "Client Added — [name] ([service], [month], Implementer: [impl])" (June 19, 2026)
+- `clDeleteRow` now logs an audit entry: "Client Removed — [name]" and also calls `_supaFlush()` immediately (June 19, 2026)
 - `clUpdateStatus()` and `submitAddClient()` call `_supaFlush()` immediately (fire-and-forget) in addition to the debounced save — ensures status changes and new clients reach Supabase right away
 - `doSignOut()` is async — cancels debounce timer and `await _supaFlush()` before signing out as a final safety net (June 19, 2026)
 
