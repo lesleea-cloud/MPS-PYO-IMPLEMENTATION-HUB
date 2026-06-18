@@ -996,8 +996,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Availed Service <span style="color:var(--r)">*</span></div>
           <select id="acm-service" onchange="acmCheckGov()" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select service —</option>
-            <option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
-            <option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option>
+            <option>Payroll Disbursement</option><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
+            <option>PYO + HR + Sprout Gov</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option>
           </select>
         </div>
         <div>
@@ -1347,10 +1347,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 2l6 6M8 2l-6 6"></path></svg>
               Clear selection
             </div>
+            <label class="svc-ms-opt"><input type="checkbox" value="Payroll Disbursement" onchange="updateSvcMs()"> Payroll Disbursement</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Payroll Starter" onchange="updateSvcMs()"> Payroll Starter</label>
             <label class="svc-ms-opt"><input type="checkbox" value="PYO" onchange="updateSvcMs()"> PYO</label>
             <label class="svc-ms-opt"><input type="checkbox" value="PYO + HR" onchange="updateSvcMs()"> PYO + HR</label>
             <label class="svc-ms-opt"><input type="checkbox" value="PYO + HR + Sprout Gov" onchange="updateSvcMs()"> PYO + HR + Sprout Gov</label>
+            <label class="svc-ms-opt"><input type="checkbox" value="PYO + Sprout Gov" onchange="updateSvcMs()"> PYO + Sprout Gov</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Sprout Gov" onchange="updateSvcMs()"> Sprout Gov</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Statutory Disbursement" onchange="updateSvcMs()"> Statutory Disbursement</label>
           </div>
@@ -1784,6 +1786,26 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <button onclick="stSaveTeam()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Team Configuration</button>
       </div>
 
+
+      <!-- Data Backup (Admin only) -->
+      <div class="panel" id="st-panel-backup" style="display:none;">
+        <div class="panel-title"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;display:inline-block;vertical-align:-2px;margin-right:5px;color:var(--g4)"><path d="M10 3v9m0 0l-3-3m3 3l3-3"/><rect x="3" y="14" width="14" height="3" rx="1"/></svg>Data Backup &amp; Restore</div>
+        <div style="font-size:11px;color:var(--s5);margin-bottom:1rem;line-height:1.6;margin-top:-.25rem;">
+          All client data, team config, audit trail, and vault are stored in your browser's local storage — they survive code updates as long as the file stays at the same path.<br>
+          <b style="color:var(--s7);">Export before every Claude feature session</b> as a safety net. Import to restore from any backup.
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:.75rem;">
+          <button onclick="exportHubData()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;flex-shrink:0;"><path d="M8 2v8m0 0L5 7m3 3l3-3"/><path d="M3 12h10"/></svg>
+            Export Data Backup
+          </button>
+          <button onclick="importHubData()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;background:#fff;color:var(--s7);border:1.5px solid var(--s2);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;flex-shrink:0;"><path d="M8 14V6m0 0l-3 3m3-3l3 3"/><path d="M3 4h10"/></svg>
+            Restore from Backup
+          </button>
+        </div>
+        <div style="font-size:10px;color:var(--s4);">Backup includes: clients, team config, add-ons, milestones, after-handover, audit trail, vault, issues log.</div>
+      </div>
 
       <!-- GitHub Auto-Commit (Admin + Manager) -->
       <div class="panel" id="st-panel-github" style="display:none;">
@@ -2664,7 +2686,7 @@ function tabTriggerDownload(fname){
 var CL_TAB='overview';
 var CL_TYPE='pyo'; // 'pyo' or 'ps' (payroll starter)
 var CL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var CL_SERVICES=['Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','Sprout Gov','Statutory Disbursement'];
+var CL_SERVICES=['Payroll Disbursement','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement'];
 var MON_SELECTED=[];  // multi-select state for month filter
 var SVC_SELECTED=[];  // multi-select state for service filter
 // Extended data for add-on services and after handover (keyed by client no)
@@ -2694,6 +2716,7 @@ var CLIENT_PENDING=(function(){try{var s=localStorage.getItem('pyo_client_pendin
         if(sa)Object.assign(CL_ADDONS,JSON.parse(sa));
         if(sm)Object.assign(CL_MILESTONES,JSON.parse(sm));
         if(sah)Object.assign(CL_AFTERHO,JSON.parse(sah));
+        _takeFullSnapshot();
         return;
       }
     }
@@ -2703,7 +2726,17 @@ var CLIENT_PENDING=(function(){try{var s=localStorage.getItem('pyo_client_pendin
   Object.keys(ADDONS_DEFAULT).forEach(function(k){CL_ADDONS[k]=Object.assign({},ADDONS_DEFAULT[k]);});
   Object.keys(MILESTONES_DEFAULT).forEach(function(k){CL_MILESTONES[k]=Object.assign({},MILESTONES_DEFAULT[k]);});
   Object.keys(AFTERHO_DEFAULT).forEach(function(k){CL_AFTERHO[k]=Object.assign({},AFTERHO_DEFAULT[k]);});
+  _takeFullSnapshot();
 })();
+
+// Snapshot of last known Supabase state — used to diff before saving so we only
+// upsert rows that THIS user actually changed, never clobbering other users' edits.
+var _snap={clients:{},addons:{},milestones:{},afterho:{}};
+function _snapClients(){D.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});}
+function _snapAddons(){Object.keys(CL_ADDONS).forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});}
+function _snapMilestones(){Object.keys(CL_MILESTONES).forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});}
+function _snapAfterho(){Object.keys(CL_AFTERHO).forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});}
+function _takeFullSnapshot(){_snapClients();_snapAddons();_snapMilestones();_snapAfterho();}
 
 function autoSave(){
   try{
@@ -2799,6 +2832,7 @@ function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d
 function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.service;d.service=val;logAudit(no,'Overview','service','Service',old,val);}autoSave();renderClients();}
 function svcChips(svc){
   if(svc==='Payroll Starter')return '<span class="svc-chip" style="color:var(--s6);background:var(--s1);">PS</span>';
+  if(svc==='Payroll Disbursement')return '<span class="svc-chip" style="color:var(--b);background:var(--b0);">PD</span>';
   if(svc==='Statutory Disbursement')return '<span class="svc-chip" style="color:var(--o);background:var(--o0);">Stat.</span>';
   var c=[];
   if(svc.indexOf('PYO')>=0)c.push('<span class="svc-chip" style="color:var(--g4);background:var(--g0);">PYO</span>');
@@ -3555,6 +3589,7 @@ function renderClients(){
       var a=CL_ADDONS[d.no]||{};
       var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
       var isOtk=a.otk===1;
+      var hasHR=d.service&&d.service.indexOf('HR')>=0;
       var rtRO=(CURRENT_ROLE==='manager');
       var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
       var govCell=isGov
@@ -3563,12 +3598,15 @@ function renderClients(){
       var otkCell=isOtk
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.otkImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateOtkImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.otkImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
+      var hriCell=hasHR
+        ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
+        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         (rtRO?'<td class="ctd">'+rChip(d.resource)+'</td>':'<td class="ctd"><select class="cl-res-sel" onchange="clUpdateResource('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'"'+(n===d.resource?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
         govCell+
-        (rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
+        hriCell+
         otkCell+
         (rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><select class="cl-pm-sel" onchange="clUpdatePm('+d.no+',this.value)"><option value="">—</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'"'+(n===d.pm?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
       '</tr>';
@@ -6053,6 +6091,7 @@ function renderSettings(){
   document.getElementById('st-panel-data').style.display=(isAdmin||isImpl)?'':'none';
   document.getElementById('st-panel-addclient').style.display=(isAdmin||isImpl)?'':'none';
   document.getElementById('st-panel-team').style.display=isAdmin?'':'none';
+  document.getElementById('st-panel-backup').style.display=isAdmin?'':'none';
   document.getElementById('st-panel-github').style.display=isAdmin?'':'none';
 
   if(isAdmin||isImpl){
@@ -6230,6 +6269,52 @@ function tcRemoveRow(type,idx){
   tcRenderTeam();
 }
 
+var HUB_BACKUP_KEYS=['pyo_data','pyo_addons','pyo_milestones','pyo_afterho','pyo_team','pyo_audit','pyo_issues','pyo_vault','pyo_users','pyo_data_ver','pyo_client_pending','pyo_pending_bank'];
+
+function exportHubData(){
+  var backup={exportedAt:new Date().toISOString(),appVersion:DATA_VERSION};
+  HUB_BACKUP_KEYS.forEach(function(k){
+    var v=localStorage.getItem(k);
+    if(v){try{backup[k]=JSON.parse(v);}catch(e){backup[k]=v;}}
+  });
+  var json=JSON.stringify(backup,null,2);
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='pyo-hub-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importHubData(){
+  if(!confirm('Restoring a backup will overwrite ALL current data. This cannot be undone.\n\nContinue?'))return;
+  var input=document.createElement('input');
+  input.type='file';input.accept='.json,application/json';
+  input.onchange=function(e){
+    var file=e.target.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{
+        var backup=JSON.parse(ev.target.result);
+        var count=0;
+        HUB_BACKUP_KEYS.forEach(function(k){
+          if(backup[k]!==undefined){
+            localStorage.setItem(k,JSON.stringify(backup[k]));
+            count++;
+          }
+        });
+        alert('Restored '+count+' data stores from backup ('+((backup.exportedAt||'').slice(0,10)||'unknown date')+').\n\nReloading now...');
+        location.reload();
+      }catch(err){
+        alert('Could not read backup file: '+err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  document.body.appendChild(input);input.click();document.body.removeChild(input);
+}
+
 function stSaveTeam(){
   function collect(cls){var r=[];document.querySelectorAll('.tc-'+cls+'-inp').forEach(function(el){var v=(el.value||'').trim();if(v)r.push(v);});return r;}
   TEAM_CONFIG.implPYO=collect('pyo');
@@ -6401,7 +6486,7 @@ async function loadFromSupabase(){
         pm:r.pm||'',hri:r.hri||'',gov:r.gov||'',remarks:r.remarks||'Not yet started',
         service:r.service||'',days:r.days||0,komDate:r.kom_date||'',
         simDate:r.sim_date||'',parDate:r.par_date||'',handOver:r.hand_over||'',
-        liveRun:r.live_run||'',kom:r.kom||0,sim:r.sim||0,par:r.par||0,live:r.live||0,post:r.post||0});
+        liveRun:r.live_run||'',otkImpl:r.otk_impl||'',kom:r.kom||0,sim:r.sim||0,par:r.par||0,live:r.live||0,post:r.post||0});
     });
     var ra=await _supa.from('client_addons').select('*');
     if(ra.data){CL_ADDONS={};ra.data.forEach(function(a){CL_ADDONS[a.client_no]={sg:a.sprout_gov?1:0,ba:a.benefits_admin?1:0,sd:a.salary_disbursement?1:0,std:a.statutory_disbursement?1:0,otk:a.outsourced_timekeeping?1:0};});}
@@ -6420,6 +6505,7 @@ async function loadFromSupabase(){
       try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
     }
     try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));}catch(e){}
+    _takeFullSnapshot(); // snapshot Supabase state — future saves only upsert changed rows
   }catch(e){console.warn('Supabase load failed, using localStorage backup:',e);}
 }
 
@@ -6428,14 +6514,31 @@ function supabaseSave(){
   clearTimeout(_supaSaveTimer);
   _supaSaveTimer=setTimeout(async function(){
     try{
-      var rows=D.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,par:d.par,live:d.live,post:d.post,updated_at:new Date().toISOString()};});
-      if(rows.length)await _supa.from('clients').upsert(rows,{onConflict:'no'});
-      var ar=Object.keys(CL_ADDONS).map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk};});
-      if(ar.length)await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
-      var mr=Object.keys(CL_MILESTONES).map(function(k){var m=CL_MILESTONES[k];return{client_no:parseInt(k),churn_date:m.churnDate||'',billing_month:m.billingMonth||'',month_completed:m.monthCompleted||''};});
-      if(mr.length)await _supa.from('client_milestones').upsert(mr,{onConflict:'client_no'});
-      var hr=Object.keys(CL_AFTERHO).map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||''};});
-      if(hr.length)await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
+      // Only upsert rows that changed vs the Supabase snapshot — never overwrite other users' edits
+      var changedClients=D.filter(function(d){return JSON.stringify(d)!==_snap.clients[d.no];});
+      if(changedClients.length){
+        var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,par:d.par,live:d.live,post:d.post,updated_at:new Date().toISOString()};});
+        await _supa.from('clients').upsert(rows,{onConflict:'no'});
+        changedClients.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});
+      }
+      var changedAddons=Object.keys(CL_ADDONS).filter(function(k){return JSON.stringify(CL_ADDONS[k])!==_snap.addons[k];});
+      if(changedAddons.length){
+        var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk};});
+        await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
+        changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});
+      }
+      var changedMilestones=Object.keys(CL_MILESTONES).filter(function(k){return JSON.stringify(CL_MILESTONES[k])!==_snap.milestones[k];});
+      if(changedMilestones.length){
+        var mr=changedMilestones.map(function(k){var m=CL_MILESTONES[k];return{client_no:parseInt(k),churn_date:m.churnDate||'',billing_month:m.billingMonth||'',month_completed:m.monthCompleted||''};});
+        await _supa.from('client_milestones').upsert(mr,{onConflict:'client_no'});
+        changedMilestones.forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});
+      }
+      var changedAfterho=Object.keys(CL_AFTERHO).filter(function(k){return JSON.stringify(CL_AFTERHO[k])!==_snap.afterho[k];});
+      if(changedAfterho.length){
+        var hr=changedAfterho.map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||''};});
+        await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
+        changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});
+      }
     }catch(e){console.warn('Supabase save failed (localStorage backup preserved):',e);}
   },1500);
 }

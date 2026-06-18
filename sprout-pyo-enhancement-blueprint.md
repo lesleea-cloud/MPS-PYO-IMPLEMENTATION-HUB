@@ -1593,3 +1593,86 @@ All `.cl-*-sel` classes upgraded:
 ```
 
 Tab bar (`tab-edit-bar`) gets `background: var(--s0)` so the active green tab reads clearly against the tinted strip.
+
+## Section 33 — New Service Types + HR-I Lock for PYO-only ✅ Coded (June 18, 2026)
+
+### New services added
+
+Two new options added to `CL_SERVICES`, the Add Client modal, and the service filter multi-select:
+
+| Service | Chip | Notes |
+|---|---|---|
+| `Payroll Disbursement` | `PD` (blue) | New `svcChips` branch added |
+| `PYO + Sprout Gov` | `PYO` + `+Gov` chips | Handled by existing substring logic (`indexOf('PYO')` + `indexOf('Sprout Gov')`) — no new branch needed |
+
+Full ordered list: `Payroll Disbursement, Payroll Starter, PYO, PYO + HR, PYO + HR + Sprout Gov, PYO + Sprout Gov, Sprout Gov, Statutory Disbursement`
+
+`acmCheckGov()` automatically shows the Gov Implementer field for "PYO + Sprout Gov" because the service name contains "gov" (case-insensitive check was already in place).
+
+### HR-I lock in Resource Team tab
+
+HR-I is now non-editable (shows `—`) when the client's service does not contain `'HR'`. Affected services: PYO, PYO + Sprout Gov, Payroll Starter, Payroll Disbursement, Sprout Gov, Statutory Disbursement.
+
+```javascript
+var hasHR = d.service && d.service.indexOf('HR') >= 0;
+var hriCell = hasHR
+  ? /* dropdown or read-only span based on role */
+  : '<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
+```
+
+Services with editable HR-I: `PYO + HR`, `PYO + HR + Sprout Gov`.
+
+## Section 34 — Data Backup & Restore ✅ Coded (June 18, 2026)
+
+### Data persistence model
+
+All live data lives in `localStorage`, keyed separately from the HTML file. Code updates via Claude only change the HTML — they never touch `localStorage`. The `D_DEFAULT` / `ADDONS_DEFAULT` etc. baked into the HTML are **fallbacks** used only when localStorage is empty.
+
+**Risk**: if `localStorage` is ever cleared (browser data wipe, different machine, different path), the baked defaults in the HTML may be stale (from the last "Save to file," not the latest live state).
+
+### Export / Import feature
+
+New **"Data Backup & Restore"** panel in Settings (Admin only, `id="st-panel-backup"`).
+
+| Button | Function | Behaviour |
+|---|---|---|
+| Export Data Backup | `exportHubData()` | Downloads `pyo-hub-backup-YYYY-MM-DD.json` containing all `pyo_*` localStorage keys |
+| Restore from Backup | `importHubData()` | File picker → validates JSON → restores all `pyo_*` keys → `location.reload()` |
+
+**Keys backed up:** `pyo_data`, `pyo_addons`, `pyo_milestones`, `pyo_afterho`, `pyo_team`, `pyo_audit`, `pyo_issues`, `pyo_vault`, `pyo_users`, `pyo_data_ver`, `pyo_client_pending`, `pyo_pending_bank`.
+
+Import requires a confirm prompt before overwriting. The backup JSON includes `exportedAt` (ISO timestamp) and `appVersion` for traceability.
+
+### Recommended workflow
+
+**Before every Claude feature session:** Settings → Export Data Backup → save the `.json` file. If anything ever goes wrong after a code update, use Restore from Backup to bring data back instantly.
+
+## Section 35 — Targeted Supabase Save (No More Full-Overwrite) ✅ Coded (June 18, 2026)
+
+### Problem
+
+`supabaseSave()` previously upserted ALL rows every time any single field changed. In a multi-user setup this meant: if Implementer A updated Client 5, and Admin (without reloading first) updated Client 10, Admin's save would overwrite Client 5 back to their stale local copy — silently discarding Implementer A's change.
+
+### Fix — snapshot diff
+
+A `_snap` object tracks the last known Supabase state for each table (keyed by record id, stored as JSON strings for O(1) diff):
+
+```javascript
+var _snap = { clients:{}, addons:{}, milestones:{}, afterho:{} };
+```
+
+`_takeFullSnapshot()` is called after every data load (Supabase, localStorage, or baked defaults). `supabaseSave()` now:
+1. Diffs current records against `_snap` — only rows where the JSON changed are upserted
+2. Updates `_snap` for those rows after a successful upsert
+3. Same diff logic for all four tables
+
+### Result
+
+Each user's save touches **only the records they actually changed**. Two users can edit different clients simultaneously with zero collision. Feature updates by Claude never affect Supabase, so implementer changes always survive code updates.
+
+### Supabase schema fix also applied
+
+`otkImpl` (OTK Implementer, added in Section 30) was missing from both `loadFromSupabase()` and `supabaseSave()`. Fixed:
+- **Save**: `otk_impl: d.otkImpl||''` added to the clients upsert row
+- **Load**: `otkImpl: r.otk_impl||''` added to the D.push mapping
+- **Supabase action required**: `ALTER TABLE clients ADD COLUMN otk_impl text DEFAULT '';` (see Section 35 setup notes)
