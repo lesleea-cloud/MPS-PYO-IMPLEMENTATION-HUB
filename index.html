@@ -830,6 +830,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .vault-open-btn:hover{background:var(--g1);}
 .vault-del-btn{padding:6px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s4);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .1s;}
 .vault-del-btn:hover{border-color:var(--r1);background:var(--r0);color:var(--r);}
+.vault-mom-body{font-size:11px;color:var(--s5);line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.vault-mom-body-full{font-size:11px;color:var(--s5);line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow-y:auto;}
+.vault-mom-expand{background:none;border:none;color:var(--g4);font-size:10px;font-weight:700;cursor:pointer;padding:0;font-family:var(--font);text-decoration:underline;}
+.vault-mom-expand:hover{color:var(--g5);}
 .vault-empty{text-align:center;padding:3rem 1rem;color:var(--s4);}
 .vault-empty svg{width:40px;height:40px;stroke:var(--s2);margin-bottom:.75rem;}
 .vault-empty-title{font-size:14px;font-weight:600;color:var(--s5);margin-bottom:4px;}
@@ -1149,10 +1153,6 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <svg class="chev" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;flex-shrink:0;transition:transform .2s;"><path d="M6 9l6 6 6-6"/></svg>
       </div>
       <div class="nav-admin-body open" id="nav-vault-body">
-        <button class="nav-tool-item active" id="nav-vault-all" onclick="goVault('all')">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></span>
-          All
-        </button>
         <button class="nav-tool-item" id="nav-vault-proposals" onclick="goVault('Proposals')">
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#1679FA;flex-shrink:0;"></span>
           Proposals
@@ -1515,6 +1515,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Add File
           </button>
+          <button id="vault-refresh-btn" onclick="refreshMOMs()" style="display:none;padding:7px 16px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);align-items:center;gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh
+          </button>
         </div>
       </div>
       <!-- Add form -->
@@ -1535,13 +1539,17 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </div>
         </div>
         <div style="margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Client <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <input id="vf-client" type="text" placeholder="e.g. CIS Bayad Center" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+        </div>
+        <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Type</div>
           <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="link" checked onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Link (URL)</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="link" checked onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Link (Google Drive / URL)</label>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="file" onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Upload File</label>
           </div>
           <div id="vf-link-row">
-            <input id="vf-url" type="url" placeholder="https://..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+            <input id="vf-url" type="url" placeholder="Paste Google Drive link or any URL..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
           </div>
           <div id="vf-file-row" style="display:none;">
             <input id="vf-file" type="file" style="font-size:12px;font-family:var(--font);color:var(--s7);">
@@ -1964,7 +1972,30 @@ var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){return J
 
 // ══════════════ IMPLEMENTATION VAULT ══════════════
 var VAULT_ITEMS=(function(){try{var s=localStorage.getItem('pyo_vault');return s?JSON.parse(s):[];}catch(e){return [];}})();
-var VAULT_FILTER='all';
+var VAULT_FILTER='Proposals';
+var MOM_ITEMS=[];
+async function fetchMOMs(){
+  try{
+    var r=await _supa.from('impl_moms').select('*').order('sent_date',{ascending:false}).limit(300);
+    if(!r.error&&Array.isArray(r.data))MOM_ITEMS=r.data;
+  }catch(e){MOM_ITEMS=[];}
+}
+async function refreshMOMs(){
+  var btn=document.getElementById('vault-refresh-btn');
+  if(btn){btn.style.opacity='.5';btn.style.pointerEvents='none';}
+  await fetchMOMs();
+  renderVault();
+  if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+}
+function vaultExpandMOM(id){
+  var preview=document.getElementById('mombody-'+id);
+  var full=document.getElementById('momfull-'+id);
+  var btn=document.getElementById('momexpand-'+id);
+  if(!full)return;
+  var expanded=full.style.display!=='none';
+  if(expanded){full.style.display='none';if(preview)preview.style.display='';if(btn)btn.textContent='Read more';}
+  else{full.style.display='';if(preview)preview.style.display='none';if(btn)btn.textContent='Read less';}
+}
 
 var VAULT_CAT={
   'Proposals':    {c:'#1679FA',bg:'#EEF7FF',label:'Proposals'},
@@ -1991,11 +2022,13 @@ function vaultSaveToStorage(){try{localStorage.setItem('pyo_vault',JSON.stringif
 
 function vaultShowForm(){
   document.getElementById('vault-form').style.display='block';
+  var catSel=document.getElementById('vf-cat');
+  if(catSel&&VAULT_FILTER&&VAULT_FILTER!=='all'){catSel.value=VAULT_FILTER;}
   document.getElementById('vf-name').focus();
 }
 function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
-  ['vf-name','vf-url','vf-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['vf-name','vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('vf-cat').value='';
   var fi=document.getElementById('vf-file');if(fi)fi.value='';
   var radios=document.querySelectorAll('input[name="vf-type"]');
@@ -2011,6 +2044,7 @@ function vaultTypeToggle(){
 function vaultSaveItem(){
   var name=(document.getElementById('vf-name').value||'').trim();
   var cat=document.getElementById('vf-cat').value;
+  var clientName=(document.getElementById('vf-client').value||'').trim();
   var type=document.querySelector('input[name="vf-type"]:checked').value;
   var notes=(document.getElementById('vf-notes').value||'').trim();
   var err=document.getElementById('vf-error');
@@ -2018,7 +2052,7 @@ function vaultSaveItem(){
   if(type==='link'){
     var url=(document.getElementById('vf-url').value||'').trim();
     if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
-    var item={id:'v_'+Date.now(),name:name,category:cat,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
+    var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
     VAULT_ITEMS.unshift(item);
     vaultSaveToStorage();
     vaultHideForm();
@@ -2028,7 +2062,7 @@ function vaultSaveItem(){
     if(!file){err.textContent='Please select a file.';err.style.display='inline';return;}
     var reader=new FileReader();
     reader.onload=function(e){
-      var item={id:'v_'+Date.now(),name:name,category:cat,type:'file',fileName:file.name,fileData:e.target.result,fileType:file.type,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
+      var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'file',fileName:file.name,fileData:e.target.result,fileType:file.type,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
       VAULT_ITEMS.unshift(item);
       vaultSaveToStorage();
       vaultHideForm();
@@ -2051,7 +2085,7 @@ function vaultDelete(id){
   vaultSaveToStorage();
   renderVault();
 }
-var VAULT_NAV_MAP={all:'nav-vault-all',Proposals:'nav-vault-proposals',MOMs:'nav-vault-moms',Decks:'nav-vault-decks','Payroll Policy':'nav-vault-policy',Templates:'nav-vault-templates',Other:'nav-vault-other'};
+var VAULT_NAV_MAP={Proposals:'nav-vault-proposals',MOMs:'nav-vault-moms',Decks:'nav-vault-decks','Payroll Policy':'nav-vault-policy',Templates:'nav-vault-templates',Other:'nav-vault-other'};
 function toggleVaultSection(){
   var body=document.getElementById('nav-vault-body');
   var hdr=document.getElementById('nav-vault-hdr');
@@ -2060,12 +2094,13 @@ function toggleVaultSection(){
   if(hdr)hdr.classList.toggle('open');
 }
 function goVault(cat){
-  VAULT_FILTER=cat||'all';
+  VAULT_FILTER=cat||'Proposals';
   go('vault');
+  if(cat==='MOMs')fetchMOMs().then(renderVault);
 }
 function vaultSyncNav(){
   document.querySelectorAll('#nav-vault-body .nav-tool-item').forEach(function(b){b.classList.remove('active');});
-  var activeId=VAULT_NAV_MAP[VAULT_FILTER]||'nav-vault-all';
+  var activeId=VAULT_NAV_MAP[VAULT_FILTER]||'';
   var activeEl=document.getElementById(activeId);
   if(activeEl)activeEl.classList.add('active');
   var body=document.getElementById('nav-vault-body');
@@ -2075,22 +2110,72 @@ function vaultSyncNav(){
 function vaultFilter(cat){
   VAULT_FILTER=cat||'all';
   vaultSyncNav();
-  renderVault();
+  if(cat==='MOMs'){fetchMOMs().then(renderVault);}
+  else{renderVault();}
 }
 function renderVault(){
   vaultSyncNav();
   var canAdd=CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god';
   var addBtn=document.getElementById('vault-add-btn');
-  if(addBtn)addBtn.style.display=canAdd?'flex':'none';
+  var refreshBtn=document.getElementById('vault-refresh-btn');
+  var isMOMs=VAULT_FILTER==='MOMs';
+  if(addBtn)addBtn.style.display=(!isMOMs&&canAdd)?'flex':'none';
+  if(refreshBtn)refreshBtn.style.display=isMOMs?'flex':'none';
 
-  var items=VAULT_FILTER==='all'?VAULT_ITEMS:VAULT_ITEMS.filter(function(v){return v.category===VAULT_FILTER;});
-  var countEl=document.getElementById('vault-count');
-  if(countEl)countEl.textContent=items.length+' file'+(items.length!==1?'s':'');
   var catLbl=document.getElementById('vault-cat-label');
-  if(catLbl)catLbl.textContent=VAULT_FILTER==='all'?'All files':VAULT_FILTER;
-
+  if(catLbl)catLbl.textContent=VAULT_FILTER;
+  var countEl=document.getElementById('vault-count');
   var grid=document.getElementById('vault-grid');
   if(!grid)return;
+
+  /* ── MOMs — rendered from Supabase ── */
+  if(isMOMs){
+    var moms=MOM_ITEMS;
+    if(countEl)countEl.textContent=moms.length+' MOM'+(moms.length!==1?'s':'');
+    if(!moms.length){
+      grid.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><div class="vault-empty-title">No MOMs yet</div><div class="vault-empty-sub">Label any MOM email in Gmail as <strong>MOM</strong>.<br>It will appear here after the next sync.</div></div>';
+      return;
+    }
+    var h='<div class="vault-grid">';
+    moms.forEach(function(m){
+      var senderName=(m.sender||'').replace(/^"?([^"<]+)"?\s*<[^>]+>$/,'$1').replace(/"/g,'').trim()||m.sender||'';
+      var bodyRaw=m.body_text||'';
+      var preview=bodyRaw.substring(0,220).replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      var hasMore=bodyRaw.length>220;
+      var fullBody=bodyRaw.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      var mid=m.id.replace(/'/g,"\\'");
+      h+='<div class="vault-card">';
+      h+='<div class="vault-card-top">';
+      h+='<div class="vault-cat-icon" style="background:#dbeafe;color:#1d4ed8"><svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>';
+      h+='<div style="flex:1;min-width:0;">';
+      h+='<div class="vault-name">'+(m.subject||'(no subject)').replace(/</g,'&lt;')+'</div>';
+      if(m.client_name)h+='<div style="font-size:11px;font-weight:600;color:var(--s6);margin:2px 0 4px;display:flex;align-items:center;gap:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+m.client_name.replace(/</g,'&lt;')+'</div>';
+      h+='<span class="vault-cat-badge" style="background:#dbeafe;color:#1d4ed8;">MOM</span>';
+      h+='</div></div>';
+      h+='<div class="vault-meta">';
+      h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+senderName.replace(/</g,'&lt;');
+      h+='<span style="color:var(--s2)">·</span>';
+      h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+(m.sent_date||'');
+      h+='</div>';
+      if(bodyRaw){
+        h+='<div class="vault-mom-body" id="mombody-'+mid+'">';
+        h+=preview+(hasMore?'<span id="momdots-'+mid+'">…</span>':'');
+        h+='</div>';
+        if(hasMore){
+          h+='<div class="vault-mom-body-full" id="momfull-'+mid+'" style="display:none;">'+fullBody+'</div>';
+          h+='<button class="vault-mom-expand" id="momexpand-'+mid+'" onclick="vaultExpandMOM(\''+mid+'\')">Read more</button>';
+        }
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+    grid.innerHTML=h;
+    return;
+  }
+
+  /* ── Regular vault items ── */
+  var items=VAULT_FILTER==='all'?VAULT_ITEMS:VAULT_ITEMS.filter(function(v){return v.category===VAULT_FILTER;});
+  if(countEl)countEl.textContent=items.length+' file'+(items.length!==1?'s':'');
   if(!items.length){
     grid.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><div class="vault-empty-title">No files yet</div><div class="vault-empty-sub">'+(canAdd?'Click "Add File" to upload your first entry.':'No entries in this category.')+'</div></div>';
     return;
@@ -2106,6 +2191,7 @@ function renderVault(){
     h+='<div class="vault-cat-icon" style="background:'+cfg.bg+';color:'+cfg.c+'"><svg viewBox="0 0 24 24">'+vaultCatIcon(v.category)+'</svg></div>';
     h+='<div style="flex:1;min-width:0;">';
     h+='<div class="vault-name">'+v.name+'</div>';
+    if(v.clientName)h+='<div style="font-size:11px;font-weight:600;color:var(--s6);margin:2px 0 4px;display:flex;align-items:center;gap:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+v.clientName+'</div>';
     h+='<span class="vault-cat-badge" style="background:'+cfg.bg+';color:'+cfg.c+';">'+cfg.label+'</span>';
     h+='</div></div>';
     if(v.notes)h+='<div class="vault-notes">'+v.notes+'</div>';

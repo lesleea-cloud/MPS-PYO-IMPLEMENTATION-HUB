@@ -1326,7 +1326,6 @@ Filter pills removed from `page-vault`. Categories are now an indented sub-panel
 
 | Sub-item | ID | Dot color |
 |---|---|---|
-| All | `nav-vault-all` | `#94a3b8` |
 | Proposals | `nav-vault-proposals` | `#1679FA` |
 | MOMs | `nav-vault-moms` | `#239A0D` |
 | Decks | `nav-vault-decks` | `#8139EE` |
@@ -1608,3 +1607,98 @@ On every sign-in (and when clicking Avg Progress), the dashboard shows exactly t
 - `selProject()`: phases array now branches on `isPS`
 - `cpanel-projects` HTML: added `style="display:none;"` to prevent pre-JS flash
 - `cpanel-project` HTML: added `style="display:none;"` to prevent pre-JS flash
+
+---
+
+## 29. Implementation Vault — MOMs Gmail Auto-Sync ✅ Coded (June 19, 2026)
+
+### Overview
+MOMs are synced automatically from Gmail to Supabase via a Google Apps Script. No copy-pasting required. Once set up, labeling any email `MOM` in Gmail is the only manual step needed.
+
+### Architecture
+```
+Gmail (label: MOM) → Google Apps Script (every 30 min) → Supabase impl_moms → App vault
+```
+
+### Supabase table: `impl_moms`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | TEXT PK | Gmail message ID — deduplication key |
+| `subject` | TEXT | Email subject |
+| `sender` | TEXT | Full From: header |
+| `sent_date` | TEXT | M/D/YYYY |
+| `body_text` | TEXT | Plain text body, capped at 8000 chars |
+| `client_name` | TEXT | Auto-extracted from subject |
+| `synced_at` | TEXT | ISO timestamp of when Apps Script ran |
+
+### Gmail subject convention (for auto client extraction)
+`MOM - [Client Name] - [Meeting Type]`
+e.g. `MOM - CIS Bayad Center - KOM Meeting`
+
+The Apps Script tries these patterns in order:
+1. `MOM - Client - Type` → extracts "Client"
+2. `MOM - Client` (no second dash) → extracts "Client"
+3. `[MOM] Client ...` → extracts first segment
+
+### Apps Script (`MOM_Gmail_Sync.gs`)
+- Reads threads with label `MOM` (up to 100 threads per run)
+- Pushes each message to Supabase with `Prefer: resolution=ignore-duplicates`
+- Runs on a 30-minute time trigger in Google Apps Script
+- Uses Supabase anon key (server-side only — never in HTML)
+
+### App changes
+| Change | Detail |
+|---|---|
+| `MOM_ITEMS = []` | Global array populated from Supabase |
+| `fetchMOMs()` | Async — `_supa.from('impl_moms').select('*').order(sent_date)` |
+| `refreshMOMs()` | Called by Refresh button — fetches then re-renders |
+| `vaultExpandMOM(id)` | Toggles body preview ↔ full body on MOM cards |
+| `goVault('MOMs')` | Calls `fetchMOMs().then(renderVault)` after navigating |
+| `vaultFilter('MOMs')` | Same fetch-then-render pattern |
+| `renderVault()` | When `VAULT_FILTER === 'MOMs'`: hides Add File, shows Refresh, renders MOM cards from `MOM_ITEMS` |
+
+### MOM card UI
+- Blue envelope icon, `MOM` badge (blue)
+- Subject as card title
+- Client name row (if extracted) — person icon + name
+- Meta row: sender name (cleaned), sent date
+- Body preview (220 chars) with "Read more" expand → scrollable full body
+
+### Setup files (in project folder)
+- `MOM_Gmail_Sync.gs` — paste into script.google.com
+- `MOM_Supabase_Table.sql` — run in Supabase SQL Editor
+
+---
+
+## 28. Implementation Vault — Proposals Google Drive Link ✅ Coded (June 19, 2026)
+
+### What changed
+Proposals (and all vault entries) now support an optional **Client** field. The form auto-selects the current category filter when opened, and the URL input now prompts for Google Drive links.
+
+### Form changes
+| Field | Change |
+|---|---|
+| **Client** (`#vf-client`) | New optional text input, row placed between Category and Type. Placeholder: "e.g. CIS Bayad Center" |
+| **Type label** | "Link (URL)" → "Link (Google Drive / URL)" |
+| **URL placeholder** | `https://...` → "Paste Google Drive link or any URL..." |
+
+### Auto-select category
+`vaultShowForm()` now pre-sets `#vf-cat` to `VAULT_FILTER` when the form opens (as long as filter is not `'all'`). Opening the form from Proposals view auto-selects "Proposals".
+
+### Data structure
+Both link and file item objects now include `clientName: string | null` field:
+```js
+{id, name, category, clientName, type:'link', url, notes, uploadedBy, uploadedAt}
+{id, name, category, clientName, type:'file', fileName, fileData, fileType, notes, uploadedBy, uploadedAt}
+```
+Old entries without `clientName` display without the client row (backward compatible).
+
+### Card rendering
+When `v.clientName` is set, a small person-icon + client name appears below the vault item name and above the category badge.
+
+### Code changes
+- Form HTML: added `#vf-client` input row; updated type radio label; updated URL placeholder
+- `vaultShowForm()`: pre-sets `#vf-cat` from `VAULT_FILTER`
+- `vaultHideForm()`: added `'vf-client'` to the fields cleared on close
+- `vaultSaveItem()`: reads `vf-client`, stores as `clientName` on both link and file items
+- `renderVault()` card: conditionally renders client name row when `v.clientName` is truthy
