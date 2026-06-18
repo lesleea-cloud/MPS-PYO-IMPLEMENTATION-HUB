@@ -220,7 +220,7 @@ Empty dates show `—`. Clicking the date opens a native `<input type="date">` i
 - `phDateEdit(no, field)` — swaps date div for inline date input
 - `phDateSave(no, field, isoVal)` — saves to D record, restores display
 
-### 3b. Enhancement 1: Active phase column highlight
+### 3b. Enhancement 1: Active phase column highlight ✅ Coded (June 18, 2026)
 
 The column representing the **most commonly active phase** across the implementor's clients gets:
 - **Green tinted header** (`.col-active-hdr` — `background:#EAF3DE; color:#27500A`)
@@ -281,12 +281,15 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 
 ---
 
-## Supabase Integration ✅ Coded (June 5, 2026)
+## Supabase Integration ✅ Coded (June 5, 2026) — Google OAuth wired June 18, 2026
 
 ### Project
 - **Supabase project:** SPROUT IMPLEMENTATION PYO HUB
 - **URL:** `https://jchqgxyectvsqfmrnype.supabase.co`
 - **Auth provider:** Google OAuth (restricted to `@sprout.ph` org)
+- **Google OAuth Client ID:** `645223084491-2ai2av0bql15nr0hstnln461usjohfpj.apps.googleusercontent.com`
+- **Authorized JS origin:** `https://mps-pyo-implementation-hub.vercel.app`
+- **Redirect URI:** `https://jchqgxyectvsqfmrnype.supabase.co/auth/v1/callback`
 
 ### Database tables created
 | Table | Purpose |
@@ -406,7 +409,7 @@ A new **HR-I** column was added to the All Clients → Overview tab, positioned 
 4. ✅ **Settings — Add Client panel** — coded (admin + implementer)
 5. ✅ **All Clients Overview — editable PM dropdown** — coded
 6. ✅ **All Clients Overview — HR-I column** — coded
-7. 🔲 **Implementation Phases tab — active column highlight** — build on top of step 3
+7. ✅ **Implementation Phases tab — active column highlight** — coded (June 18, 2026)
 8. 🔲 **Dashboard layout overhaul** — larger effort, can be done independently
 
 ---
@@ -468,11 +471,11 @@ Two scrollable columns side by side:
 
 **Left column:**
 - Needs Attention panel — prominent orange header, always visible, body scrolls up to 280px
-- My Projects panel — collapsible; currently `display:none` for layout preview (restore by removing the inline style)
+- My Projects panel — collapsible; ✅ restored (June 18, 2026)
 
 **Right column:**
 - Project Status by Module — collapsible (default open), bar chart breakdown by service
-- Selected Project — currently hidden for layout preview; auto-select on load is disabled; restore by un-commenting `selProject(myD[0].no)` in `renderImpl()` and removing the `display:none` from `#cpanel-project`
+- Selected Project — ✅ restored (June 18, 2026); auto-selects first project on load
 
 ### KPI bar — clickable drill-down (June 6, 2026)
 Each KPI segment (My Projects, Live, Ongoing, Not Started, Churned, Avg Progress) is now clickable with a two-mode dashboard:
