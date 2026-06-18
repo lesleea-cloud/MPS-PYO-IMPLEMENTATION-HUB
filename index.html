@@ -11,6 +11,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 9px center!important;background-size:10px 6px!important;padding-right:28px!important;text-overflow:ellipsis;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+select:hover{border-color:#94a3b8!important;}
+select:focus{border-color:var(--g)!important;box-shadow:0 0 0 3px rgba(50,206,19,.12)!important;outline:none!important;}
 :root{
   /* Sprout brand — Green Apple */
   --g:#32CE13;--g0:#E9FAE5;--g1:#C9F3BE;--g2:#A6EB93;--g4:#239A0D;
@@ -510,21 +513,22 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .mf-val{font-size:13px;font-weight:500;}
  
 /* ══ CLIENT TABS ══ */
-.ctab{padding:10px 14px;font-size:12px;font-weight:500;color:var(--s5);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:color .12s,border-color .12s;user-select:none;}
-.ctab:hover{color:var(--s8);}
-.ctab.ctab-on{color:var(--g4);border-bottom-color:var(--g);font-weight:700;}
-.ctab-count{display:inline-block;background:var(--s1);color:var(--s5);border-radius:20px;padding:1px 7px;font-size:10px;font-weight:700;margin-left:4px;transition:background .12s,color .12s;}
-.ctab.ctab-on .ctab-count{background:var(--g);color:#fff;}
+.ctab{padding:10px 16px;font-size:12px;font-weight:500;color:var(--s5);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all .15s;user-select:none;border-radius:8px 8px 0 0;}
+.ctab:hover{color:var(--s8);background:var(--s1);}
+.ctab.ctab-on{color:var(--g4);border-bottom-color:var(--g4);font-weight:700;background:var(--g0);}
+.ctab-count{display:inline-block;background:rgba(0,0,0,.07);color:var(--s6);border-radius:20px;padding:1px 8px;font-size:10px;font-weight:700;margin-left:5px;transition:all .15s;}
+.ctab.ctab-on .ctab-count{background:var(--g4);color:#fff;}
 .cth{padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;}
 .ctd{padding:8px 12px;border-bottom:1px solid var(--s1);vertical-align:middle;}
 .cl-link{color:var(--g4);font-weight:600;cursor:pointer;text-decoration:none;}
 .cl-link:hover{text-decoration:underline;}
-.cl-mon-sel{padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;}
-.cl-svc-sel{padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;max-width:160px;}
-.cl-st-sel{padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;cursor:pointer;}
-.cl-pm-sel{padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;cursor:pointer;}
-.cl-hri-sel{padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;cursor:pointer;}
-.cl-gov-sel{padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;cursor:pointer;}
+.cl-mon-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
+.cl-svc-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;max-width:160px;}
+.cl-st-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
+.cl-pm-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
+.cl-hri-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
+.cl-gov-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
+.cl-res-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1.5px solid var(--g2);font-size:11px;font-family:var(--font);color:var(--g4);background:var(--g0);outline:none;cursor:pointer;font-weight:700;}
 .cl-cb{width:15px;height:15px;border:1.5px solid var(--s3);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
 .cl-cb.chk{background:var(--g0);border-color:var(--g);}
 .cl-cb.red{background:var(--r0);border-color:var(--r);}
@@ -543,7 +547,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
 
 /* ══ EDIT/LOCK SYSTEM ══ */
-.tab-edit-bar{display:flex;align-items:center;border-bottom:1px solid var(--s2);padding:0 1rem;overflow-x:auto;flex-shrink:0;gap:0;}
+.tab-edit-bar{display:flex;align-items:center;border-bottom:1px solid var(--s2);padding:0 1rem;overflow-x:auto;flex-shrink:0;gap:2px;background:var(--s0);}
 .tab-edit-actions{margin-left:auto;display:flex;align-items:center;gap:6px;padding:4px 0;flex-shrink:0;}
 .lock-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;}
 .lock-badge.is-locked{background:var(--s1);color:var(--s5);}
@@ -1111,6 +1115,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#0891b2;flex-shrink:0;"></span>
           Payroll Starter
         </button>
+        <button class="nav-tool-item" id="nav-cl-audit" style="display:none;" onclick="goAudit()">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+          Audit Trail
+        </button>
         <button class="nav-tool-item" id="nav-cl-issues" style="display:none;" onclick="go('issues')">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           Issue Log
@@ -1355,6 +1363,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <!-- Tab bar -->
         <div class="tab-edit-bar" id="tab-edit-bar">
           <div id="ctab-overview" onclick="switchClientTab('overview')" class="ctab">Overview <span class="ctab-count" id="ctc-overview">36</span></div>
+          <div id="ctab-resource" onclick="switchClientTab('resource')" class="ctab">Resource Team <span class="ctab-count" id="ctc-resource">0</span></div>
           <div id="ctab-phases" onclick="switchClientTab('phases')" class="ctab">Implementation Phases <span class="ctab-count" id="ctc-phases">27</span></div>
           <div id="ctab-addons" onclick="switchClientTab('addons')" class="ctab">Add On Services Availed <span class="ctab-count" id="ctc-addons">0</span></div>
           <div id="ctab-milestones" onclick="switchClientTab('milestones')" class="ctab">Milestone Dates <span class="ctab-count" id="ctc-milestones">29</span></div>
@@ -1382,6 +1391,21 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead id="cl-head"><tr style="background:var(--s0)"><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">#</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">Month</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;;min-width:180px;">Client Name</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">Resource</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">PM</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">Status</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;;min-width:140px;">Service</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">Days</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;">Progress</th><th style="padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;"></th></tr></thead>
               <tbody id="cl-body"><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''" style=""><td class="ctd" style="color:var(--s4);font-family:var(--mono)">1</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(1,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Brandfox Digital</span></td><td class="ctd"><span class="res-chip rLeslee">Leslee</span></td><td class="ctd" style="color:var(--s5)">Lexy</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(1,this.value)"><option selected="" value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(1,this.value)"><option selected="">Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(1,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15" selected="">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:60%"></div></div><span class="pgm-pct">60%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(1)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">2</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(2,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Appen Services Philippines</span></td><td class="ctd"><span class="res-chip rLeslee">Leslee</span></td><td class="ctd" style="color:var(--s5)">Aldwin</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(2,this.value)"><option value="Live">Live</option><option selected="" value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(2,this.value)"><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option selected="">PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(2,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150" selected="">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:60%"></div></div><span class="pgm-pct">60%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(2)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">3</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(3,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">DIS TECH PHILIPPINES, LLC</span></td><td class="ctd"><span class="res-chip rDenise">Denise</span></td><td class="ctd" style="color:var(--s5)">Lexy</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(3,this.value)"><option selected="" value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(3,this.value)"><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option selected="">PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(3,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15">15</option><option value="30">30</option><option value="60" selected="">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:100%"></div></div><span class="pgm-pct">100%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(3)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">4</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(4,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Evermere Food Corporation</span></td><td class="ctd"><span class="res-chip rArmie">Armie</span></td><td class="ctd" style="color:var(--s5)">Angge</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(4,this.value)"><option selected="" value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(4,this.value)"><option selected="">Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(4,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15" selected="">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:60%"></div></div><span class="pgm-pct">60%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(4)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">5</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(5,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Powers Technical Services OPC</span></td><td class="ctd"><span class="res-chip rPau">Pau</span></td><td class="ctd" style="color:var(--s5)">Lexy</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(5,this.value)"><option value="Live">Live</option><option value="Ongoing">Ongoing</option><option selected="" value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(5,this.value)"><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option selected="">Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(5,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15">15</option><option value="30" selected="">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:0%"></div></div><span class="pgm-pct">0%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(5)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">6</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(6,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Wilmar Sugar Philippines Inc.</span></td><td class="ctd"><span class="res-chip rArmie">Armie</span></td><td class="ctd" style="color:var(--s5)">Angge</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(6,this.value)"><option selected="" value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(6,this.value)"><option selected="">Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(6,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15" selected="">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:60%"></div></div><span class="pgm-pct">60%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(6)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">7</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(7,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Glowify Aesthetic Clinic</span></td><td class="ctd"><span class="res-chip rDenise">Denise</span></td><td class="ctd" style="color:var(--s5)">Lexy</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(7,this.value)"><option value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option selected="" value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(7,this.value)"><option selected="">Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(7,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15" selected="">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:40%"></div></div><span class="pgm-pct">40%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(7)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">8</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(8,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Kuh Meal</span></td><td class="ctd"><span class="res-chip rArmie">Armie</span></td><td class="ctd" style="color:var(--s5)">See</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(8,this.value)"><option selected="" value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(8,this.value)"><option selected="">Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(8,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15" selected="">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:60%"></div></div><span class="pgm-pct">60%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(8)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">9</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(9,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Q&amp;A Consulting OPC/ Arden Consult</span></td><td class="ctd"><span class="res-chip rPau">Pau</span></td><td class="ctd" style="color:var(--s5)">Lexy</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(9,this.value)"><option value="Live">Live</option><option value="Ongoing">Ongoing</option><option selected="" value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(9,this.value)"><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option selected="">Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(9,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15">15</option><option value="30" selected="">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:0%"></div></div><span class="pgm-pct">0%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(9)" title="Remove">✕</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">10</td><td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth(10,this.value)"><option selected="">January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select></td><td class="ctd" style="min-width:180px;"><span class="cl-link">Exter Philippines Corporation</span></td><td class="ctd"><span class="res-chip rArmie">Armie</span></td><td class="ctd" style="color:var(--s5)">Angge</td><td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus(10,this.value)"><option selected="" value="Live">Live</option><option value="Ongoing">Ongoing</option><option value="Not yet started">Not yet started</option><option value="Churned">Churned</option><option value="On-Hold Back to Sales">On-Hold Back to Sales</option></select></td><td class="ctd"><select class="cl-svc-sel" onchange="clUpdateSvc(10,this.value)"><option selected="">Payroll Starter</option><option>PYO</option><option>PYO + HR</option><option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option></select></td><td class="ctd" style="text-align:center;"><select onchange="clUpdateDays(10,this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;"><option value="0">—</option><option value="15" selected="">15</option><option value="30">30</option><option value="60">60</option><option value="90">90</option><option value="120">120</option><option value="150">150</option></select></td><td class="ctd"><div class="pgm"><div class="pgm-bar"><div class="pgm-fill" style="width:60%"></div></div><span class="pgm-pct">60%</span></div></td><td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow(10)" title="Remove">✕</span></td></tr></tbody>
+            </table>
+          </div>
+          <!-- RESOURCE TEAM TAB -->
+          <div id="ctab-body-resource" style="display:none;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead><tr style="background:var(--s0)">
+                <th class="cth">#</th>
+                <th class="cth" style="min-width:200px;">Client Name</th>
+                <th class="cth">Resource</th>
+                <th class="cth">Gov Resource</th>
+                <th class="cth">HR-I</th>
+                <th class="cth">OTK Implementer</th>
+                <th class="cth">Project Manager</th>
+              </tr></thead>
+              <tbody id="cl-body-resource"></tbody>
             </table>
           </div>
           <!-- IMPLEMENTATION PHASES TAB -->
@@ -1508,6 +1532,36 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       </div>
       <div class="panel" style="padding:0;">
         <div id="page-issues-body"></div>
+      </div>
+    </div>
+
+    <!-- ══ AUDIT TRAIL PAGE ══ -->
+    <div class="page" id="page-audit" style="gap:.75rem;">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Audit Trail</div>
+          <div class="sec-sub">All field changes across PYO and Payroll Starter clients</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;">
+          <input id="audit-search" type="text" placeholder="Search by client or field…" oninput="renderAudit()" style="padding:7px 10px;border:1px solid var(--s2);border-radius:8px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;flex:1;min-width:180px;">
+          <button onclick="clearAudit()" style="padding:7px 14px;background:var(--r0);color:var(--r);border:1px solid var(--r1);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">Clear Log</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr>
+              <th class="cth">Date / Time</th>
+              <th class="cth">Client</th>
+              <th class="cth">Tab</th>
+              <th class="cth">Field</th>
+              <th class="cth">Old Value</th>
+              <th class="cth">New Value</th>
+              <th class="cth">Changed By</th>
+            </tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1962,7 +2016,7 @@ function vaultOpenFile(id){
 }
 
 function go(page){
-  ['dashboard','weekly','monthly','clients','impl','settings','issues','vault'].forEach(function(p){
+  ['dashboard','weekly','monthly','clients','impl','settings','issues','vault','audit'].forEach(function(p){
     var pg=document.getElementById('page-'+p);
     var ni=document.getElementById('nav-'+p);
     if(pg)pg.classList.remove('active');
@@ -1976,9 +2030,11 @@ function go(page){
   var clPyoBtn=document.getElementById('nav-cl-pyo');
   var clPsBtn=document.getElementById('nav-cl-ps');
   var clIssBtn=document.getElementById('nav-cl-issues');
+  var clAuditBtn=document.getElementById('nav-cl-audit');
   if(clPyoBtn)clPyoBtn.classList.remove('active');
   if(clPsBtn)clPsBtn.classList.remove('active');
   if(clIssBtn)clIssBtn.classList.remove('active');
+  if(clAuditBtn)clAuditBtn.classList.remove('active');
   var pg=document.getElementById('page-'+page);
   var ni=document.getElementById('nav-'+page);
   if(pg)pg.classList.add('active');
@@ -2017,6 +2073,7 @@ function go(page){
   else if(page==='settings')renderSettings();
   else if(page==='issues')renderIssuesPage();
   else if(page==='vault')renderVault();
+  if(page==='audit'){if(clAuditBtn)clAuditBtn.classList.add('active');}
 }
  
 function renderDashboard(){
@@ -2615,6 +2672,7 @@ var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
 var CL_ISSUES=(function(){try{var s=localStorage.getItem('pyo_issues');return s?JSON.parse(s):[];}catch(e){return [];}})();
+var CL_AUDIT=(function(){try{var s=localStorage.getItem('pyo_audit');return s?JSON.parse(s):[];}catch(e){return [];}})();
 var PENDING_BANK=(function(){try{var s=localStorage.getItem('pyo_pending_bank');if(s)return JSON.parse(s);var def=[{id:'pb1',label:'Complete Employee Masterfile',phase:'1',category:'Data'},{id:'pb2',label:'Submit Government IDs (SSS, PhilHealth, HDMF)',phase:'1',category:'Document'},{id:'pb3',label:'CRF submission and approval',phase:'2',category:'Approval'},{id:'pb4',label:'Sandbox account setup confirmation',phase:'2',category:'Account'},{id:'pb5',label:'Simulation result sign-off',phase:'2',category:'Approval'},{id:'pb6',label:'Parallel run variance resolved',phase:'3',category:'Data'},{id:'pb7',label:'Final payroll register sign-off',phase:'3',category:'Approval'},{id:'pb8',label:'SLA signed and submitted',phase:'4',category:'Document'},{id:'pb9',label:'Go-live confirmation from client',phase:'4',category:'Approval'}];localStorage.setItem('pyo_pending_bank',JSON.stringify(def));return def;}catch(e){return [];}})();
 var CLIENT_PENDING=(function(){try{var s=localStorage.getItem('pyo_client_pending');return s?JSON.parse(s):{};}catch(e){return {};}})();
 
@@ -2691,7 +2749,7 @@ function switchClientTab(tab){
   }
   CL_TAB=tab;
   clPg=1;
-  ['overview','phases','addons','milestones','afterho'].forEach(function(t){
+  ['overview','resource','phases','addons','milestones','afterho'].forEach(function(t){
     document.getElementById('ctab-'+t).classList.remove('ctab-on');
     document.getElementById('ctab-body-'+t).style.display='none';
   });
@@ -2714,24 +2772,31 @@ function deriveRemarks(d){
 D.forEach(function(d){ d.remarks = deriveRemarks(d); });
 
 function clCbox(no,field,val){
+  var phLbl={kom:'KOM',sim:'SIM',par:'PAR',live:'Live Run',post:'Post Live'};
+  var adLbl={sg:'Sprout Gov',ba:'Benefits Admin',sd:'Salary Disbursement',std:'Statutory Disbursement',otk:'OTK'};
   if(field==='kom'||field==='sim'||field==='par'||field==='live'||field==='post'){
     var d=D.find(function(x){return x.no===no;});
     if(d){
       if(d.service==='Payroll Starter'&&(field==='par'||field==='post'))return;
+      var oldV=d[field];
       d[field]=d[field]?0:1;
       d.remarks=deriveRemarks(d);
+      logAudit(no,'Phases',field,phLbl[field]||field,oldV?'Done':'Pending',d[field]?'Done':'Pending');
     }
   } else {
     if(!CL_ADDONS[no])CL_ADDONS[no]={sg:0,ba:0,sd:0,std:0,otk:0};
     var cur=CL_ADDONS[no][field]||0;
-    CL_ADDONS[no][field]=cur===0?1:cur===1?-1:0;
+    var nxt=cur===0?1:cur===1?-1:0;
+    var adVal=function(v){return v===1?'Yes':v===-1?'No':'—';};
+    logAudit(no,'Add-ons',field,adLbl[field]||field,adVal(cur),adVal(nxt));
+    CL_ADDONS[no][field]=nxt;
   }
   autoSave();
   renderClients();
 }
 
-function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.month=val;autoSave();renderClients();}
-function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.service=val;autoSave();renderClients();}
+function clUpdateMonth(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.month;d.month=val;logAudit(no,'Overview','month','Month',old,val);}autoSave();renderClients();}
+function clUpdateSvc(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.service;d.service=val;logAudit(no,'Overview','service','Service',old,val);}autoSave();renderClients();}
 function svcChips(svc){
   if(svc==='Payroll Starter')return '<span class="svc-chip" style="color:var(--s6);background:var(--s1);">PS</span>';
   if(svc==='Statutory Disbursement')return '<span class="svc-chip" style="color:var(--o);background:var(--o0);">Stat.</span>';
@@ -2749,18 +2814,52 @@ function svcEditEnd(no){
   var wrap=document.getElementById('sc-'+no);var sel=document.getElementById('ss-'+no);
   if(wrap)wrap.style.display='inline-flex';if(sel)sel.style.display='none';
 }
-function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.days=parseInt(val)||0;autoSave();renderClients();}
-function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.remarks=val;autoSave();renderClients();}
-function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.pm=val;autoSave();}
-function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.hri=val;autoSave();}
-function clUpdateGov(no,val){var d=D.find(function(x){return x.no===no;});if(d)d.gov=val;autoSave();}
-function ahUpdateField(no,field,val){if(!CL_AFTERHO[no])CL_AFTERHO[no]={};CL_AFTERHO[no][field]=val;autoSave();}
+function clUpdateResource(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.resource;d.resource=val;logAudit(no,'Resource Team','resource','Resource',old,val);}autoSave();renderClients();}
+function clUpdateOtkImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.otkImpl||'';d.otkImpl=val;logAudit(no,'Resource Team','otkImpl','OTK Implementer',old,val);}autoSave();}
+function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.days;d.days=parseInt(val)||0;logAudit(no,'Overview','days','Days',old,d.days);}autoSave();renderClients();}
+function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.remarks;d.remarks=val;logAudit(no,'Overview','status','Status',old,val);}autoSave();renderClients();}
+function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pm;d.pm=val;logAudit(no,'Overview','pm','Project Manager',old,val);}autoSave();}
+function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.hri;d.hri=val;logAudit(no,'Resource Team','hri','HR-I',old,val);}autoSave();}
+function clUpdateGov(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.gov;d.gov=val;logAudit(no,'Resource Team','gov','Gov Resource',old,val);}autoSave();}
+function ahUpdateField(no,field,val){
+  if(!CL_AFTERHO[no])CL_AFTERHO[no]={};
+  var ahLbl={csm:'CSM',processor:'Processor'};
+  var old=CL_AFTERHO[no][field]||'';
+  CL_AFTERHO[no][field]=val;
+  logAudit(no,'After Hand Over',field,ahLbl[field]||field,old,val);
+  autoSave();
+}
 function ahCheckbox(no,field,val){
   var svgChk='<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var cls='cl-cb'+(val?' chk':'');
   return '<div class="ph-cell"><div class="'+cls+'" onclick="ahToggleCb('+no+',\''+field+'\','+(val?1:0)+')" title="Click to toggle">'+(val?svgChk:'')+'</div></div>';
 }
-function ahToggleCb(no,field,curVal){if(!CL_AFTERHO[no])CL_AFTERHO[no]={};CL_AFTERHO[no][field]=curVal?0:1;autoSave();renderClients();}
+function ahToggleCb(no,field,curVal){
+  if(!CL_AFTERHO[no])CL_AFTERHO[no]={};
+  var newVal=curVal?0:1;
+  var ahLbl={turnedOver:'Turned Over'};
+  logAudit(no,'After Hand Over',field,ahLbl[field]||field,curVal?'Yes':'No',newVal?'Yes':'No');
+  CL_AFTERHO[no][field]=newVal;
+  autoSave();renderClients();
+}
+
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function logAudit(clientNo,tab,field,label,oldVal,newVal){
+  if(String(oldVal||'')===String(newVal||''))return;
+  var d=D.find(function(x){return x.no===clientNo;});
+  CL_AUDIT.unshift({ts:new Date().toISOString(),clientNo:clientNo,client:d?d.client:'#'+clientNo,tab:tab,field:field,label:label,old:String(oldVal||''),new:String(newVal||''),by:CURRENT_NAME||CURRENT_ROLE||'—'});
+  if(CL_AUDIT.length>2000)CL_AUDIT.length=2000;
+  try{localStorage.setItem('pyo_audit',JSON.stringify(CL_AUDIT));}catch(e){}
+}
+
+function clearAudit(){
+  if(!confirm('Clear the entire audit log? This cannot be undone.'))return;
+  CL_AUDIT=[];
+  try{localStorage.removeItem('pyo_audit');}catch(e){}
+  renderAudit();
+}
+
 function clDeleteRow(no){
   var idx=D.findIndex(function(x){return x.no===no;});
   if(idx>=0){
@@ -2894,8 +2993,9 @@ function phDateSave(no,field,isoVal){
   var cell=document.getElementById(dId);
   var val=mlFromISO(isoVal);
   var fieldMap={kom:'komDate',sim:'simDate',par:'parDate',live:'liveRun'};
+  var phLbl={kom:'KOM Date',sim:'SIM Date',par:'PAR Date',live:'Live Run Date'};
   var dataField=fieldMap[field];
-  if(dataField){var rec=D.find(function(x){return x.no===no;});if(rec){rec[dataField]=val;autoSave();}}
+  if(dataField){var rec=D.find(function(x){return x.no===no;});if(rec){var old=rec[dataField]||'';rec[dataField]=val;logAudit(no,'Phases',dataField,phLbl[field]||field+' Date',old,val);autoSave();}}
   if(cell){
     cell.setAttribute('data-val',val);
     cell.innerHTML=val?('<span style="font-family:var(--mono);font-size:10px;color:var(--s5);">'+val+'</span>'):'<span style="color:var(--s3)">—</span>';
@@ -2981,7 +3081,10 @@ function mlEndEdit(id,no,field,src){
 
 function mlUpdateMonth(no,field,val){
   if(!CL_MILESTONES[no])CL_MILESTONES[no]={};
+  var mlLbl={billingMonth:'Billing Month',monthCompleted:'Month Completed',churnDate:'Churn Date'};
+  var old=CL_MILESTONES[no][field]||'';
   CL_MILESTONES[no][field]=val;
+  logAudit(no,'Milestones',field,mlLbl[field]||field,old,val);
   autoSave();
 }
 
@@ -3407,6 +3510,7 @@ function renderClients(){
 
   // Tab counts
   document.getElementById('ctc-overview').textContent=rows.length;
+  document.getElementById('ctc-resource').textContent=rows.length;
   document.getElementById('ctc-phases').textContent=rows.filter(function(d){return d.kom||d.sim||d.par||d.live||d.post;}).length;
   document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.sd||a.std||a.otk;}).length;
   document.getElementById('ctc-milestones').textContent=rows.filter(function(d){return d.komDate||d.handOver||d.liveRun;}).length;
@@ -3416,7 +3520,7 @@ function renderClients(){
 
   if(CL_TAB==='overview'){
     var thStyle='padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;';
-    document.getElementById('cl-head').innerHTML='<tr style="background:var(--s0)"><th style="'+thStyle+'">#</th><th style="'+thStyle+'">Month</th><th style="'+thStyle+';min-width:180px;">Client Name</th><th style="'+thStyle+'">Resource</th><th style="'+thStyle+'">Gov Resource</th><th style="'+thStyle+'">PM</th><th style="'+thStyle+'">HR-I</th><th style="'+thStyle+'">Status</th><th style="'+thStyle+';min-width:140px;">Service</th><th style="'+thStyle+'">Days</th><th style="'+thStyle+'">Progress</th><th style="'+thStyle+'"></th></tr>';
+    document.getElementById('cl-head').innerHTML='<tr style="background:var(--s0)"><th style="'+thStyle+'">#</th><th style="'+thStyle+'">Month</th><th style="'+thStyle+';min-width:180px;">Client Name</th><th style="'+thStyle+'">Status</th><th style="'+thStyle+';min-width:140px;">Service</th><th style="'+thStyle+'">Days</th><th style="'+thStyle+'">Progress</th><th style="'+thStyle+'"></th></tr>';
     var ovRO=(CURRENT_ROLE==='manager');
     var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
     document.getElementById('cl-body').innerHTML=slice.map(function(d){
@@ -3435,10 +3539,6 @@ function renderClients(){
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.month+'</span></td>':'<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>')+
         '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
-        '<td class="ctd">'+rChip(d.resource)+'</td>'+
-        govCell+
-        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><input type="text" value="'+(d.pm||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdatePm('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="'+inpStyle+'" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>')+
-        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.remarks+'</span></td>':'<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>')+
         '<td class="ctd" style="white-space:nowrap;">'+
           (ovRO
@@ -3448,6 +3548,29 @@ function renderClients(){
         (function(){var daysOpts=[0,15,30,60,90,120,150];var canEditDays=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='god');if(!canEditDays){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+(d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+
         '<td class="ctd">'+pbar(p)+'</td>'+
         (ovRO?'<td class="ctd"></td>':'<td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow('+d.no+')" title="Remove">✕</span></td>')+
+      '</tr>';
+    }).join('');
+  } else if(CL_TAB==='resource'){
+    document.getElementById('cl-body-resource').innerHTML=slice.map(function(d){
+      var a=CL_ADDONS[d.no]||{};
+      var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
+      var isOtk=a.otk===1;
+      var rtRO=(CURRENT_ROLE==='manager');
+      var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
+      var govCell=isGov
+        ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.gov||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateGov('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'"'+(n===d.gov?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
+        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
+      var otkCell=isOtk
+        ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.otkImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateOtkImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.otkImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
+        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
+      return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
+        (rtRO?'<td class="ctd">'+rChip(d.resource)+'</td>':'<td class="ctd"><select class="cl-res-sel" onchange="clUpdateResource('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'"'+(n===d.resource?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
+        govCell+
+        (rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
+        otkCell+
+        (rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><select class="cl-pm-sel" onchange="clUpdatePm('+d.no+',this.value)"><option value="">—</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'"'+(n===d.pm?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
       '</tr>';
     }).join('');
   } else if(CL_TAB==='phases'){
@@ -4314,6 +4437,38 @@ function goClients(type){
   CL_TYPE=type;
   clPg=1;
   go('clients');
+}
+
+function goAudit(){
+  go('audit');
+}
+
+function renderAudit(){
+  var con=document.getElementById('audit-body');
+  if(!con)return;
+  var search=(document.getElementById('audit-search')||{value:''}).value.toLowerCase();
+  var rows=CL_AUDIT.filter(function(e){
+    if(!search)return true;
+    return (e.client||'').toLowerCase().indexOf(search)>=0||(e.label||e.field||'').toLowerCase().indexOf(search)>=0|(e.tab||'').toLowerCase().indexOf(search)>=0;
+  });
+  var sub=document.querySelector('#page-audit .sec-sub');
+  if(sub)sub.textContent=rows.length+' entr'+(rows.length===1?'y':'ies')+' — showing newest first';
+  if(!rows.length){con.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--s4);font-size:12px;">'+(search?'No matches found.':'No audit entries yet. Changes to client fields will appear here.')+'</td></tr>';return;}
+  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  con.innerHTML=rows.slice(0,500).map(function(e){
+    var d=new Date(e.ts);
+    var ds=MN[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    var tabColor={Overview:'#2563eb',Phases:'#16a34a','Add-ons':'#7c3aed',Milestones:'#ea580c','After Hand Over':'#0e7490'}[e.tab]||'#64748b';
+    return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'
+      +'<td class="ctd" style="white-space:nowrap;font-family:var(--mono);font-size:10px;color:var(--s5);">'+ds+'</td>'
+      +'<td class="ctd" style="font-weight:600;white-space:nowrap;">'+escHtml(e.client||'')+'</td>'
+      +'<td class="ctd"><span style="background:'+tabColor+'18;color:'+tabColor+';border-radius:4px;padding:1px 7px;font-size:10px;font-weight:600;white-space:nowrap;">'+escHtml(e.tab||'')+'</span></td>'
+      +'<td class="ctd">'+escHtml(e.label||e.field||'')+'</td>'
+      +'<td class="ctd" style="color:var(--r);font-size:11px;">'+(e.old?escHtml(e.old):'<span style="color:var(--s3)">—</span>')+'</td>'
+      +'<td class="ctd" style="color:var(--g4);font-size:11px;font-weight:600;">'+(e.new?escHtml(e.new):'<span style="color:var(--s3)">—</span>')+'</td>'
+      +'<td class="ctd" style="color:var(--s6);font-size:11px;">'+escHtml(e.by||'—')+'</td>'
+      +'</tr>';
+  }).join('');
 }
  
 function openTool(val){
@@ -5853,7 +6008,7 @@ function mfEscXml(s){
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
   manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','issues','settings']},
-  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients','issues']},
+  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'dashboard',hideNav:['impl','my-clients','issues']},
   implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','clients']},
   god:{pill:'rp-god',pillText:'God Mode',avatarBg:'#7c3aed',defaultPage:'dashboard',hideNav:[]}
 };
@@ -6343,6 +6498,8 @@ function startApp(){
   if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
   var clIssuesBtn=document.getElementById('nav-cl-issues');
   if(clIssuesBtn)clIssuesBtn.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
+  var clAuditNavBtn=document.getElementById('nav-cl-audit');
+  if(clAuditNavBtn)clAuditNavBtn.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
   if(godSwitchEl)godSwitchEl.className='god-switch'+(_IS_GOD?' visible':'');
   document.getElementById('login-screen').classList.add('hidden');

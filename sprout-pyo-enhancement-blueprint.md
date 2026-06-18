@@ -1352,6 +1352,10 @@ The Add New Client modal now sources its assignee fields from live `TEAM_CONFIG`
 
 Changed from inline text input to a `<select>` populated from `TEAM_CONFIG.implHR`. Uses `clUpdateHrI()` on change.
 
+#### Overview tab Resource cell (June 18, 2026)
+
+Changed from `rChip(d.resource)` static chip to a `<select class="cl-res-sel">` populated from `TEAM_CONFIG.implPYO`. Pre-selects the current `d.resource` value. Manager role (read-only) still renders the `rChip`. New `clUpdateResource(no, val)` function saves the change, calls `logAudit()`, and re-renders. CSS class `.cl-res-sel` added (same style as `.cl-hri-sel` but with `font-weight:600`).
+
 #### Overview tab Gov Resource cell (June 18, 2026)
 
 Changed from inline text input to a `<select class="cl-gov-sel">` populated from `TEAM_CONFIG.implGov`. Only rendered when `isGov` is true. Pre-selects the current `d.gov` value. Uses `clUpdateGov()` on change. Read-only roles see plain text. CSS class `.cl-gov-sel` added (identical style to `.cl-hri-sel`).
@@ -1414,3 +1418,178 @@ This ensures PMs are always saved to Supabase even if the `impl_*` columns haven
 ### Supabase table note
 
 If `impl_pyo`, `impl_gov`, `impl_hr`, `impl_otk` columns do not yet exist in the `team_config` table, add them as `text[]` / jsonb array type. The PM-only fallback handles the transition period.
+
+---
+
+## Section 29 — Audit Trail for PYO & Payroll Starter Clients ✅ Coded (June 18, 2026)
+
+Every field change across all client tabs is now recorded in a persistent audit log, visible to Admin, Manager, and God roles.
+
+### What is tracked
+
+| Tab | Fields logged |
+|---|---|
+| Overview | Month, Service, Days, Status, Project Manager, HR-I, Gov Resource |
+| Phases | KOM / SIM / PAR / Live Run / Post Live checkboxes; KOM / SIM / PAR / Live Run dates |
+| Add-ons | Sprout Gov, Benefits Admin, Salary Disbursement, Statutory Disbursement, OTK toggles |
+| Milestones | Billing Month, Month Completed, Churn Date |
+| After Hand Over | CSM, Processor, Turned Over |
+
+### Data structure
+
+```javascript
+var CL_AUDIT = []; // flat array, newest first, max 2000 entries
+// Entry shape:
+{ ts, clientNo, client, tab, field, label, old, new, by }
+```
+
+- **Stored**: `localStorage.setItem('pyo_audit', ...)`
+- **Not sent to Supabase** (localStorage only for now)
+
+### Key functions
+
+| Function | Purpose |
+|---|---|
+| `logAudit(clientNo, tab, field, label, oldVal, newVal)` | Appends a new entry; skips no-ops (old === new); trims to 2000 entries |
+| `escHtml(s)` | Escapes `&`, `<`, `>`, `"` for safe inline HTML rendering |
+| `renderAudit()` | Renders the audit table; respects search filter; shows newest 500 entries |
+| `goAudit()` | Navigates to the audit page via `go('audit')` |
+| `clearAudit()` | Clears `CL_AUDIT` and removes `pyo_audit` from localStorage after confirm |
+
+### All modified update functions
+
+`clCbox`, `clUpdateMonth`, `clUpdateSvc`, `clUpdateDays`, `clUpdateStatus`, `clUpdatePm`, `clUpdateHrI`, `clUpdateGov`, `ahUpdateField`, `ahToggleCb`, `phDateSave`, `mlUpdateMonth`
+
+### UI
+
+- New **Audit Trail** nav sub-item under Clients (clipboard icon), visible for Admin / Manager / God
+- New **`page-audit`** page with a search input and table: Date/Time · Client · Tab · Field · Old Value · New Value · Changed By
+- Tab badges are colour-coded: Overview=blue, Phases=green, Add-ons=purple, Milestones=orange, After Hand Over=teal
+- **Clear Log** button (admin/manager confirm-guarded)
+- `go()` function updated to include `'audit'` in the page list and clear the nav button active state
+
+## Section 30 — Resource Team Tab ✅ Coded (June 18, 2026)
+
+A dedicated **Resource Team** tab was added between Overview and Implementation Phases in the Clients panel. All team-assignment columns were removed from Overview and moved here.
+
+### Overview tab changes
+
+Removed columns: Resource, Gov Resource, HR-I, OTK Implementer, Project Manager.
+
+Remaining Overview columns: #, Month, Client Name, Status, Service, Days, Progress, (delete).
+
+### Resource Team tab
+
+**Tab bar:** `Resource Team` with a count badge (`ctc-resource`).
+
+**Columns:** #, Client Name, Resource, Gov Resource, HR-I, OTK Implementer, Project Manager.
+
+**Conditional cells:**
+- **Gov Resource** — shown as a `<select>` from `TEAM_CONFIG.implGov` only when `isGov` is true (service contains "gov" OR Sprout Gov / Benefits Admin / Statutory Disbursement add-on is ticked). Shows `—` otherwise.
+- **OTK Implementer** — shown as a `<select>` from `TEAM_CONFIG.implOTK` only when `isOtk` is true (`CL_ADDONS[no].otk === 1`). Shows `—` otherwise.
+- **HR-I** — always shown; `<select>` from `TEAM_CONFIG.implHR`.
+- **Resource** — always shown; `<select>` from `TEAM_CONFIG.implPYO`.
+- **Project Manager** — always shown; `<select>` from `TEAM_CONFIG.pms`.
+
+**Read-only for Manager role** — dropdowns become plain text spans when `CURRENT_ROLE === 'manager'`.
+
+### CSS classes used
+
+`cl-res-sel`, `cl-gov-sel`, `cl-hri-sel`, `cl-pm-sel` — all share the same styling (6px padding, 6px border-radius, 11px font, `var(--s2)` border).
+
+### New function
+
+| Function | Purpose |
+|---|---|
+| `clUpdateOtkImpl(no, val)` | Updates `d.otkImpl`; calls `logAudit` under tab `'Resource Team'`, field `'otkImpl'`, label `'OTK Implementer'` |
+
+### Audit tab labels updated
+
+`clUpdateResource`, `clUpdateGov`, `clUpdateHrI` now log under tab `'Resource Team'` (was `'Overview'`) since those columns moved.
+
+### switchClientTab()
+
+`'resource'` added to the tab list: `['overview','resource','phases','addons','milestones','afterho']`.
+
+### renderClients() block
+
+```javascript
+} else if(CL_TAB==='resource'){
+  document.getElementById('cl-body-resource').innerHTML=slice.map(function(d){
+    var a=CL_ADDONS[d.no]||{};
+    var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
+    var isOtk=a.otk===1;
+    var rtRO=(CURRENT_ROLE==='manager');
+    // ... govCell: select from implGov if isGov, else —
+    // ... otkCell: select from implOTK if isOtk, else —
+    // Resource: select from implPYO
+    // HR-I: select from implHR
+    // PM: select from pms
+  }).join('');
+}
+```
+
+## Section 31 — Global Select Dropdown Text Overlap Fix ✅ Coded (June 18, 2026)
+
+All `<select>` elements across the dashboard were showing text overlapping the native dropdown arrow when the selected value was long (e.g. "Statutory Disbursement", "— Select implementer —").
+
+### Fix
+
+Added a single global CSS rule immediately after the universal reset:
+
+```css
+select { padding-right: 28px !important; text-overflow: ellipsis; }
+```
+
+- `padding-right: 28px !important` — overrides any inline `padding` shorthand to ensure the text area always stops 28px before the right edge, leaving room for the native arrow (~16–20px wide).
+- `text-overflow: ellipsis` — if text is still too long for the container it shows `…` cleanly instead of getting clipped under the arrow.
+- Applies universally to every `<select>` in the SPA: modal dropdowns (Add Client, Vault), table-cell selects (Overview, Resource Team), settings selects, and all others.
+
+## Section 32 — Dropdown & Tab Visual Polish ✅ Coded (June 18, 2026)
+
+### Select dropdowns — global redesign
+
+All `<select>` elements now use a consistent custom-styled chevron and interaction states:
+
+```css
+select {
+  appearance: none; -webkit-appearance: none;
+  background-image: url("...svg chevron in #94a3b8...") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 9px center !important;
+  background-size: 10px 6px !important;
+  padding-right: 28px !important;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+select:hover  { border-color: #94a3b8 !important; }
+select:focus  { border-color: var(--g) !important; box-shadow: 0 0 0 3px rgba(50,206,19,.12) !important; outline: none !important; }
+```
+
+The `!important` on `background-image` is required to override inline `background:#fff` shorthand styles that would otherwise reset the image to `none`. All other `background-*` longhands cooperate without conflict.
+
+### Table-cell selects
+
+All `.cl-*-sel` classes upgraded:
+- Padding: `3px 6px` → `4px 28px 4px 8px` (taller, clear left indent, arrow space baked in)
+- Border-radius: `6px` → `7px`
+- Background: `#fff` → `var(--s0)` (light tint makes them read as interactive controls, not plain text)
+
+`.cl-res-sel` (Resource assignee) gets a distinct green treatment:
+- Border: `1.5px solid var(--g2)`
+- Color: `var(--g4)` (dark green text)
+- Background: `var(--g0)` (light green fill)
+- Weight: `700` — primary assignment column is visually prominent
+
+### Client tabs — pill-tab style
+
+```css
+.ctab        { border-bottom: 3px solid transparent; border-radius: 8px 8px 0 0; transition: all .15s; padding: 10px 16px; }
+.ctab:hover  { background: var(--s1); color: var(--s8); }
+.ctab.ctab-on{ background: var(--g0); border-bottom-color: var(--g4); color: var(--g4); font-weight: 700; }
+.ctab-count  { background: rgba(0,0,0,.07); } /* inactive */
+.ctab.ctab-on .ctab-count { background: var(--g4); color: #fff; } /* active */
+```
+
+Tab bar (`tab-edit-bar`) gets `background: var(--s0)` so the active green tab reads clearly against the tinted strip.
