@@ -5,6 +5,20 @@
 
 ---
 
+## Bug Fix — Jun 18, 2026: Google Sign-In button not visible / non-functional (local file)
+
+**Root cause:** Google's Identity Services `renderButton` silently fails from `file://` URLs because the origin isn't in the authorized JavaScript origins list in Google Cloud Console. Even when the GSI library loads, it injects an invisible iframe (so children.length > 0), making detection unreliable. `google.accounts.id.prompt()` also silently fails on `file://`.
+
+**Fix applied (final — Jun 18, 2026 revision 4):**
+- Login HTML: single dark `.lf-btn` button "Sign in with Google" (Google G SVG + yellow-green text on #092903 bg) — matches original screenshot 12 exactly. Hidden `#ll-local-fallback` with 7 hardcoded user picker buttons below it.
+- `handleSignInClick()`: called when the dark button is clicked. If `file://` → toggles `#ll-local-fallback` visible (user picks their name → `llPickUser()`). If Vercel/HTTPS → calls `google.accounts.id.prompt()` → Google One-Tap → `handleGoogleCredential` → `startApp()`.
+- `initGoogleSignIn()`: if `file://` → returns immediately. If Vercel → waits for GIS library (retries via setTimeout), then calls `google.accounts.id.initialize()`.
+- `llPickUser(email)`: looks up user, sets role/name, saves to localStorage, calls `startApp()`.
+- **Vercel:** dark button → click → Google One-Tap signs you in. **Local file:** dark button → click → reveals user picker → click name → signed in.
+- **DO NOT delete Supabase or Google Cloud Console.** Vercel authorized origin is already set up.
+
+---
+
 ## Overview
 
 This document captures all UI/UX enhancements agreed upon during this brainstorming session. It covers three areas:
@@ -298,10 +312,13 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 | `team_config` | TEAM_CONFIG implementers + pms arrays |
 | `user_roles` | Maps @sprout.ph email → role + implementer_name |
 
-### Login flow
-- Login screen replaced with "Sign in with Google" button
-- On auth: looks up user email in `user_roles` to get role + name
-- Unauthorized emails shown error; Supabase session signed out
+### Login flow (updated June 18, 2026)
+- Uses **Google Identity Services (GIS)** library directly — no Supabase auth, no typing required
+- `initGoogleSignIn()` renders the Google button on page load; `hd:'sprout.ph'` restricts to Sprout work accounts
+- `handleGoogleCredential()` decodes the returned JWT, extracts email, matches against local `USERS` array
+- Unauthorized emails shown an error; authorized users go straight to `startApp()`
+- `lesleea@sprout.ph` still gets god role
+- Google Client ID: `645223084491-7c5foosn9d8kfc5lvos4l6etgc7fe8k3.apps.googleusercontent.com`
 
 ### Data strategy (hybrid)
 - **Load:** Supabase first → localStorage fallback → baked defaults
