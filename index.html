@@ -3643,7 +3643,9 @@ function renderClients(){
     document.getElementById('cl-body-phases').innerHTML=slice.map(function(d){
       function phCell(key,val,dateVal){
         var isActive=key===activePhase;
-        var isNextUp=isActive&&!val;
+        var keyIdx=phaseKeys.indexOf(key);
+        var prevDone=keyIdx<=0||phaseKeys.slice(0,keyIdx).every(function(pk){return !!d[pk];});
+        var isNextUp=isActive&&!val&&prevDone;
         var cellCls='ctd'+(isActive?' col-active':'');
         var box=clPhaseBox(d.no,key,val,d.service,dateVal,isNextUp);
         return '<td class="'+cellCls+'" style="text-align:center;">'+box+'</td>';
