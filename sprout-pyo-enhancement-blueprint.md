@@ -187,10 +187,12 @@ The full dashboard was redesigned with these principles:
 
 Each phase column keeps its existing checkbox with a **date below it**, editable inline.
 
-**Date fields per phase:** KOM → `d.komDate`, Simulation → `d.simDate`, Parallel Run → `d.parDate`, Live Run → `d.liveRun`. Post Live has no date field.
+**Date fields per phase:** KOM → `d.komDate`, Simulation → `d.simDate`, Project Checklist (PS only) → `d.checklistDate`, Parallel Run → `d.parDate`, Live Run → `d.liveRun`. Post Live has no date field.
 
 **New data fields added:**
 - `simDate` — Simulation date (string, MM/DD/YYYY format)
+- `checklistDate` — Project Checklist date (Payroll Starter only)
+- `checklist` — Project Checklist checkbox (int 0/1, Payroll Starter only)
 - `parDate` — Parallel Run date
 
 These were added to:
@@ -198,10 +200,15 @@ These were added to:
 - Export logic (Milestone Dates sheet, 11 columns)
 - Implementation Phases tab rendering (`clPhaseBox`)
 
-**Column structure (unchanged headers):**
+**Column structure — PYO clients:**
 ```
-# | CLIENT NAME | KOM | SIMULATION | PARALLEL RUN | LIVE RUN | POST LIVE
+# | CLIENT NAME | KOM | SIMULATION | PARALLEL RUN | LIVE RUN
 ```
+**Column structure — Payroll Starter clients:**
+```
+# | CLIENT NAME | KOM | SIMULATION | PROJECT CHECKLIST | LIVE RUN
+```
+Project Checklist column (`ph-th-checklist`) is shown only when `CL_TYPE==='ps'`; Parallel Run column (`ph-th-par`) is hidden for PS. PS phase sequence: `['kom','sim','checklist','live']`. Progress percentage for PS uses 4 phases (KOM, SIM, Checklist, Live Run).
 
 **Each phase cell:**
 ```
