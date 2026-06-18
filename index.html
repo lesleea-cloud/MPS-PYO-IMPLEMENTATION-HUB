@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprout PYO — Enhancement Blueprint</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --g:  #32CE13;
+    --g0: #E9FAE5;
+    --g1: #C9F3BE;
+    --g4: #239A0D;
+    --g9: #092903;
+    --b:  #1679FA;
+    --b0: #EEF7FF;
+    --b1: #D8EBFF;
+    --o:  #FF7F00;
+    --o0: #FFFAEC;
+    --o1: #FFE5A5;
+    --v:  #8139EE;
+    --v1: #DED6FE;
+    --r:  #dc2626;
+    --r0: #fef2f2;
+    --s:  #64748b;
+    --s0: #f1f5f9;
+    --s1: #e2e8f0;
+    --bg: #F7F5F2;
+    --ink: #0f172a;
+    --ink2: #475569;
+    --card: #ffffff;
+    --radius: 10px;
+    --font: 'Rubik', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--g9);
+    color: #fff;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -.3px;
+    color: var(--g);
+  }
+  .topbar-logo span { color: #fff; }
+  .topbar-tag {
+    font-size: 11px;
+    font-weight: 500;
+    background: rgba(50,206,19,.15);
+    color: var(--g);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+  }
+  .topbar-meta {
+    margin-left: auto;
+    font-size: 12px;
+    color: rgba(255,255,255,.45);
+  }
+
+  /* ── LAYOUT ── */
+  .shell {
+    display: flex;
+    min-height: calc(100vh - 48px);
+  }
+
+  /* ── SIDEBAR TOC ── */
+  .toc {
+    width: 240px;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid var(--s1);
+    padding: 24px 0;
+    position: sticky;
+    top: 48px;
+    height: calc(100vh - 48px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--s1) transparent;
+  }
+  .toc::-webkit-scrollbar { width: 4px; }
+  .toc::-webkit-scrollbar-thumb { background: var(--s1); border-radius: 4px; }
+
+  .toc-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--s);
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding: 8px 20px 4px;
+  }
+  .toc a {
+    display: block;
+    padding: 6px 20px;
+    font-size: 12.5px;
+    color: var(--ink2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .toc a:hover {
+    color: var(--g4);
+    background: var(--g0);
+    border-left-color: var(--g);
+  }
+  .toc a.coded { color: var(--g4); }
+  .toc a.pending { color: var(--o); }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1;
+    padding: 32px 40px 80px;
+    max-width: 860px;
+  }
+
+  /* ── PAGE HEADER ── */
+  .page-header {
+    margin-bottom: 36px;
+  }
+  .page-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -.4px;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  .page-header-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--s);
+  }
+  .page-header-meta span { display: flex; align-items: center; gap: 5px; }
+
+  /* ── OVERVIEW BOX ── */
+  .overview-box {
+    background: var(--g9);
+    color: #fff;
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 36px;
+  }
+  .overview-box p { font-size: 13.5px; color: rgba(255,255,255,.7); margin-bottom: 12px; }
+  .overview-areas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .overview-area {
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+  .overview-area .area-num { color: var(--g); font-weight: 700; font-size: 18px; margin-bottom: 2px; }
+  .overview-area .area-label { color: rgba(255,255,255,.75); line-height: 1.3; }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 44px;
+    scroll-margin-top: 70px;
+  }
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--s1);
+  }
+  .section-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--s);
+    font-family: var(--mono);
+    padding-top: 4px;
+    min-width: 28px;
+  }
+  .section-title-wrap { flex: 1; }
+  .section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -.2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: var(--font);
+    letter-spacing: .2px;
+    white-space: nowrap;
+  }
+  .badge-coded { background: var(--g0); color: var(--g4); }
+  .badge-pending { background: var(--o0); color: #9a4500; }
+  .section-date {
+    font-size: 11px;
+    color: var(--s);
+    font-family: var(--mono);
+    margin-top: 3px;
+  }
+
+  /* ── SUBSECTION ── */
+  .subsection {
+    margin-bottom: 24px;
+  }
+  .subsection-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .subsection-title::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 14px;
+    background: var(--b);
+    border-radius: 2px;
+  }
+
+  /* ── PROSE ── */
+  .prose {
+    font-size: 13.5px;
+    color: var(--ink2);
+    line-height: 1.65;
+    margin-bottom: 12px;
+  }
+
+  /* ── TABLES ── */
+  .tbl-wrap { overflow-x: auto; margin-bottom: 16px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  thead tr {
+    background: var(--s0);
+  }
+  th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--s1);
+    color: var(--ink2);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--s0); }
+
+  /* priority color dots in table */
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 16px 18px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--s0);
+    color: var(--v);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+
+  /* ── LIST ── */
+  ul.detail-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 14px;
+  }
+  ul.detail-list li {
+    font-size: 13px;
+    color: var(--ink2);
+    padding: 5px 0 5px 18px;
+    position: relative;
+    border-bottom: 1px solid var(--s1);
+    line-height: 1.5;
+  }
+  ul.detail-list li:last-child { border-bottom: none; }
+  ul.detail-list li::before {
+    content: '–';
+    position: absolute;
+    left: 0;
+    color: var(--s);
+  }
+
+  /* ── CSS CLASS CHIPS ── */
+  .class-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .class-chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--b0);
+    color: var(--b);
+    border: 1px solid var(--b1);
+    padding: 3px 8px;
+    border-radius: 5px;
+  }
+  .class-chip.removed {
+    background: var(--r0);
+    color: var(--r);
+    border-color: #fecaca;
+    text-decoration: line-through;
+  }
+  .class-chip.green {
+    background: var(--g0);
+    color: var(--g4);
+    border-color: var(--g1);
+  }
+
+  /* ── ASCII DIAGRAM ── */
+  .ascii-box {
+    background: #0f172a;
+    color: #94a3b8;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 16px 18px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 14px;
+    line-height: 1.55;
+    white-space: pre;
+  }
+
+  /* ── COLUMN SPEC PILLS ── */
+  .col-spec {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .col-pill {
+    font-size: 12px;
+    background: var(--card);
+    border: 1px solid var(--s1);
+    border-radius: 7px;
+    padding: 8px 12px;
+    min-width: 140px;
+  }
+  .col-pill-label { font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+  .col-pill-val { color: var(--s); font-family: var(--mono); font-size: 11px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 10px 14px;
+    border-radius: 0 7px 7px 0;
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .callout-info { border-color: var(--b); background: var(--b0); color: #1e3a8a; }
+  .callout-warn { border-color: var(--o); background: var(--o0); color: #7c3a00; }
+  .callout-ok   { border-color: var(--g); background: var(--g0); color: var(--g4); }
+  .callout strong { font-weight: 600; }
+
+  /* ── PRIORITY LEGEND ── */
+  .priority-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--s1);
+    font-size: 12.5px;
+    color: var(--ink2);
+  }
+  .priority-row:last-child { border-bottom: none; }
+  .p-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    min-width: 22px;
+    color: var(--s);
+  }
+
+  /* ── SCHEMA PILLS ── */
+  .schema-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--card);
+    border: 1px solid var(--s1);
+    border-radius: 7px;
+    padding: 6px 10px;
+    margin: 4px;
+    font-size: 12px;
+  }
+  .schema-field code { font-size: 11.5px; }
+  .schema-type {
+    font-size: 10.5px;
+    background: var(--s0);
+    color: var(--s);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: var(--mono);
+  }
+
+  /* ── STATUS PILL ── */
+  .status-done { color: var(--g4); font-weight: 600; }
+  .status-done::before { content: '✅ '; }
+  .status-pending { color: #9a4500; font-weight: 600; }
+  .status-pending::before { content: '🔲 '; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--s1);
+    margin: 32px 0;
+  }
+
+  /* ── IMPL ORDER ── */
+  .impl-order {
+    counter-reset: impl;
+    list-style: none;
+    padding: 0;
+  }
+  .impl-order li {
+    counter-increment: impl;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--s1);
+    font-size: 13px;
+  }
+  .impl-order li:last-child { border-bottom: none; }
+  .impl-order li::before {
+    content: counter(impl);
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--s0);
+    color: var(--s);
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── COLOR SWATCH ── */
+  .swatch-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .swatch {
+    width: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--s1);
+    font-size: 11px;
+  }
+  .swatch-color { height: 36px; }
+  .swatch-info { padding: 5px 7px; background: #fff; }
+  .swatch-name { font-weight: 600; color: var(--ink); }
+  .swatch-hex { color: var(--s); font-family: var(--mono); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .toc { display: none; }
+    .main { padding: 20px 18px 60px; }
+    .overview-areas { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="topbar-logo">Sprout <span>PYO</span></div>
+  <div class="topbar-tag">Enhancement Blueprint</div>
+  <div class="topbar-meta">Session: May 10, 2026 &nbsp;·&nbsp; Scope: Implementer Dashboard + My Clients</div>
+</header>
+
+<div class="shell">
+
+<!-- SIDEBAR TOC -->
+<nav class="toc">
+  <div class="toc-label">Overview</div>
+  <a href="#overview">Document Summary</a>
+
+  <div class="toc-label">Coded ✅</div>
+  <a href="#s1" class="coded">1. Needs Attention Panel</a>
+  <a href="#s3" class="coded">3. Implementation Phases Tab</a>
+  <a href="#s4" class="coded">4. Settings — Add Client</a>
+  <a href="#s5" class="coded">5. Editable PM Field</a>
+  <a href="#s6" class="coded">6. HR-I Column</a>
+  <a href="#s7" class="coded">7. PYO vs Payroll Starter</a>
+  <a href="#s8" class="coded">8. Collapsible Dashboard</a>
+  <a href="#s9" class="coded">9. Brand Color & Font</a>
+  <a href="#s10" class="coded">10. Post Live Moved</a>
+  <a href="#s11" class="coded">11. Service Chips</a>
+  <a href="#s12" class="coded">12. Excel Data Migration</a>
+  <a href="#s13" class="coded">13. Sidebar Redesign</a>
+  <a href="#s14" class="coded">14. Sidebar Scrollbar</a>
+  <a href="#s15" class="coded">15. God Mode</a>
+  <a href="#s16" class="coded">16. Issue Log</a>
+  <a href="#s17" class="coded">17. MOM Generator</a>
+  <a href="#s18" class="coded">18. Weekly Report</a>
+  <a href="#s18b" class="coded">18b. Sample Templates</a>
+  <a href="#s19" class="coded">19. Turned Over Column</a>
+  <a href="#s20" class="coded">20. Weekly 3-Tab Layout</a>
+  <a href="#s21" class="coded">21. Role-Based Permissions</a>
+  <a href="#s22" class="coded">22. Remove User Mgmt</a>
+  <a href="#s23" class="coded">23. Team Config</a>
+  <a href="#s24" class="coded">24. Gov Resource Column</a>
+  <a href="#s25" class="coded">25. Implementation Vault</a>
+
+  <div class="toc-label">Not Yet Coded 🔲</div>
+  <a href="#s2" class="pending">2. Dashboard Layout</a>
+  <a href="#s3b" class="pending">3b. Active Column Highlight</a>
+
+  <div class="toc-label">Reference</div>
+  <a href="#schema">Data Schema Changes</a>
+  <a href="#bugfixes">Bug Fixes</a>
+  <a href="#supabase">Supabase Integration</a>
+  <a href="#implorder">Implementation Order</a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header" id="overview">
+    <h1>Sprout PYO Implementation Hub<br>Enhancement Blueprint</h1>
+    <div class="page-header-meta">
+      <span>📅 Session date: May 10, 2026</span>
+      <span>📄 File: <code>index.html</code></span>
+      <span>🎯 Scope: Implementer Dashboard + My Clients → Implementation Phases</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="overview-box">
+    <p>This document captures all UI/UX enhancements agreed upon during this brainstorming session.</p>
+    <div class="overview-areas">
+      <div class="overview-area">
+        <div class="area-num">1</div>
+        <div class="area-label">Implementer Dashboard — Needs Attention panel <strong style="color:#32CE13">Coded ✅</strong></div>
+      </div>
+      <div class="overview-area">
+        <div class="area-num">2</div>
+        <div class="area-label">Implementer Dashboard — general layout improvements <em style="color:rgba(255,255,255,.5)">Designed, not yet coded</em></div>
+      </div>
+      <div class="overview-area">
+        <div class="area-num">3</div>
+        <div class="area-label">My Clients → Implementation Phases tab <strong style="color:#32CE13">Coded ✅</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 1 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">§1</div>
+      <div class="section-title-wrap">
+        <div class="section-title">
+          Needs Attention Panel — Enhanced Alert Logic
+          <span class="badge badge-coded">✅ Coded</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="prose">The Needs Attention panel was redesigned from a simple two-section list (Overdue / Upcoming) into a fully prioritized alert feed covering all key implementation phases — not just live run.</div>
+
+    <div class="subsection">
+      <div class="subsection-title">New Alert Types</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Priority</th><th>Color</th><th>Trigger</th><th>Badge</th></tr></thead>
+          <tbody>
+            <tr><td><span class="p-num">0</span></td><td><span class="dot" style="background:#dc2626"></span><code>#dc2626</code></td><td>Live run date passed but <code>live</code> phase not ticked</td><td><span class="badge" style="background:#fef2f2;color:#dc2626">Overdue</span></td></tr>
+            <tr><td><span class="p-num">1</span></td><td><span class="dot" style="background:#dc2626"></span><code>#dc2626</code></td><td>KOM done but Simulation not started — 15+ days idle</td><td><span class="badge" style="background:#fef2f2;color:#dc2626">Overdue</span></td></tr>
+            <tr><td><span class="p-num">2</span></td><td><span class="dot" style="background:#dc2626"></span><code>#dc2626</code></td><td>Simulation done but Parallel Run not started — 15+ days idle</td><td><span class="badge" style="background:#fef2f2;color:#dc2626">Overdue</span></td></tr>
+            <tr><td><span class="p-num">3</span></td><td><span class="dot" style="background:#ea580c"></span><code>#ea580c</code></td><td>Live run date within <strong>7 days</strong></td><td><span class="badge" style="background:#fff7ed;color:#c2410c">X days</span></td></tr>
+            <tr><td><span class="p-num">4</span></td><td><span class="dot" style="background:#f59e0b"></span><code>#f59e0b</code></td><td>Live run date within <strong>8–14 days</strong></td><td><span class="badge" style="background:#fffbeb;color:#92400e">X days</span></td></tr>
+            <tr><td><span class="p-num">5</span></td><td><span class="dot" style="background:#2563eb"></span><code>#2563eb</code></td><td>KOM done, Simulation not yet scheduled (no live run date)</td><td><span class="badge" style="background:#eff6ff;color:#1d4ed8">Schedule</span></td></tr>
+            <tr><td><span class="p-num">6</span></td><td><span class="dot" style="background:#2563eb"></span><code>#2563eb</code></td><td>Simulation done, Parallel Run not yet scheduled</td><td><span class="badge" style="background:#eff6ff;color:#1d4ed8">Schedule</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">What Was Removed</div>
+      <ul class="detail-list">
+        <li>Section sub-headers ("OVERDUE", "UPCOMING — LIVE RUN", etc.) — redundant since each row badge communicates the same thing</li>
+        <li>"On track" / "All clear" section — only projects needing action appear</li>
+        <li>Completed projects (all 5 phases done) are excluded entirely</li>
+        <li>Churned projects are excluded</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">New Row Anatomy</div>
+      <ul class="detail-list">
+        <li><strong>Colored dot</strong> — urgency color at a glance</li>
+        <li><strong>Client name</strong> — bold</li>
+        <li><strong>Sub-text</strong> — plain-language description of the issue</li>
+        <li><strong>Date line</strong> — the relevant date highlighted in color if overdue</li>
+        <li><strong>Right column:</strong> Badge (Overdue / X days / Schedule) · Phase tag · Days label (Xd past / Xd idle)</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">New CSS Classes Added</div>
+      <div class="class-grid">
+        <span class="class-chip">.impl-attn-date</span>
+        <span class="class-chip">.impl-attn-right</span>
+        <span class="class-chip">.impl-attn-phase</span>
+        <span class="class-chip">.impl-attn-days</span>
+        <span class="class-chip">.impl-attn-legend</span>
+        <span class="class-chip">.impl-attn-leg-item</span>
+        <span class="class-chip">.impl-attn-leg-dot</span>
+      </div>
+      <div class="class-grid">
+        <span class="class-chip removed">.impl-attn-sublbl</span>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">JS Function Updated</div>
+      <div class="callout callout-info">
+        <strong><code>implRenderAttention(myD)</code></strong> — fully rewritten. Builds a flat <code>alerts[]</code> array sorted by <code>priority</code> (0 = most urgent). Skips completed clients (all 5 phase flags ticked) and churned clients. Updates <code>#impl-attn-count</code> badge and shows/hides <code>#impl-attn-legend</code>.
+      </div>
+    </div>
+
+    <div class="callout callout-warn">
+      <strong>Known Limitation — Priority 2:</strong> Priority 2 (Simulation done, Parallel Run 15+ days idle) is gated on <code>d.simDate</code>. Since <code>simDate</code> was not yet in the data schema, this alert does not fire until <code>simDate</code> is added. No code change needed — the alert activates automatically once <code>simDate</code> is populated.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 2 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num">§2</div>
+      <div class="section-title-wrap">
+        <div class="section-title">
+          Implementer Dashboard — Layout Improvements
+          <span class="badge badge-pending">🔲 Not Yet Coded</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">2a. Stacked Priority Layout</div>
+      <div class="prose">Problems solved: "My Projects" was buried at the bottom (now anchors top-left); Project Status panel took too much space (moved below My Projects, more compact); Right panel was empty until a project was clicked (now always populated); KPI cards were tall and repetitive (replaced with compact inline stat bar).</div>
+      <div class="ascii-box">┌─────────────────────────────────────────────────────┐
+│  App header (logo, role pill, sign out)             │
+├──────────────┬──────────────────────────────────────┤
+│              │  Greeting + Search bar               │
+│   Sidebar    ├──────────────────────────────────────┤
+│              │  KPI inline bar                      │
+│  - Overview  ├────────────────────┬─────────────────┤
+│  - My Dash   │  My Projects       │ Needs Attention │
+│  - My Clients│  (scrollable list) ├─────────────────┤
+│  ──────────  │                    │ Selected Project│
+│  - System    │  ──────────────────│ (scrollable     │
+│  - Admin Tool│  Project Status    │  detail panel)  │
+│  - Settings  │  by Module         │                 │
+└──────────────┴────────────────────┴─────────────────┘</div>
+      <div class="col-spec">
+        <div class="col-pill"><div class="col-pill-label">Sidebar</div><div class="col-pill-val">190px fixed</div></div>
+        <div class="col-pill"><div class="col-pill-label">Left Column</div><div class="col-pill-val">flex 1.2, fluid</div></div>
+        <div class="col-pill"><div class="col-pill-label">Right Column</div><div class="col-pill-val">280px fixed</div></div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">2b. My Projects Panel — Filter Pills</div>
+      <div class="class-grid">
+        <span class="class-chip green">All</span>
+        <span class="class-chip green">Live</span>
+        <span class="class-chip green">Ongoing</span>
+        <span class="class-chip green">Not Started</span>
+        <span class="class-chip green">PYO</span>
+        <span class="class-chip green">Payroll Starter</span>
+      </div>
+      <div class="prose">Project ordering within each filter: (1) Ongoing → (2) Not yet started / On-Hold / For Turnover → (3) Live → (4) Churned. Group labels removed — status badge on each row does the labeling.</div>
+      <div class="prose">Each row shows: Initials avatar (deterministic color) · Client name + status badge · Month · service · go-live date · Progress bar + percentage. Selected row: green left border + green background, fade-in transition.</div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">2c. Project Status by Module</div>
+      <ul class="detail-list">
+        <li>Tabs (Payroll Starter / PYO) replaced with side-by-side columns — both visible at once</li>
+        <li>Date range shown prominently above the bars ("Week of May 4 – May 8, 2026")</li>
+        <li>Horizontal bars with count shown inside (white text on colored fill)</li>
+      </ul>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">2d & 2e. Other Changes</div>
+      <ul class="detail-list">
+        <li><strong>Administration Tool</strong> — moved from top-right button into sidebar under System, above Settings. Implementer role only.</li>
+        <li><strong>Selected Project panel</strong> — fixed header (avatar, name, month, service, status, progress) + scrollable detail sections (Overview · Phases · Add-ons · Milestones · After hand over)</li>
+        <li>Clicking a Needs Attention row syncs the highlight in My Projects. First Ongoing project is auto-selected on load.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 3 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num">§3</div>
+      <div class="section-title-wrap">
+        <div class="section-title">
+          My Clients → Implementation Phases Tab
+          <span class="badge badge-coded">✅ Coded</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="subsection">
+      <div class="subsection-title">3a. Checkbox + Date Stacked (Option A)</div>
+      <div class="prose">Each phase column keeps its existing checkbox with a <strong>date below it</strong>, editable inline.</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Phase</th><th>Date Field</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>KOM</td><td><code>d.komDate</code></td><td><span class="status-done">Added</span></td></tr>
+            <tr><td>Simulation</td><td><code>d.simDate</code></td><td><span class="status-done">Added</span></td></tr>
+            <tr><td>Parallel Run</td><td><code>d.parDate</code></td><td><span class="status-done">Added</span></td></tr>
+            <tr><td>Live Run</td><td><code>d.liveRun</code></td><td>Existing</td></tr>
+            <tr><td>Post Live</td><td>No date field</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose">Empty dates show <code>—</code>. Clicking the date opens a native <code>&lt;input type="date"&gt;</code> in-place; blur/Enter saves it via <code>autoSave()</code>.</div>
+      <div class="class-grid">
+        <span class="class-chip">.ph-cell</span>
+        <span class="class-chip">.ph-date</span>
+      </div>
+    </div>
+
+    <div class="subsection" id="s3b">
+      <div class="subsection-title">3b. Active Column Highlight <span class="badge badge-pending" style="font-size:10px">🔲 Not Yet Coded</span></div>
+      <div class="prose">The column representing the most commonly active phase gets a green tinted header and cell background. A "Next" micro-badge appears on cells where that phase is next up.</div>
+      <pre><code>.col-active     { background: rgba(99,153,34,0.05); }
+.col-active-hdr { background: #EAF3DE; color: #27500A; }
+.cb-next        { border: 1.5px dashed #639922; background: #f1f9e6; }
+.next-badge     { font-size: 9px; background: #EAF3DE; color: #27500A;
+                  padding: 1px 5px; border-radius: 10px; font-weight: 500; }</code></pre>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 4 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num">§4</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Settings — Add Client Panel <span class="badge badge-coded">✅ Coded</span></div>
+      </div>
+    </div>
+    <div class="prose">A new "Add New Client" panel (<code>id="st-panel-addclient"</code>) was added to the Settings page, visible to <strong>Admin</strong> and <strong>Implementer</strong> only (hidden for Manager). Inserted between the Data Management and Team Configuration panels.</div>
+    <ul class="detail-list">
+      <li>Opens the existing <code>#add-client-modal</code> with full fields: Month, PM, Company Name, Availed Service, Implementer, Days, Add-on Services</li>
+      <li>For <strong>Implementer</strong> logins: <code>openAddClientModal()</code> auto-selects and disables the Implementer dropdown, locking it to <code>IMPL_USER</code></li>
+      <li>For <strong>Admin</strong> logins: the Implementer dropdown remains editable</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 5 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num">§5</div>
+      <div class="section-title-wrap">
+        <div class="section-title">All Clients — Editable PM Field <span class="badge badge-coded">✅ Coded</span></div>
+      </div>
+    </div>
+    <div class="prose">The <strong>Project Manager</strong> column in the All Clients → Overview tab was changed from static text to a dropdown select, consistent with Month, Status, and Service columns. PM options populated from <code>TEAM_CONFIG.pms</code>.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Area</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td>CSS</td><td>Added <code>.cl-pm-sel</code></td></tr>
+          <tr><td>Overview tab row renderer</td><td>PM <code>&lt;td&gt;</code> replaced with a <code>&lt;select class="cl-pm-sel"&gt;</code> built from <code>TEAM_CONFIG.pms</code></td></tr>
+          <tr><td>New JS function</td><td><code>clUpdatePm(no, val)</code> — updates <code>d.pm</code>, calls <code>autoSave()</code> only (no re-render)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 6 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">§6</div>
+      <div class="section-title-wrap">
+        <div class="section-title">All Clients Overview — HR-I Column <span class="badge badge-coded">✅ Coded</span></div>
+      </div>
+    </div>
+    <div class="prose">A new <strong>HR-I</strong> column was added to the All Clients → Overview tab, positioned between PM and Status. Field key: <code>d.hri</code> (string, defaults to <code>''</code>). Dropdown source: <code>TEAM_CONFIG.implementers</code>.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Area</th><th>Change</th></tr></thead>
+        <tbody>
+          <tr><td>CSS</td><td>Added <code>.cl-hri-sel</code></td></tr>
+          <tr><td>Overview header</td><td>Added "HR-I" <code>&lt;th&gt;</code> between PM and Status</td></tr>
+          <tr><td>Add Client modal</td><td>Top row expanded from 2-column to 3-column: Month · PM · HR-I</td></tr>
+          <tr><td>Export</td><td>Added <code>HR-I</code> column after <code>Project Manager</code>; column width 12</td></tr>
+          <tr><td>Import handler</td><td>Reads <code>row['HR-I']</code> into <code>hri</code> on new record push</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 7 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num">§7</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Client Type Split — PYO vs Payroll Starter <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">All 5 client tabs now show data split by client type, controlled by a toggle at the top of the Clients page. Default view: PYO.</div>
+    <ul class="detail-list">
+      <li><strong>PYO:</strong> any client whose <code>service</code> field is not <code>"Payroll Starter"</code> (covers PYO, PYO+HR, PYO+HR+Sprout Gov, etc.)</li>
+      <li><strong>Payroll Starter:</strong> <code>service === "Payroll Starter"</code> only</li>
+      <li><strong>Parallel Run</strong> hidden for Payroll Starter — <code>&lt;th id="ph-th-par"&gt;</code> gets <code>display:none</code>; Parallel Run <code>&lt;td&gt;</code> skipped entirely in row rendering</li>
+      <li>After Hand Over: Processor column removed from HTML, JS, and Excel export (data field retained for backward compatibility)</li>
+    </ul>
+    <div class="class-grid">
+      <span class="class-chip">.cl-type-bar</span>
+      <span class="class-chip">.cl-type-toggle</span>
+      <span class="class-chip">.cl-type-btn</span>
+      <span class="class-chip">.cl-type-btn.active</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 8 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num">§8</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Implementer Dashboard — Priority-Based Collapsible Layout <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">Priority order: (1) Alerts/Needs Attention — always visible · (2) Project Status by Module — collapsible · (3) My Projects list — collapsible · (4) Selected Project — hidden until clicked.</div>
+    <div class="subsection">
+      <div class="subsection-title">KPI Bar — Clickable Drill-Down</div>
+      <ul class="detail-list">
+        <li><strong>Default mode:</strong> Needs Attention (left) + Project Status by Module (right)</li>
+        <li><strong>Drill mode:</strong> Needs Attention hides · Project Status hides · Filtered client list fills left column · Right column shows "Select a client" placeholder</li>
+        <li>"← Overview" back button appears in client list panel header</li>
+        <li><strong>Avg Progress</strong> always returns to default overview — does not drill down</li>
+      </ul>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Collapsible Panel CSS Classes</div>
+      <div class="class-grid">
+        <span class="class-chip">.impl-cpanel</span>
+        <span class="class-chip">.impl-cpanel-hdr</span>
+        <span class="class-chip">.impl-cpanel-title</span>
+        <span class="class-chip">.impl-cpanel-body</span>
+        <span class="class-chip">.impl-chev</span>
+        <span class="class-chip">.impl-alerts-panel</span>
+        <span class="class-chip">.impl-alerts-hdr</span>
+        <span class="class-chip">.impl-alerts-title</span>
+      </div>
+    </div>
+    <div class="callout callout-warn">
+      <strong>Bug fix (Jun 6):</strong> Two conflicting <code>.impl-attn-body</code> CSS rules existed. The second rule overrode the first with <code>flex:1;min-height:0;</code>, stripping the body styling. Fix: removed the conflicting second rule. The canonical rule at line 290 (<code>max-height:280px;background:#fffaf7;</code>) now applies cleanly.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 9 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s9">
+    <div class="section-header">
+      <div class="section-num">§9</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Sprout Brand Color & Font Update <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">Applied Sprout's official design system across the full app. Reference: <a href="https://sprout-design.figma.site/" target="_blank" rel="noopener" style="color:var(--b)">sprout-design.figma.site</a>. Body font changed from DM Sans → <strong>Rubik</strong>.</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:#32CE13"></div><div class="swatch-info"><div class="swatch-name">Green Apple</div><div class="swatch-hex">--g #32CE13</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#239A0D"></div><div class="swatch-info"><div class="swatch-name">Green Apple 800</div><div class="swatch-hex">--g4 #239A0D</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#1679FA"></div><div class="swatch-info"><div class="swatch-name">Blueberry</div><div class="swatch-hex">--b #1679FA</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#FF7F00"></div><div class="swatch-info"><div class="swatch-name">Carrot</div><div class="swatch-hex">--o #FF7F00</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#8139EE"></div><div class="swatch-info"><div class="swatch-name">Ubas</div><div class="swatch-hex">--v #8139EE</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#092903"></div><div class="swatch-info"><div class="swatch-name">Deep Green Apple</div><div class="swatch-hex">--s9 #092903</div></div></div>
+      <div class="swatch"><div class="swatch-color" style="background:#F7F5F2"></div><div class="swatch-info"><div class="swatch-name">BG 01</div><div class="swatch-hex">--bg #F7F5F2</div></div></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 10 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s10">
+    <div class="section-header">
+      <div class="section-num">§10</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Post Live — Moved to After Hand Over <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">Post Live was removed from the Implementation Phases tab and progress percentage calculation, and relocated to the <strong>After Hand Over</strong> tab.</div>
+    <ul class="detail-list">
+      <li><strong>Progress %:</strong> PYO now uses 4 phases (KOM / Sim / Parallel Run / Live Run) instead of 5. Payroll Starter unchanged (3 phases).</li>
+      <li>Removed <code>&lt;th&gt;Post Live&lt;/th&gt;</code> from Implementation Phases <code>&lt;thead&gt;</code> and row rendering</li>
+      <li>Added Post Live checkbox cell to After Hand Over tab between CSM and Remarks</li>
+      <li>Selected Project side panel: Post Live now appears in After hand over section, not Implementation phases</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 11 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s11">
+    <div class="section-header">
+      <div class="section-num">§11</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Service Column Chips + Shortened Add-On Headers <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Service Chips</div>
+      <div class="class-grid">
+        <span class="class-chip green">PYO</span>
+        <span class="class-chip" style="background:var(--b0);color:var(--b);border-color:var(--b1)">+HR</span>
+        <span class="class-chip" style="background:var(--v1);color:var(--v);border-color:var(--v1)">+Gov</span>
+        <span class="class-chip" style="background:var(--s0);color:var(--s);border-color:var(--s1)">PS</span>
+        <span class="class-chip" style="background:var(--o0);color:var(--o);border-color:var(--o1)">Stat.</span>
+      </div>
+      <div class="prose">Click-to-edit: chips show normally; clicking reveals hidden <code>&lt;select&gt;</code>; blur hides it again.</div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Shortened Add-On Headers</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Original</th><th>Short Label</th><th>Tooltip</th></tr></thead>
+          <tbody>
+            <tr><td>Sprout Gov</td><td>S. Gov</td><td>Sprout Gov</td></tr>
+            <tr><td>Benefits Admin</td><td>Benefits</td><td>Benefits Administration</td></tr>
+            <tr><td>Salary Disbursement</td><td>Salary</td><td>Salary Disbursement</td></tr>
+            <tr><td>Statutory Disbursement</td><td>Statutory</td><td>Statutory Disbursement</td></tr>
+            <tr><td>Outsourced Timekeeping</td><td>Timekeep.</td><td>Outsourced Timekeeping</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 12 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s12">
+    <div class="section-header">
+      <div class="section-num">§12</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Data Migration from PS Implementation Monitoring Excel <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">37 records migrated from <code>PS - Implementation Monitoring (2).xlsx</code> → sheet <code>2026 Implem</code> into <code>D_DEFAULT</code>, <code>ADDONS_DEFAULT</code>, <code>MILESTONES_DEFAULT</code>, <code>AFTERHO_DEFAULT</code>. <code>DATA_VERSION</code> bumped 0 → 1.</div>
+    <div class="subsection">
+      <div class="subsection-title">Sync Source Button (Ongoing Re-import)</div>
+      <div class="prose">A purple <strong>Sync Source</strong> button (refresh icon) was added in the My Clients toolbar next to Import. Triggers <code>handleSourceImport(event)</code> — reads the "2026 Implem" sheet and replaces all D, CL_ADDONS, CL_AFTERHO, CL_MILESTONES with fresh data.</div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 13 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s13">
+    <div class="section-header">
+      <div class="section-num">§13</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Sidebar Redesign — Dark Nav + Phase-Organized Administration <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">Background changed to <code>#0b1e08</code> (deep Sprout green-black). Nav items: <code>rgba(255,255,255,.65)</code> text, green active state with solid white left border.</div>
+    <div class="subsection">
+      <div class="subsection-title">Nav Group Structure</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Group</th><th>Items</th><th>Who Sees It</th></tr></thead>
+          <tbody>
+            <tr><td>Top (no label)</td><td>Dashboard / My Dashboard</td><td>Manager+Admin / Implementer</td></tr>
+            <tr><td><strong>Reports</strong></td><td>Weekly Status, Monthly Stats</td><td>All roles</td></tr>
+            <tr><td><strong>Clients</strong> (collapsible)</td><td>PYO, Payroll Starter</td><td>All roles</td></tr>
+            <tr><td><strong>Clients</strong> (collapsible)</td><td>Issue Log</td><td>Implementer, God only</td></tr>
+            <tr><td><strong>Resources</strong></td><td>Implementation Vault</td><td>All roles</td></tr>
+            <tr><td><strong>System</strong></td><td>Administration, Settings</td><td>All roles</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Administration Tools — Organized by Phase</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Phase</th><th>Tools</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge" style="background:#f1f5f9;color:#475569">Common</span></td><td>MOM Generator · Pending Items Bank</td></tr>
+            <tr><td><span class="badge" style="background:#fef9c3;color:#854d0e">Phase 1 — Setup</span></td><td>Payroll Account Creator · Masterfile Creator</td></tr>
+            <tr><td><span class="badge" style="background:var(--b0);color:#1e3a8a">Phase 2 — Simulation</span></td><td>Simulation Variance Analysis · CRF Generator · Sandbox Account Creator · Payroll Calendar Generator</td></tr>
+            <tr><td><span class="badge" style="background:var(--v1);color:#4c1d95">Phase 3 — Parallel Run</span></td><td>Parallel Run Variance Analysis · Payroll Policy Excel Generator</td></tr>
+            <tr><td><span class="badge" style="background:var(--g0);color:var(--g4)">Phase 4 — Go Live</span></td><td>SLA Generator</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 14 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s14">
+    <div class="section-header">
+      <div class="section-num">§14</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Sidebar Scrollbar + Nav Icon Improvements <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <ul class="detail-list">
+      <li>4px-wide custom scrollbar thumb on transparent track — <code>rgba(255,255,255,.2)</code> default, <code>rgba(255,255,255,.38)</code> on hover. Firefox: <code>scrollbar-width:thin</code></li>
+      <li><strong>My Dashboard</strong> icon: changed from generic person silhouette → ascending 3-bar chart</li>
+      <li><strong>My Clients</strong> icon: changed from single person → person silhouette with checkmark badge</li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 15 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s15">
+    <div class="section-header">
+      <div class="section-num">§15</div>
+      <div class="section-title-wrap">
+        <div class="section-title">God Mode — Developer Full Access <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="prose">Added a <code>god</code> role for <code>lesleea@sprout.ph</code> granting unrestricted access to all role views without re-logging in. Purple pill label "God Mode". Role-switcher (MGR / ADM / IMPL) visible in header only when <code>_IS_GOD === true</code>.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Tab</th><th>Pill</th><th>Default Page</th><th>Data Filter</th></tr></thead>
+        <tbody>
+          <tr><td>MGR</td><td><span class="badge" style="background:var(--o0);color:#9a4500">Manager</span></td><td>Dashboard</td><td>All clients</td></tr>
+          <tr><td>ADM</td><td><span class="badge" style="background:var(--b0);color:#1e3a8a">Admin</span></td><td>Weekly Status</td><td>All clients</td></tr>
+          <tr><td>IMPL</td><td><span class="badge" style="background:var(--g0);color:var(--g4)">Implementer</span></td><td>My Dashboard</td><td>Filtered by CURRENT_NAME</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-ok"><strong>Bug fix (Jun 8):</strong> <code>godSwitch('implementer')</code> now sets <code>IMPL_USER</code> to <code>CURRENT_NAME</code> (god user's own name from Supabase <code>implementer_name</code>) instead of falling back to <code>TEAM_CONFIG.implementers[0]</code>, which was showing Ana's empty projects instead of Leslee's own.</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 16 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s16">
+    <div class="section-header">
+      <div class="section-num">§16</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Issue Log Tab + Pending Items Bank Tool <span class="badge badge-coded">✅ Coded (Jun 6)</span></div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Issue Log</div>
+      <div class="prose">Standalone sidebar nav item (implementer + god mode only). Tab count badge shows <em>open</em> issues only. Open issues also appear as alerts in the Needs Attention panel (High → red priority -1 · Medium → orange priority 0 · Low → amber priority 1).</div>
+      <pre><code>{id, clientNo, clientName, date, description,
+ priority: 'high'|'medium'|'low',
+ status: 'open'|'resolved',
+ resolution, createdBy}</code></pre>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Pending Items Bank (Administration Tool)</div>
+      <div class="prose">Two-tab modal (820px wide): <strong>Item Bank</strong> (templates grouped by phase) and <strong>Client Tracker</strong> (per-client assignment checklist).</div>
+      <ul class="detail-list">
+        <li><code>PENDING_BANK</code> — 9 default templates; saved to <code>pyo_pending_bank</code></li>
+        <li><code>CLIENT_PENDING</code> — per-client assignments; saved to <code>pyo_client_pending</code></li>
+        <li>"+ From Bank" assigns all unassigned bank templates to the selected client</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 17 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s17">
+    <div class="section-header">
+      <div class="section-num">§17</div>
+      <div class="section-title-wrap">
+        <div class="section-title">MOM Generator Improvements</div>
+      </div>
+    </div>
+    <ul class="detail-list">
+      <li><strong>Auto-populate Sprout staff</strong> — default staff list now uses <code>TEAM_CONFIG.implementers.concat(TEAM_CONFIG.pms)</code> instead of hardcoded names</li>
+      <li><strong>Slides (.pdf) made optional</strong> — <code>momCheckReady()</code> only requires transcript; <code>momGenerate()</code> no longer errors if slides absent</li>
+      <li><strong>Copy to clipboard</strong> — <code>📋 Copy</code> button added next to Download .docx; label flashes "✅ Copied!" for 1.8s</li>
+      <li><strong>Inline editing in review panel</strong> — each item text span is <code>contenteditable="true"</code>; click → orange underline; blur/Enter saves without re-rendering</li>
+      <li><strong>Manual add items per bucket</strong> — each bucket has an add row with input + <code>+</code> button; pushes <code>{text, conf:3, label:'HIGH', source:'✍️ Manual'}</code></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 18 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s18">
+    <div class="section-header">
+      <div class="section-num">§18</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Weekly Implementation Meeting Report <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="prose">The Weekly Status page opens with a <strong>Weekly Implementation Meeting Report</strong> table (matching the team's weekly sync format), prepended above the existing monthly breakdown.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Section</th><th>Row</th><th>Logic</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="4">Starter</td><td>On going implem</td><td>service Starter AND status Ongoing</td></tr>
+          <tr><td>Not yet started / On Hold</td><td>service Starter AND (Not yet started OR On-Hold)</td></tr>
+          <tr><td># of accounts you process</td><td>Starter AND Live ticked AND Turned Over not ticked</td></tr>
+          <tr><td>Need to turnover – still unassigned</td><td>Starter AND Live AND Turned Over not ticked AND no CSM</td></tr>
+          <tr><td rowspan="4">PYO</td><td>On going implem</td><td>service PYO AND status Ongoing</td></tr>
+          <tr><td>Not yet started / On Hold</td><td>service PYO AND (Not yet started OR On-Hold)</td></tr>
+          <tr><td># of accounts you process</td><td>PYO AND Live ticked AND Turned Over not ticked</td></tr>
+          <tr><td>Need to turnover – still unassigned</td><td>PYO AND Live AND Turned Over not ticked AND no CSM</td></tr>
+          <tr><td>Gov</td><td>With PYO under Implem / Stand alone</td><td><code>isPYO AND sg=1</code> / <code>service="Sprout Gov"</code></td></tr>
+          <tr><td>BenAd</td><td>Under Implem</td><td><code>CL_ADDONS.ba=1</code> AND active</td></tr>
+          <tr><td>Disbursement</td><td>Under Implem</td><td><code>sd OR std=1</code> AND active</td></tr>
+          <tr><td>OTK</td><td>Under Implem / Under Live</td><td><code>otk=1</code> AND active / <code>otk=1</code> AND status Live</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-info"><strong>Turnover removal rule:</strong> Once <code>CL_AFTERHO[no].turnedOver = 1</code>, that client disappears from "# of accounts you process", "For Turnover", and "Need to turnover" rows entirely.</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 18b -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s18b">
+    <div class="section-header">
+      <div class="section-num">§18b</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Administration Tool Sample Templates <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Tool</th><th>Upload(s)</th><th>Sample Button</th></tr></thead>
+        <tbody>
+          <tr><td>MOM Generator</td><td>Transcript (.docx)</td><td>"📥 Download sample transcript (.docx)"</td></tr>
+          <tr><td>Masterfile Creator</td><td>Source file + Output template</td><td>Sample source file (.xlsx) + Sample output template (.xlsx)</td></tr>
+          <tr><td>CRF Generator</td><td>Impl. Monitoring (.xlsx)</td><td>"📥 Download sample template" — in upload zone</td></tr>
+          <tr><td>Payroll Account Creator</td><td>Impl. Monitoring (.xlsx)</td><td>"📥 Download sample template" — in upload zone</td></tr>
+          <tr><td>Simulation Variance Analysis</td><td>Client CSV + Sprout CSV</td><td>Sample client CSV + Sample Sprout CSV</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 19 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s19">
+    <div class="section-header">
+      <div class="section-num">§19</div>
+      <div class="section-title-wrap">
+        <div class="section-title">After Hand Over — "Turned Over" Column <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="prose">A <strong>Turned Over</strong> checkbox column inserted between Post Live and Remarks in the After Hand Over tab.</div>
+    <ul class="detail-list">
+      <li><strong>Type:</strong> Checkbox — <code>cl-cb</code> / <code>chk</code> classes, green checkmark SVG</li>
+      <li><strong>Storage:</strong> <code>CL_AFTERHO[no].turnedOver</code> → saved to <code>pyo_afterho</code> in localStorage via <code>autoSave()</code></li>
+      <li><strong>Toggle:</strong> <code>ahToggleCb(no, field, curVal)</code></li>
+      <li><strong>Render helper:</strong> <code>ahCheckbox(no, field, val)</code></li>
+      <li><strong>Excel export</strong> <code>ahHeaders</code>: added <code>'Turned Over'</code> column; exports <code>'Done'</code> or <code>''</code></li>
+    </ul>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 20 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s20">
+    <div class="section-header">
+      <div class="section-num">§20</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Weekly Status 3-Tab Layout + Monthly Stats Separate Page <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Tab</th><th>Label</th><th>Contents</th></tr></thead>
+        <tbody>
+          <tr><td><code>report</code></td><td>Weekly Report</td><td>Weekly meeting table (collapsible sections) + Issue List — default tab</td></tr>
+          <tr><td><code>resource</code></td><td>By Resource</td><td>Per-implementer status breakdown (chips + colored status badges)</td></tr>
+          <tr><td><code>dates</code></td><td>Key Dates</td><td>Upcoming KOM / Live Run / Hand Over — timeline grouped by time proximity</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">Key Dates grouped into: <strong>This Week</strong> (≤7 days) · <strong>Next 2 Weeks</strong> (8–21 days) · <strong>Later</strong> (>21 days, capped at 10). Monthly Stats is a peer nav item, not a tab inside Weekly Status.</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 21 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s21">
+    <div class="section-header">
+      <div class="section-num">§21</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Role-Based Edit Permissions for All Clients Tab <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Tab</th><th>Admin</th><th>Manager</th><th>Implementer</th></tr></thead>
+        <tbody>
+          <tr><td>Overview</td><td>read-only</td><td><strong>fully read-only</strong></td><td>edit</td></tr>
+          <tr><td>Implementation Phases</td><td>read-only</td><td>read-only</td><td>edit</td></tr>
+          <tr><td>Add On Services</td><td><strong>edit</strong></td><td>read-only</td><td>edit</td></tr>
+          <tr><td>Milestone Dates — dates</td><td>read-only</td><td>read-only</td><td>edit</td></tr>
+          <tr><td>Milestone Dates — Billing Month</td><td><strong>edit (only)</strong></td><td>read-only</td><td>edit</td></tr>
+          <tr><td>After Hand Over</td><td>read-only</td><td>read-only</td><td>edit</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">Manager is <strong>fully read-only</strong> on Overview: Month, Status, Service, PM, HR-I, Gov Resource all render as static <code>&lt;span&gt;</code>. Add Client / Import buttons hidden. Delete ✕ button hidden.</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 22 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s22">
+    <div class="section-header">
+      <div class="section-num">§22</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Remove User Management from Settings <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="prose">The local User Management panel has been removed. All users now log in exclusively via Google Work Email (Supabase OAuth). User access is managed directly in the Supabase <code>user_roles</code> table.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Column</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>email</code></td><td>Google Workspace email — must match exactly</td></tr>
+          <tr><td><code>role</code></td><td><code>implementer</code>, <code>admin</code>, or <code>manager</code></td></tr>
+          <tr><td><code>implementer_name</code></td><td>Display name used in the app (required for implementers; set for dual-role users like Zona)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 23 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s23">
+    <div class="section-header">
+      <div class="section-num">§23</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Team Configuration — Unlimited Slots + 4 Implementer Categories <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="prose">Redesigned from fixed 5-slot grids to a fully dynamic add/remove list with no upper limit, split into four implementer categories.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Category</th><th>Config Key</th><th>List Container</th></tr></thead>
+        <tbody>
+          <tr><td>PYO / PY Starter</td><td><code>implPYO</code></td><td><code>#st-pyo-list</code></td></tr>
+          <tr><td>Gov Implementer</td><td><code>implGov</code></td><td><code>#st-gov-list</code></td></tr>
+          <tr><td>HRI / SI Implementer</td><td><code>implHR</code></td><td><code>#st-hr-list</code></td></tr>
+          <tr><td>OTK Resource</td><td><code>implOTK</code></td><td><code>#st-otk-list</code></td></tr>
+          <tr><td>Project Managers</td><td><code>pms</code></td><td><code>#st-pm-list</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose"><code>TEAM_CONFIG.implementers</code> is rebuilt as <code>implPYO.concat(implGov).concat(implHR).concat(implOTK)</code> whenever saved or loaded.</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 24 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s24">
+    <div class="section-header">
+      <div class="section-num">§24</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Gov Resource Column in Overview Tab <span class="badge badge-coded">✅ Coded (Jun 7)</span></div>
+      </div>
+    </div>
+    <div class="prose">A "Gov Resource" column was added after the "Resource" column. Cell is editable when ANY of these are true:</div>
+    <ul class="detail-list">
+      <li><code>d.service</code> contains "gov" (case-insensitive)</li>
+      <li><code>CL_ADDONS[d.no].sg</code> is truthy (S.Gov addon ticked)</li>
+      <li><code>CL_ADDONS[d.no].ba</code> is truthy (Benefits Admin addon ticked)</li>
+      <li><code>CL_ADDONS[d.no].std</code> is truthy (Statutory Disbursement addon ticked)</li>
+    </ul>
+    <div class="callout callout-info">New Supabase column required: <code>gov text</code> on the <code>clients</code> table.</div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SECTION 25 -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section" id="s25">
+    <div class="section-header">
+      <div class="section-num">§25</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Implementation Vault <span class="badge badge-coded">✅ Coded (Jun 8)</span></div>
+      </div>
+    </div>
+    <div class="prose">Central reference bank for all implementation files and links. Sidebar nav under <strong>Resources</strong>, visible to all roles.</div>
+    <div class="subsection">
+      <div class="subsection-title">Categories & Colors</div>
+      <div class="swatch-grid">
+        <div class="swatch"><div class="swatch-color" style="background:#1679FA"></div><div class="swatch-info"><div class="swatch-name">Proposals</div><div class="swatch-hex">#1679FA</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#239A0D"></div><div class="swatch-info"><div class="swatch-name">MOMs</div><div class="swatch-hex">#239A0D</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#8139EE"></div><div class="swatch-info"><div class="swatch-name">Decks</div><div class="swatch-hex">#8139EE</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#FF7F00"></div><div class="swatch-info"><div class="swatch-name">Payroll Policy</div><div class="swatch-hex">#FF7F00</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#0891b2"></div><div class="swatch-info"><div class="swatch-name">Templates</div><div class="swatch-hex">#0891b2</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#64748b"></div><div class="swatch-info"><div class="swatch-name">Other</div><div class="swatch-hex">#64748b</div></div></div>
+      </div>
+    </div>
+    <div class="subsection">
+      <div class="subsection-title">Permissions</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Action</th><th>Admin</th><th>Manager</th><th>Implementer</th></tr></thead>
+          <tbody>
+            <tr><td>View all entries</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Add entries</td><td>✅</td><td>✗</td><td>✅</td></tr>
+            <tr><td>Delete any entry</td><td>✅</td><td>✗</td><td>✗</td></tr>
+            <tr><td>Delete own entry</td><td>✅</td><td>✗</td><td>✅ (own only)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="callout callout-info"><strong>Supabase integration (future):</strong> Add a <code>vault_items</code> table. File uploads go to Supabase Storage bucket instead of base64 in localStorage.</div>
+  </section>
+
+  <hr class="divider" id="schema">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- DATA SCHEMA CHANGES -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">DB</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Data Schema Changes Required</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th><th>Used By</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>simDate</code></td><td>String MM/DD/YYYY</td><td>Simulation phase date</td><td>Phases tab, Needs Attention</td><td><span class="status-done">Added</span></td></tr>
+          <tr><td><code>parDate</code></td><td>String MM/DD/YYYY</td><td>Parallel Run phase date</td><td>Phases tab, Needs Attention</td><td><span class="status-done">Added</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="prose">Both fields are included in the download template (<code>stDownloadTemplate</code>), record push in <code>stHandleFile</code> (initialized as <code>''</code>), and the Milestone Dates parser.</div>
+  </section>
+
+  <hr class="divider" id="bugfixes">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- BUG FIXES -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">🐛</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Bug Fixes Applied</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Fix</th><th>Files</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Header date shows "Mar 30, 2026"</strong></td><td>Both HTML</td><td><code>startApp()</code> now sets <code>#hdr-date</code> and <code>#last-updated</code> dynamically using <code>new Date()</code> on every login</td></tr>
+          <tr><td><strong>Masterfile data missing in output</strong></td><td>Both HTML</td><td>3 root causes: (1) <code>colMap</code> header row detection now dynamic; (2) <code>mfInjectRows</code> handles namespace-prefixed XML tags; (3) <code>colMap</code> built from <code>xlRaw[hdrIdx]</code> array directly</td></tr>
+          <tr><td><strong>Generated file has no source data</strong></td><td>index.html</td><td>Reverted all <code>mfDownload</code> rewrites back to original 8PM code</td></tr>
+          <tr><td><strong>Implementer dashboard bleeds into Clients page</strong></td><td>Both HTML</td><td>Fixed in <code>go()</code> using inline styles (<code>pg.style.display='none'/'flex'</code>) to beat CSS specificity</td></tr>
+          <tr><td><strong>Admin tool menu never closes on outside click</strong></td><td>index.html</td><td>Click-outside handler was targeting <code>#admin-tool-wrap</code> (non-existent) — corrected to <code>#nav-admin-tool-wrap</code></td></tr>
+          <tr><td><strong><code>mfNormBankType</code> incorrectly mapped non-bank values</strong></td><td>index.html</td><td>Removed redundant <code>includes('savings')</code> branch — simplified logic</td></tr>
+          <tr><td><strong>Generate button enabled before output template parsed (race condition)</strong></td><td>index.html</td><td>Moved button enable into <code>reader.onload</code> callback for the 'out' file</td></tr>
+          <tr><td><strong>CSV source files failed to parse</strong></td><td>index.html</td><td><code>mfReadXlsx</code> now detects <code>.csv</code> by extension and uses <code>readAsText + XLSX.read({type:'string'})</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="divider" id="supabase">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- SUPABASE INTEGRATION -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">☁️</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Supabase Integration <span class="badge badge-coded">✅ Coded (Jun 5)</span></div>
+      </div>
+    </div>
+    <div class="prose"><strong>Project:</strong> SPROUT IMPLEMENTATION PYO HUB · <strong>URL:</strong> <code>https://jchqgxyectvsqfmrnype.supabase.co</code> · <strong>Auth:</strong> Google OAuth restricted to <code>@sprout.ph</code> org.</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Table</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>clients</code></td><td>Main D[] array — all client records</td></tr>
+          <tr><td><code>client_addons</code></td><td>CL_ADDONS (sg, ba, sd, std, otk)</td></tr>
+          <tr><td><code>client_milestones</code></td><td>CL_MILESTONES (churnDate, billingMonth, monthCompleted)</td></tr>
+          <tr><td><code>client_afterho</code></td><td>CL_AFTERHO (csm, processor)</td></tr>
+          <tr><td><code>team_config</code></td><td>TEAM_CONFIG implementers + pms arrays</td></tr>
+          <tr><td><code>user_roles</code></td><td>Maps @sprout.ph email → role + implementer_name</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout callout-ok"><strong>Data strategy (hybrid):</strong> Load — Supabase first → localStorage fallback → baked defaults. Save — localStorage immediately (sync) + Supabase 1.5s debounced (async). localStorage serves as offline/error backup.</div>
+  </section>
+
+  <hr class="divider" id="implorder">
+
+  <!-- ══════════════════════════════════════════════════════ -->
+  <!-- IMPLEMENTATION ORDER -->
+  <!-- ══════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">📋</div>
+      <div class="section-title-wrap">
+        <div class="section-title">Implementation Order (Recommended)</div>
+      </div>
+    </div>
+    <ol class="impl-order">
+      <li><span class="status-done">Needs Attention panel — coded</span></li>
+      <li><span class="status-done">Add <code>simDate</code> + <code>parDate</code> fields — added to schema, upload template, import parser, and export</span></li>
+      <li><span class="status-done">Implementation Phases tab — checkbox + date stacked — coded (<code>clPhaseBox</code> updated, <code>phDateEdit</code>/<code>phDateSave</code> added)</span></li>
+      <li><span class="status-done">Settings — Add Client panel — coded (admin + implementer)</span></li>
+      <li><span class="status-done">All Clients Overview — editable PM dropdown — coded</span></li>
+      <li><span class="status-done">All Clients Overview — HR-I column — coded</span></li>
+      <li><span class="status-pending">Implementation Phases tab — active column highlight — build on top of step 3</span></li>
+      <li><span class="status-pending">Dashboard layout overhaul — larger effort, can be done independently</span></li>
+    </ol>
+  </section>
+
+  <hr class="divider">
+
+  <div style="text-align:center;padding:20px 0;font-size:12px;color:var(--s);">
+    Generated from brainstorming session — Sprout PYO Implementation Hub<br>
+    All layout previews were approved before coding began
+  </div>
+
+</main>
+</div>
+
+</body>
+</html>
