@@ -6323,8 +6323,9 @@ function tlParseFile(binaryStr,filename){
   // Match client in D[] — exact first, then substring
   var mc=D.find(function(d){return d.client.toLowerCase().trim()===clientName.toLowerCase().trim();});
   if(!mc){mc=D.find(function(d){var a=d.client.toLowerCase().trim(),b=clientName.toLowerCase().trim();return a.indexOf(b)>=0||b.indexOf(a)>=0;});}
-  var dates={komDate:'',simDate:'',parDate:'',handOver:''};
-  var phase=null,filled={kom:false,sim:false,par:false,ho:false};
+  var isPS=mc&&mc.service==='Payroll Starter';
+  var dates={komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:''};
+  var phase=null,filled={kom:false,ho:false};
   rows.forEach(function(row){
     var colA=String(row[0]||'').trim();
     var colB=String(row[1]||'').trim();
@@ -6333,13 +6334,16 @@ function tlParseFile(binaryStr,filename){
     var tgtStart=(row[4]!==undefined&&row[4]!==null&&row[4]!=='') ? row[4] : '';
     if(/PHASE\s*1|KICK.?OFF/i.test(colA)){phase='kom';return;}
     if(/PHASE\s*3|SIMULATION/i.test(colA)){phase='sim';return;}
-    if(/PHASE\s*6|PARALLEL.?RUN/i.test(colA)){phase='par';return;}
+    if(/PHASE\s*5|PROJECT.?REVIEW/i.test(colA)){phase='review';return;}
+    // SIGN OFF check must come before PHASE 6 — PS timelines use "Phase 6: Implementation Sign Off"
     if(/PHASE\s*7|SIGN.?OFF/i.test(colA)){phase='ho';return;}
-    if(/PHASE\s*[2458]/i.test(colA)&&colA!==''){phase=null;return;}
+    if(/PHASE\s*6|PARALLEL.?RUN/i.test(colA)){phase='par';return;}
+    if(/PHASE\s*[248]/i.test(colA)&&colA!==''){phase=null;return;}
     var d=parseImportDate(tgtStart);
     if(!d)return;
     if(phase==='kom'&&!filled.kom){dates.komDate=d;filled.kom=true;}
     else if(phase==='sim'){dates.simDate=d;}
+    else if(phase==='review'){if(isPS)dates.checklistDate=d;}
     else if(phase==='par'){dates.parDate=d;}
     else if(phase==='ho'&&!filled.ho){
       if(/project\s*handover/i.test(task)||!dates.handOver){dates.handOver=d;filled.ho=true;}
@@ -6360,7 +6364,7 @@ function tlShowPreview(){
   if(unmatched.length)parts.push('<span style="color:var(--o)">'+unmatched.length+' unmatched</span>');
   if(errs.length)parts.push('<span style="color:var(--r)">'+errs.length+' error(s)</span>');
   msg.innerHTML=parts.join(', ');
-  var heads=['Extracted Client Name','Matched To','KOM Date','Simulation','Parallel Run','Hand Over'];
+  var heads=['Extracted Client Name','Matched To','KOM Date','Simulation','Par Run / Checklist','Hand Over'];
   var html='<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:var(--s1);">'+
     heads.map(function(h){return'<th style="padding:5px 8px;text-align:left;font-weight:700;color:var(--s5);border-bottom:1px solid var(--s2);white-space:nowrap;">'+h+'</th>';}).join('')+
     '</tr></thead><tbody>';
@@ -6369,12 +6373,13 @@ function tlShowPreview(){
       r.matchedClient?'<span style="color:var(--g)">&#10003; '+escHtml(r.matchedClient.client)+'</span>':
       '<span style="color:var(--o)">No match found</span>';
     var d=r.dates||{};
+    var parOrCl=r.matchedClient&&r.matchedClient.service==='Payroll Starter'?(d.checklistDate||'&#8212;'):(d.parDate||'&#8212;');
     html+='<tr style="border-bottom:1px solid var(--s1);">'+
       '<td style="padding:5px 8px;color:var(--s8);">'+escHtml(r.clientName)+'</td>'+
       '<td style="padding:5px 8px;">'+mc+'</td>'+
       '<td style="padding:5px 8px;color:var(--s6);">'+(d.komDate||'&#8212;')+'</td>'+
       '<td style="padding:5px 8px;color:var(--s6);">'+(d.simDate||'&#8212;')+'</td>'+
-      '<td style="padding:5px 8px;color:var(--s6);">'+(d.parDate||'&#8212;')+'</td>'+
+      '<td style="padding:5px 8px;color:var(--s6);">'+parOrCl+'</td>'+
       '<td style="padding:5px 8px;color:var(--s6);">'+(d.handOver||'&#8212;')+'</td>'+
       '</tr>';
   });
@@ -6390,12 +6395,13 @@ function tlConfirm(){
     if(!r.matchedClient||!r.dates||r.error)return;
     var d=D.find(function(x){return x.no===r.matchedClient.no;});
     if(!d)return;
-    var before=JSON.stringify({komDate:d.komDate,simDate:d.simDate,parDate:d.parDate,handOver:d.handOver});
+    var before=JSON.stringify({komDate:d.komDate,simDate:d.simDate,checklistDate:d.checklistDate,parDate:d.parDate,handOver:d.handOver});
     if(r.dates.komDate)d.komDate=r.dates.komDate;
     if(r.dates.simDate)d.simDate=r.dates.simDate;
+    if(r.dates.checklistDate)d.checklistDate=r.dates.checklistDate;
     if(r.dates.parDate)d.parDate=r.dates.parDate;
     if(r.dates.handOver)d.handOver=r.dates.handOver;
-    logAudit(d.no,'Implementation Phases','timeline','Timeline Uploaded',before,JSON.stringify({komDate:d.komDate,simDate:d.simDate,parDate:d.parDate,handOver:d.handOver}));
+    logAudit(d.no,'Implementation Phases','timeline','Timeline Uploaded',before,JSON.stringify({komDate:d.komDate,simDate:d.simDate,checklistDate:d.checklistDate,parDate:d.parDate,handOver:d.handOver}));
     count++;
   });
   autoSave();_supaFlush();renderClients();

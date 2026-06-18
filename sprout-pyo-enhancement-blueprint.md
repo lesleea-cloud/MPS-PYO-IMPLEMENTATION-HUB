@@ -1322,7 +1322,8 @@ The parser (`tlParseFile`) scans all rows and detects phase headers by keyword m
 |---|---|
 | `PHASE 1` or `KICK OFF` | `komDate` — first sub-task with a Target Start Date |
 | `PHASE 3` or `SIMULATION` | `simDate` — **last** sub-task with a Target Start Date (e.g. "Payroll Discussion") |
-| `PHASE 6` or `PARALLEL RUN` | `parDate` — **last** sub-task with a Target Start Date (e.g. "Variance Analysis Discussion") |
+| `PHASE 5` or `PROJECT REVIEW` | `checklistDate` (Payroll Starter only) — last sub-task with a Target Start Date (e.g. "Sprout Payroll Outsourcing Project Review Checklist") |
+| `PHASE 6` or `PARALLEL RUN` | `parDate` (PYO only) — **last** sub-task with a Target Start Date (e.g. "Variance Analysis Discussion"). For PS timelines Phase 6 is "Implementation Sign Off" — caught by the SIGN OFF rule below. |
 | `PHASE 7` or `SIGN OFF` | `handOver` — "Project Handover" task, or first task with a date |
 
 ### Client matching
