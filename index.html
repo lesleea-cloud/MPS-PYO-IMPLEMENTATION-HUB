@@ -2157,7 +2157,9 @@ function renderDashboard(){
   document.getElementById('month-bars').innerHTML=monthHtml+'<div class="legend-row">'+legHtml+'</div>';
   var ho=D.filter(function(d){return d.handOver&&new Date(d.handOver)>=TODAY;}).sort(function(a,b){return new Date(a.handOver)-new Date(b.handOver);}).slice(0,6);
   document.getElementById('timeline').innerHTML=ho.length?ho.map(function(d){var c=SC[d.remarks]||'#64748b';return '<div class="tl-item" style="--c:'+c+'"><div class="tl-dot" style="background:'+c+'"></div><div class="tl-body"><div class="tl-date">'+d.handOver+'</div><div class="tl-name">'+d.client+'</div><div class="tl-meta">'+d.resource+' &nbsp;·&nbsp; '+d.service+'</div></div></div>';}).join(''):'<p style="font-size:13px;color:var(--s4)">No upcoming hand-overs.</p>';
-  var rl=['Ana','Bea','Carl','Dana','Eli'];
+  var rl=(TEAM_CONFIG.implementers||[]).filter(Boolean);
+  var _rcp=['#32CE13','#1679FA','#8139EE','#FF7F00','#D2F612','#0ea5e9','#f59e0b','#94a3b8'];
+  rl.forEach(function(n,i){if(!RC[n])RC[n]=_rcp[i%_rcp.length];});
   var rwHtml=rl.map(function(r){
     var rd=D.filter(function(d){return d.resource.indexOf(r)>=0;});if(!rd.length)return '';
     var lv=rd.filter(function(d){return d.remarks==='Live';}).length;
