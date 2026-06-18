@@ -989,7 +989,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Availed Service <span style="color:var(--r)">*</span></div>
-          <select id="acm-service" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          <select id="acm-service" onchange="acmCheckGov()" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select service —</option>
             <option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
             <option>PYO + HR + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option>
@@ -999,7 +999,6 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Implementer <span style="color:var(--r)">*</span></div>
           <select id="acm-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select implementer —</option>
-            <option>Ana</option><option>Bea</option><option>Carl</option><option>Dana</option><option>Eli</option>
           </select>
         </div>
         <div>
@@ -1014,12 +1013,20 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <div>
         <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Add-on Services <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sg" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Sprout Gov</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sg" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Sprout Gov</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-ba" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Benefits Admin</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sd" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Salary Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-std" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Statutory Disbursement</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-otk" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Outsourced Timekeeping</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-otk" onchange="acmCheckOtk()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Outsourced Timekeeping</label>
         </div>
+      </div>
+      <div id="acm-gov-row" style="display:none;">
+        <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Sprout Gov Implementer</div>
+        <select id="acm-gov" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
+      </div>
+      <div id="acm-otk-row" style="display:none;">
+        <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">OTK Implementer</div>
+        <select id="acm-otk-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
       </div>
       <div id="acm-error" style="display:none;padding:8px 12px;background:var(--r0);border:1px solid var(--r1);border-radius:8px;font-size:12px;color:var(--r);"></div>
     </div>
@@ -2771,11 +2778,17 @@ function openAddClientModal(){
   var pmEl=document.getElementById('acm-pm');
   if(pmEl){pmEl.innerHTML='<option value="">— Select PM —</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var hriEl=document.getElementById('acm-hri');
-  if(hriEl){hriEl.innerHTML='<option value="">— Select —</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  if(hriEl){hriEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var govEl=document.getElementById('acm-gov');
+  if(govEl){govEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var otkImplEl=document.getElementById('acm-otk-impl');
+  if(otkImplEl){otkImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var implEl=document.getElementById('acm-impl');
-  if(implEl){implEl.innerHTML='<option value="">— Select implementer —</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  if(implEl){implEl.innerHTML='<option value="">— Select implementer —</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   // Reset form values
-  ['acm-month','acm-pm','acm-hri','acm-service','acm-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['acm-month','acm-pm','acm-hri','acm-service','acm-impl','acm-gov','acm-otk-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('acm-gov-row').style.display='none';
+  document.getElementById('acm-otk-row').style.display='none';
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
   ['acm-sg','acm-ba','acm-sd','acm-std','acm-otk'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
@@ -2794,6 +2807,17 @@ function closeAddClientModal(){
   if(mo)mo.classList.remove('open');
 }
 
+function acmCheckGov(){
+  var svc=(document.getElementById('acm-service').value||'').toLowerCase();
+  var sgTicked=document.getElementById('acm-sg').checked;
+  var show=svc.indexOf('gov')>=0||sgTicked;
+  document.getElementById('acm-gov-row').style.display=show?'':'none';
+}
+function acmCheckOtk(){
+  var show=document.getElementById('acm-otk').checked;
+  document.getElementById('acm-otk-row').style.display=show?'':'none';
+}
+
 function submitAddClient(){
   var month  =document.getElementById('acm-month').value.trim();
   var name   =document.getElementById('acm-name').value.trim();
@@ -2801,6 +2825,8 @@ function submitAddClient(){
   var impl   =document.getElementById('acm-impl').value.trim();
   var pm     =document.getElementById('acm-pm').value.trim();
   var hri    =(document.getElementById('acm-hri').value||'').trim();
+  var gov    =(document.getElementById('acm-gov').value||'').trim();
+  var otkImpl=(document.getElementById('acm-otk-impl').value||'').trim();
   var err=document.getElementById('acm-error');
   var missing=[];
   if(!month)  missing.push('Month');
@@ -2817,7 +2843,7 @@ function submitAddClient(){
   var maxNo=D.reduce(function(m,d){return Math.max(m,d.no);},0);
   var newNo=maxNo+1;
   var days=parseInt(document.getElementById('acm-days').value)||0;
-  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,par:0,live:0,post:0});
+  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,gov:gov,otkImpl:otkImpl,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,par:0,live:0,post:0});
   // Save add-on services
   var addons={
     sg: document.getElementById('acm-sg').checked?1:0,
@@ -3409,7 +3435,7 @@ function renderClients(){
         '<td class="ctd">'+rChip(d.resource)+'</td>'+
         govCell+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><input type="text" value="'+(d.pm||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdatePm('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="'+inpStyle+'" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>')+
-        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><input type="text" value="'+(d.hri||'').replace(/"/g,'&quot;')+'" placeholder="—" onblur="clUpdateHrI('+d.no+',this.value.trim())" onkeydown="if(event.key===\'Enter\')this.blur()" style="'+inpStyle+'" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/></td>')+
+        (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.remarks+'</span></td>':'<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>')+
         '<td class="ctd" style="white-space:nowrap;">'+
           (ovRO
@@ -6061,13 +6087,17 @@ function stSaveTeam(){
   var implSel=document.getElementById('login-impl-name');
   if(implSel){implSel.innerHTML='<option value="">Select implementer…</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var aImpl=document.getElementById('acm-impl');
-  if(aImpl){aImpl.innerHTML=TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  if(aImpl){aImpl.innerHTML='<option value="">— Select implementer —</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var crSel=document.getElementById('cr');
   if(crSel){crSel.innerHTML='<option value="">All resources</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var aPm=document.getElementById('acm-pm');
   if(aPm){aPm.innerHTML='<option value="">— Select PM —</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var aHri=document.getElementById('acm-hri');
-  if(aHri){aHri.innerHTML='<option value="">— Select —</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  if(aHri){aHri.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var aGov=document.getElementById('acm-gov');
+  if(aGov){aGov.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var aOtkImpl=document.getElementById('acm-otk-impl');
+  if(aOtkImpl){aOtkImpl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   tcRenderTeam();
   if(typeof _supa!=='undefined'&&_supa){
     _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){if(r.error)console.warn('team_config save failed:',r.error);});
