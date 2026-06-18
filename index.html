@@ -975,11 +975,11 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Project Manager <span style="color:var(--r)">*</span></div>
-          <input id="acm-pm" type="text" placeholder="e.g. Marcus" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          <select id="acm-pm" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select PM —</option></select>
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">HR-I</div>
-          <input id="acm-hri" type="text" placeholder="e.g. Ana" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          <select id="acm-hri" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
         </div>
       </div>
       <div>
@@ -2767,14 +2767,20 @@ function clAddRow(){openAddClientModal();}
 function openAddClientModal(){
   var mo=document.getElementById('add-client-modal');
   if(mo)mo.classList.add('open');
-  // Reset form
+  // Populate dropdowns from TEAM_CONFIG
+  var pmEl=document.getElementById('acm-pm');
+  if(pmEl){pmEl.innerHTML='<option value="">— Select PM —</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var hriEl=document.getElementById('acm-hri');
+  if(hriEl){hriEl.innerHTML='<option value="">— Select —</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var implEl=document.getElementById('acm-impl');
+  if(implEl){implEl.innerHTML='<option value="">— Select implementer —</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  // Reset form values
   ['acm-month','acm-pm','acm-hri','acm-service','acm-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';;
+  var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
   ['acm-sg','acm-ba','acm-sd','acm-std','acm-otk'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   var err=document.getElementById('acm-error');if(err){err.style.display='none';err.textContent='';}
   // For implementer logins, lock the implementer field to their own name
-  var implEl=document.getElementById('acm-impl');
   if(implEl&&CURRENT_ROLE==='implementer'&&IMPL_USER){
     implEl.value=IMPL_USER;
     implEl.disabled=true;
@@ -6059,7 +6065,9 @@ function stSaveTeam(){
   var crSel=document.getElementById('cr');
   if(crSel){crSel.innerHTML='<option value="">All resources</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var aPm=document.getElementById('acm-pm');
-  if(aPm){aPm.innerHTML='<option value="">— Select —</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  if(aPm){aPm.innerHTML='<option value="">— Select PM —</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var aHri=document.getElementById('acm-hri');
+  if(aHri){aHri.innerHTML='<option value="">— Select —</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   tcRenderTeam();
   if(typeof _supa!=='undefined'&&_supa){
     _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){if(r.error)console.warn('team_config save failed:',r.error);});
