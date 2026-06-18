@@ -1610,6 +1610,19 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             </div>
           </div>
 
+          <!-- Pending Items Reminder -->
+          <div class="impl-cpanel" id="cpanel-pending" style="display:none;">
+            <div class="impl-cpanel-hdr" onclick="toggleCPanel('pending')">
+              <div class="impl-cpanel-title">
+                <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+                Pending Items
+                <span id="impl-pending-badge" style="font-size:10px;padding:0px 6px;border-radius:8px;background:#fef3c7;color:#92400e;font-weight:700;line-height:1.6;display:none;"></span>
+              </div>
+              <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div class="impl-cpanel-body" id="cpbody-pending"></div>
+          </div>
+
           <!-- PRIORITY 3 — My Projects -->
           <div class="impl-cpanel" id="cpanel-projects">
             <div class="impl-cpanel-hdr" onclick="toggleCPanel('projects')">
@@ -4069,6 +4082,9 @@ function renderImpl(){
   /* Needs Attention */
   implRenderAttention(myD);
 
+  /* Pending Items */
+  renderPendingPanel(myD);
+
   /* Project list */
   implRenderProjects();
 
@@ -4078,6 +4094,70 @@ function renderImpl(){
   var proj=document.getElementById('cpanel-project');
   if(proj)proj.style.display='none';
   SELECTED_PROJECT=null;
+}
+
+function renderPendingPanel(myD){
+  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var panel=document.getElementById('cpanel-pending');
+  var body=document.getElementById('cpbody-pending');
+  var badge=document.getElementById('impl-pending-badge');
+  if(!panel||!body)return;
+
+  /* Collect all unresolved items for this implementer's clients */
+  var groups=[];
+  var totalPending=0;
+  myD.forEach(function(d){
+    var items=(CLIENT_PENDING[d.no]||[]).filter(function(i){return !i.done;});
+    if(!items.length)return;
+    totalPending+=items.length;
+    groups.push({client:d,items:items});
+  });
+
+  if(!totalPending){
+    panel.style.display='none';
+    return;
+  }
+
+  panel.style.display='';
+  if(badge){badge.textContent=totalPending;badge.style.display='';}
+
+  var html='<div style="padding:4px 10px 10px;">';
+  groups.forEach(function(g){
+    var clientNo=g.client.no;
+    html+='<div style="margin-bottom:10px;">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;padding:6px 0 4px;display:flex;align-items:center;gap:6px;">'
+      +'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></span>'
+      +g.client.client
+      +'<span style="font-weight:400;color:var(--s4);">'+g.items.length+' item'+(g.items.length>1?'s':'')+'</span>'
+      +'</div>';
+    g.items.forEach(function(item,localIdx){
+      /* find real index in CLIENT_PENDING */
+      var realIdx=(CLIENT_PENDING[clientNo]||[]).indexOf(item);
+      html+='<div class="pib-check-item" style="margin-bottom:3px;">'
+        +'<input type="checkbox" class="pib-check-cb" onchange="dashPendingToggle('+clientNo+','+realIdx+',this.checked)"/>'
+        +'<span class="pib-check-label">'+item.label+'</span>'
+        +'<span style="font-size:9px;color:var(--s3);white-space:nowrap;padding-left:4px;">'+(PIB_PHASE_LBL[item.phase||'general']||'')+'</span>'
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  html+='<div style="text-align:right;margin-top:4px;">'
+    +'<span style="font-size:11px;color:var(--g4);cursor:pointer;font-weight:600;" onclick="openPendingBank()">Manage in Pending Items Bank →</span>'
+    +'</div>';
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+function dashPendingToggle(clientNo,idx,done){
+  if(!CLIENT_PENDING[clientNo]||CLIENT_PENDING[clientNo][idx]===undefined)return;
+  CLIENT_PENDING[clientNo][idx].done=done;
+  pibSavePending();
+  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  renderPendingPanel(myD);
+}
+
+function openPendingBank(){
+  openTool('pending-bank');
 }
 
 function implRenderAttention(myD){
