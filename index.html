@@ -1804,7 +1804,7 @@ function fd(src,q,mon,st,res){
 }
  
 var TEAM_CONFIG = (function(){
-  try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);return t;}}catch(e){}
+  try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);t._fromLocalStorage=true;return t;}}catch(e){}
   return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
 })();
 var ST_PREVIEW = null;
@@ -6100,7 +6100,12 @@ function stSaveTeam(){
   if(aOtkImpl){aOtkImpl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   tcRenderTeam();
   if(typeof _supa!=='undefined'&&_supa){
-    _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){if(r.error)console.warn('team_config save failed:',r.error);});
+    _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){
+      if(r.error){
+        console.warn('Full team_config save failed, trying PM-only fallback:',r.error);
+        _supa.from('team_config').upsert({id:1,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r2){if(r2.error)console.warn('PM-only save failed:',r2.error);});
+      }
+    });
   }
   showImportToast('success','Team configuration saved.');
 }
@@ -6253,7 +6258,7 @@ async function loadFromSupabase(){
       if(rt.data.impl_hr) TEAM_CONFIG.implHR =rt.data.impl_hr;
       if(rt.data.impl_otk)TEAM_CONFIG.implOTK=rt.data.impl_otk;
       TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK);
-      if(rt.data.pms)TEAM_CONFIG.pms=rt.data.pms;
+      if(rt.data.pms && !TEAM_CONFIG._fromLocalStorage)TEAM_CONFIG.pms=rt.data.pms;
       try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
     }
     try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));}catch(e){}
