@@ -879,19 +879,9 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div class="lf-title">Sign in to continue</div>
           <div class="lf-sub">Use your Sprout work account. You'll land on your role's dashboard automatically.</div>
           <div class="lf-error" id="login-error" style="display:none;"></div>
-          <button class="lf-btn" id="lf-google-btn" onclick="doGoogleLogin()">
-            <svg width="16" height="16" viewBox="0 0 48 48">
-              <path fill="#D2F612" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.07 17.74 9.5 24 9.5z"/>
-              <path fill="#A6EB93" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-              <path fill="#D2F612" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-              <path fill="#A6EB93" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.57-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-            </svg>
-            Sign in with Google
-          </button>
-          <!-- Password login — hidden fallback, not used when hosted on HTTPS -->
-          <div id="lf-local-form" style="display:none;width:100%;">
-            <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Your account</div>
-            <select id="ll-user" class="lf-select" style="margin-bottom:12px;"><option value="">— Select your name —</option></select>
+          <div id="lf-local-form" style="width:100%;">
+            <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Email</div>
+            <input id="ll-email" type="email" class="lf-input" placeholder="you@sprout.ph" style="margin-bottom:12px;" onkeydown="if(event.key==='Enter')document.getElementById('ll-pass').focus()">
             <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Password</div>
             <input id="ll-pass" type="password" class="lf-input" placeholder="Enter your password" style="margin-bottom:16px;" onkeydown="if(event.key==='Enter')doLocalLogin()">
             <button onclick="doLocalLogin()" style="width:100%;padding:12px;background:#32CE13;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);letter-spacing:.01em;">Sign In</button>
@@ -6554,49 +6544,26 @@ function supabaseSave(){
 var _authHandled=false;
 (function initAuth(){
   _supa.auth.getSession().then(function(res){
-    if(res.data&&res.data.session){_authHandled=true;onAuthSuccess(res.data.session.user);}
-  });
-  _supa.auth.onAuthStateChange(function(event,session){
-    if(event==='SIGNED_IN'&&session&&!_authHandled){_authHandled=true;onAuthSuccess(session.user);}
-    if(event==='SIGNED_OUT'){_authHandled=false;}
+    if(res.data&&res.data.session){_supa.auth.signOut();}
   });
 })();
 
 function doLocalLogin(){
-  var username=(document.getElementById('ll-user').value||'').trim();
+  var email=(document.getElementById('ll-email').value||'').trim().toLowerCase();
   var password=(document.getElementById('ll-pass').value||'').trim();
-  if(!username){showLoginError('Please select your account.');return;}
+  if(!email){showLoginError('Please enter your email.');return;}
   if(!password){showLoginError('Please enter your password.');return;}
-  var user=USERS.find(function(u){return u.username===username;});
-  if(!user||user.password!==password){showLoginError('Incorrect password. Please try again.');return;}
+  var user=USERS.find(function(u){return (u.email||'').toLowerCase()===email;});
+  if(!user||user.password!==password){showLoginError('Incorrect email or password.');return;}
   var errEl=document.getElementById('login-error');
   if(errEl){errEl.style.display='none';errEl.classList.remove('show');}
   CURRENT_ROLE=user.role||'implementer';
+  if(user.email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
   CURRENT_NAME=user.username;
   if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
-  loadFromSupabase().then(function(){startApp();}).catch(function(){startApp();});
+  startApp();
 }
 
-(function initLoginMode(){
-  try{
-    var gBtn=document.getElementById('lf-google-btn');
-    var lForm=document.getElementById('lf-local-form');
-    if(gBtn)gBtn.style.display='none';
-    if(!lForm)return;
-    var sel=document.getElementById('ll-user');
-    if(sel){
-      sel.innerHTML='<option value="">— Select your name —</option>';
-      var sorted=USERS.slice().sort(function(a,b){return a.username.localeCompare(b.username);});
-      sorted.forEach(function(u){
-        var opt=document.createElement('option');
-        opt.value=u.username;
-        opt.textContent=u.username+' · '+u.role.charAt(0).toUpperCase()+u.role.slice(1);
-        sel.appendChild(opt);
-      });
-    }
-    lForm.style.display='block';
-  }catch(e){console.warn('initLoginMode error',e);}
-})();
 
 function doLogin(){
   var roleEl=document.querySelector('.role-card.selected');
@@ -6656,7 +6623,7 @@ function startApp(){
 }
  
 function doSignOut(){
-  _supa.auth.signOut();
+  try{_supa.auth.signOut();}catch(e){}
   var el=document.getElementById('login-error');
   if(el){el.style.display='none';el.classList.remove('show');}
   document.getElementById('login-screen').classList.remove('hidden');
