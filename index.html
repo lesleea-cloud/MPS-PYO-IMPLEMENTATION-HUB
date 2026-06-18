@@ -879,7 +879,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div class="lf-title">Sign in to continue</div>
           <div class="lf-sub">Use your Sprout work account. You'll land on your role's dashboard automatically.</div>
           <div class="lf-error" id="login-error" style="display:none;"></div>
-          <button class="lf-btn" id="lf-google-btn" onclick="doGoogleLogin()" style="display:none;">
+          <button class="lf-btn" id="lf-google-btn" onclick="doGoogleLogin()">
             <svg width="16" height="16" viewBox="0 0 48 48">
               <path fill="#D2F612" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.07 17.74 9.5 24 9.5z"/>
               <path fill="#A6EB93" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -888,8 +888,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             </svg>
             Sign in with Google
           </button>
-          <!-- Password login — primary login method -->
-          <div id="lf-local-form" style="display:block;width:100%;">
+          <!-- Password login — hidden fallback, not used when hosted on HTTPS -->
+          <div id="lf-local-form" style="display:none;width:100%;">
             <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Your account</div>
             <select id="ll-user" class="lf-select" style="margin-bottom:12px;"><option value="">— Select your name —</option></select>
             <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Password</div>
