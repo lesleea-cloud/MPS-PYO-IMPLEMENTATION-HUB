@@ -1813,6 +1813,25 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <div style="font-size:10px;color:var(--s4);">Backup includes: clients, team config, add-ons, milestones, after-handover, audit trail, vault, issues log.</div>
       </div>
 
+      <!-- Upload Project Timeline -->
+      <div class="panel" id="st-panel-timeline" style="display:none;">
+        <div class="panel-title"><span class="pt-dot" style="--c:#0ea5e9"></span>Upload Project Timeline</div>
+        <div style="font-size:12px;color:var(--s5);line-height:1.5;margin-bottom:.75rem;">Upload one or more client project timeline files (.xlsx) to automatically fill in implementation phase dates. The client name is matched from the filename — format: <code style="background:var(--s1);padding:1px 5px;border-radius:4px;font-family:var(--mono);font-size:11px;">Client Name - Project Timeline.xlsx</code></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:.25rem;">
+          <label style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#fff;color:var(--s7);border:1px solid var(--s2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path><line x1="12" y1="3" x2="12" y2="15"></line><polyline points="17 8 12 3 7 8"></polyline></svg>
+            Choose File(s)
+            <input type="file" id="tl-file-input" accept=".xlsx" multiple style="display:none;" onchange="tlHandleFiles(event)">
+          </label>
+          <span id="tl-file-count" style="font-size:12px;color:var(--s4);">No file selected</span>
+        </div>
+        <div id="tl-preview-area" style="display:none;margin-top:.75rem;background:var(--s0);border:1px solid var(--s2);border-radius:8px;padding:.75rem;">
+          <div id="tl-preview-msg" style="font-size:12px;color:var(--s7);margin-bottom:.5rem;"></div>
+          <div id="tl-preview-table" style="overflow-x:auto;margin-bottom:.75rem;max-height:220px;overflow-y:auto;"></div>
+          <button id="tl-confirm-btn" onclick="tlConfirm()" style="display:none;align-items:center;gap:6px;padding:7px 16px;background:#0ea5e9;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);"></button>
+        </div>
+      </div>
+
       <!-- GitHub Auto-Commit (Admin + Manager) -->
       <div class="panel" id="st-panel-github" style="display:none;">
         <div class="panel-title"><span class="pt-dot" style="--c:#24292f"></span>GitHub Auto-Commit</div>
@@ -6142,6 +6161,7 @@ function renderSettings(){
   document.getElementById('st-panel-team').style.display=isAdmin?'':'none';
   document.getElementById('st-panel-backup').style.display=isAdmin?'':'none';
   document.getElementById('st-panel-github').style.display=isAdmin?'':'none';
+  document.getElementById('st-panel-timeline').style.display=(isAdmin||isImpl)?'':'none';
 
   if(isAdmin||isImpl){
     var months=[];
@@ -6263,6 +6283,116 @@ function stHandleFile(e){
     }
   };
   reader.readAsBinaryString(file);
+}
+
+// ── Upload Project Timeline ──────────────────────────────────────────────────
+var TL_PREVIEW=null;
+function tlHandleFiles(e){
+  var files=Array.from(e.target.files);
+  if(!files.length)return;
+  document.getElementById('tl-file-count').textContent=files.length+' file(s) selected';
+  document.getElementById('tl-preview-area').style.display='none';
+  if(typeof XLSX==='undefined'){alert('SheetJS not loaded.');return;}
+  TL_PREVIEW=[];
+  var processed=0;
+  files.forEach(function(file){
+    var reader=new FileReader();
+    reader.onload=function(ev){
+      try{TL_PREVIEW.push(tlParseFile(ev.target.result,file.name));}
+      catch(err){TL_PREVIEW.push({filename:file.name,clientName:file.name,matchedClient:null,dates:null,error:err.message});}
+      processed++;
+      if(processed===files.length)tlShowPreview();
+    };
+    reader.readAsBinaryString(file);
+  });
+}
+function tlParseFile(binaryStr,filename){
+  var wb=XLSX.read(binaryStr,{type:'binary',cellDates:false});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,dateNF:'MM/DD/YYYY'});
+  // Extract client name from filename: strip " - Project Timeline[...].xlsx"
+  var clientName=filename.replace(/\s*[-–—]\s*Project\s*Timeline.*$/i,'').replace(/\.xlsx$/i,'').trim();
+  // Match client in D[] — exact first, then substring
+  var mc=D.find(function(d){return d.client.toLowerCase().trim()===clientName.toLowerCase().trim();});
+  if(!mc){mc=D.find(function(d){var a=d.client.toLowerCase().trim(),b=clientName.toLowerCase().trim();return a.indexOf(b)>=0||b.indexOf(a)>=0;});}
+  var dates={komDate:'',simDate:'',parDate:'',handOver:''};
+  var phase=null,filled={kom:false,sim:false,par:false,ho:false};
+  rows.forEach(function(row){
+    var colA=String(row[0]||'').trim();
+    var colB=String(row[1]||'').trim();
+    var task=colA||colB;
+    var tgtStart=String(row[4]||'').trim();
+    if(/PHASE\s*1|KICK.?OFF/i.test(colA)){phase='kom';return;}
+    if(/PHASE\s*3|SIMULATION/i.test(colA)){phase='sim';return;}
+    if(/PHASE\s*6|PARALLEL.?RUN/i.test(colA)){phase='par';return;}
+    if(/PHASE\s*7|SIGN.?OFF/i.test(colA)){phase='ho';return;}
+    if(/PHASE\s*[2458]/i.test(colA)&&colA!==''){phase=null;return;}
+    var d=parseImportDate(tgtStart);
+    if(!d)return;
+    if(phase==='kom'&&!filled.kom){dates.komDate=d;filled.kom=true;}
+    else if(phase==='sim'&&!filled.sim){dates.simDate=d;filled.sim=true;}
+    else if(phase==='par'&&!filled.par){dates.parDate=d;filled.par=true;}
+    else if(phase==='ho'&&!filled.ho){
+      if(/project\s*handover/i.test(task)||!dates.handOver){dates.handOver=d;filled.ho=true;}
+    }
+  });
+  return{filename:filename,clientName:clientName,matchedClient:mc||null,dates:dates};
+}
+function tlShowPreview(){
+  var area=document.getElementById('tl-preview-area');
+  var msg=document.getElementById('tl-preview-msg');
+  var tbl=document.getElementById('tl-preview-table');
+  var btn=document.getElementById('tl-confirm-btn');
+  area.style.display='block';
+  var matched=TL_PREVIEW.filter(function(r){return r.matchedClient&&!r.error;});
+  var unmatched=TL_PREVIEW.filter(function(r){return !r.matchedClient&&!r.error;});
+  var errs=TL_PREVIEW.filter(function(r){return !!r.error;});
+  var parts=['<b>'+matched.length+' client(s) matched</b>'];
+  if(unmatched.length)parts.push('<span style="color:var(--o)">'+unmatched.length+' unmatched</span>');
+  if(errs.length)parts.push('<span style="color:var(--r)">'+errs.length+' error(s)</span>');
+  msg.innerHTML=parts.join(', ');
+  var heads=['Extracted Client Name','Matched To','KOM Date','Simulation','Parallel Run','Hand Over'];
+  var html='<table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:var(--s1);">'+
+    heads.map(function(h){return'<th style="padding:5px 8px;text-align:left;font-weight:700;color:var(--s5);border-bottom:1px solid var(--s2);white-space:nowrap;">'+h+'</th>';}).join('')+
+    '</tr></thead><tbody>';
+  TL_PREVIEW.forEach(function(r){
+    var mc=r.error?'<span style="color:var(--r)">Error: '+escHtml(r.error)+'</span>':
+      r.matchedClient?'<span style="color:var(--g)">&#10003; '+escHtml(r.matchedClient.client)+'</span>':
+      '<span style="color:var(--o)">No match found</span>';
+    var d=r.dates||{};
+    html+='<tr style="border-bottom:1px solid var(--s1);">'+
+      '<td style="padding:5px 8px;color:var(--s8);">'+escHtml(r.clientName)+'</td>'+
+      '<td style="padding:5px 8px;">'+mc+'</td>'+
+      '<td style="padding:5px 8px;color:var(--s6);">'+(d.komDate||'&#8212;')+'</td>'+
+      '<td style="padding:5px 8px;color:var(--s6);">'+(d.simDate||'&#8212;')+'</td>'+
+      '<td style="padding:5px 8px;color:var(--s6);">'+(d.parDate||'&#8212;')+'</td>'+
+      '<td style="padding:5px 8px;color:var(--s6);">'+(d.handOver||'&#8212;')+'</td>'+
+      '</tr>';
+  });
+  html+='</tbody></table>';
+  tbl.innerHTML=html;
+  if(matched.length){btn.textContent='Apply dates to '+matched.length+' client(s)';btn.style.display='inline-flex';}
+  else{btn.style.display='none';}
+}
+function tlConfirm(){
+  if(!TL_PREVIEW)return;
+  var count=0;
+  TL_PREVIEW.forEach(function(r){
+    if(!r.matchedClient||!r.dates||r.error)return;
+    var d=D.find(function(x){return x.no===r.matchedClient.no;});
+    if(!d)return;
+    var before=JSON.stringify({komDate:d.komDate,simDate:d.simDate,parDate:d.parDate,handOver:d.handOver});
+    if(r.dates.komDate)d.komDate=r.dates.komDate;
+    if(r.dates.simDate)d.simDate=r.dates.simDate;
+    if(r.dates.parDate)d.parDate=r.dates.parDate;
+    if(r.dates.handOver)d.handOver=r.dates.handOver;
+    logAudit(d.no,'Implementation Phases','timeline','Timeline Uploaded',before,JSON.stringify({komDate:d.komDate,simDate:d.simDate,parDate:d.parDate,handOver:d.handOver}));
+    count++;
+  });
+  autoSave();_supaFlush();renderClients();
+  document.getElementById('tl-preview-msg').innerHTML='<b style="color:var(--g)">&#10003; Dates applied to '+count+' client(s). Changes saved.</b>';
+  document.getElementById('tl-confirm-btn').style.display='none';
+  TL_PREVIEW=null;
 }
 
 function stConfirmReplace(){

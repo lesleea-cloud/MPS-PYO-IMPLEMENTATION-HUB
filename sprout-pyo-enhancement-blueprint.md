@@ -1282,3 +1282,63 @@ Stored in `localStorage` key `pyo_vault` as `VAULT_ITEMS` array:
 
 ### Supabase integration (future)
 Add a `vault_items` table to replace localStorage for multi-user sync. Columns: `id`, `name`, `category`, `type`, `url`, `file_name`, `file_path` (Supabase Storage path), `notes`, `uploaded_by`, `uploaded_at`. File uploads should go to Supabase Storage bucket instead of base64 in localStorage.
+
+---
+
+## 22. Settings — Upload Project Timeline ✅ Coded (June 19, 2026)
+
+### What was added
+A new **"Upload Project Timeline"** panel (`id="st-panel-timeline"`) in the Settings page allows Admin and Implementer users to upload one or more Sprout project timeline Excel files (.xlsx) and automatically populate implementation phase dates for matching clients.
+
+### Panel location
+Inserted just before the GitHub Auto-Commit panel in Settings.
+
+### File format supported
+The standard Sprout PYO project timeline Excel file:
+- **Filename pattern:** `[Client Name] - Project Timeline.xlsx`
+- **Sheet:** First sheet (any name — e.g. `60 HR and PYO_V1`)
+- **Column layout:**
+  - Column A (index 0): Phase headers (e.g. `PHASE 1: KICK OFF MEETING`)
+  - Column B (index 1): Sub-task names
+  - Column E (index 4): Target Start Date (MM/DD/YYYY)
+  - Column F (index 5): Target End Date
+
+### Date extraction logic
+The parser (`tlParseFile`) scans all rows and detects phase headers by keyword matching in Column A:
+
+| Phase keyword | Target date field |
+|---|---|
+| `PHASE 1` or `KICK OFF` | `komDate` — first sub-task with a Target Start Date |
+| `PHASE 3` or `SIMULATION` | `simDate` — first sub-task with a Target Start Date |
+| `PHASE 6` or `PARALLEL RUN` | `parDate` — first sub-task with a Target Start Date |
+| `PHASE 7` or `SIGN OFF` | `handOver` — "Project Handover" task, or first task with a date |
+
+### Client matching
+1. Strip ` - Project Timeline[...].xlsx` from the filename → candidate client name
+2. Exact match against `D[].client` (case-insensitive)
+3. Fallback: substring match (either name contains the other)
+
+### UX flow
+1. User clicks **Choose File(s)** — supports `multiple` selection
+2. Files are read and parsed client-side (no server)
+3. Preview table shows: Extracted Client Name | Matched To | KOM | Simulation | Parallel Run | Hand Over
+4. Unmatched files shown in orange, errors in red
+5. **"Apply dates to N client(s)"** button confirms changes
+6. On confirm: dates written to matching D[] records, `logAudit()` called, `autoSave()` + `_supaFlush()` fired
+
+### Visibility
+- Shown for **Admin** and **Implementer** roles; hidden for Manager
+- Controlled in `renderSettings()` alongside other panel visibility rules
+
+### New JS functions
+| Function | Purpose |
+|---|---|
+| `tlHandleFiles(e)` | File input handler — reads all selected files with FileReader |
+| `tlParseFile(binaryStr, filename)` | Parses one xlsx, extracts dates + matches client |
+| `tlShowPreview()` | Renders preview table + confirm button |
+| `tlConfirm()` | Applies extracted dates to D[], logs audit, saves |
+
+### Uses existing infrastructure
+- `XLSX.read()` / `XLSX.utils.sheet_to_json()` — SheetJS already loaded
+- `parseImportDate()` — existing date normalizer (handles MM/DD/YYYY, YYYY-MM-DD, Excel serials)
+- `logAudit()`, `autoSave()`, `_supaFlush()` — standard save pipeline
