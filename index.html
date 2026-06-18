@@ -1138,9 +1138,46 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">Resources</div>
-    <div class="nav-item" id="nav-vault" onclick="go('vault')" style="display:flex;">
-      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      Implementation Vault
+    <!-- hidden marker keeps the nav loop working -->
+    <div id="nav-vault" style="display:none;"></div>
+    <div class="nav-admin-section" id="nav-vault-section" style="display:flex;">
+      <div class="nav-admin-hdr open" id="nav-vault-hdr" onclick="toggleVaultSection()">
+        <span style="display:flex;align-items:center;gap:8px;">
+          <svg class="hdr-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Implementation Vault
+        </span>
+        <svg class="chev" viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;flex-shrink:0;transition:transform .2s;"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="nav-admin-body open" id="nav-vault-body">
+        <button class="nav-tool-item active" id="nav-vault-all" onclick="goVault('all')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#94a3b8;flex-shrink:0;"></span>
+          All
+        </button>
+        <button class="nav-tool-item" id="nav-vault-proposals" onclick="goVault('Proposals')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#1679FA;flex-shrink:0;"></span>
+          Proposals
+        </button>
+        <button class="nav-tool-item" id="nav-vault-moms" onclick="goVault('MOMs')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#239A0D;flex-shrink:0;"></span>
+          MOMs
+        </button>
+        <button class="nav-tool-item" id="nav-vault-decks" onclick="goVault('Decks')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#8139EE;flex-shrink:0;"></span>
+          Decks
+        </button>
+        <button class="nav-tool-item" id="nav-vault-policy" onclick="goVault('Payroll Policy')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF7F00;flex-shrink:0;"></span>
+          Payroll Policy
+        </button>
+        <button class="nav-tool-item" id="nav-vault-templates" onclick="goVault('Templates')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#0891b2;flex-shrink:0;"></span>
+          Templates
+        </button>
+        <button class="nav-tool-item" id="nav-vault-other" onclick="goVault('Other')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#64748b;flex-shrink:0;"></span>
+          Other
+        </button>
+      </div>
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">System</div>
@@ -1520,16 +1557,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div id="vf-error" style="display:none;font-size:11px;color:var(--r);align-self:center;"></div>
         </div>
       </div>
-      <!-- Filter pills -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-        <button class="vault-fp on" onclick="vaultFilter('all',this)">All</button>
-        <button class="vault-fp" onclick="vaultFilter('Proposals',this)">Proposals</button>
-        <button class="vault-fp" onclick="vaultFilter('MOMs',this)">MOMs</button>
-        <button class="vault-fp" onclick="vaultFilter('Decks',this)">Decks</button>
-        <button class="vault-fp" onclick="vaultFilter('Payroll Policy',this)">Payroll Policy</button>
-        <button class="vault-fp" onclick="vaultFilter('Templates',this)">Templates</button>
-        <button class="vault-fp" onclick="vaultFilter('Other',this)">Other</button>
-        <span id="vault-count" style="margin-left:auto;font-size:11px;color:var(--s4);font-family:var(--mono);"></span>
+      <!-- Category label + count -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
+        <span id="vault-cat-label" style="font-size:13px;font-weight:600;color:var(--s7);"></span>
+        <span id="vault-count" style="font-size:11px;color:var(--s4);font-family:var(--mono);"></span>
       </div>
       <!-- Cards grid -->
       <div id="vault-grid"></div>
@@ -2020,13 +2051,34 @@ function vaultDelete(id){
   vaultSaveToStorage();
   renderVault();
 }
-function vaultFilter(cat,btn){
-  VAULT_FILTER=cat;
-  document.querySelectorAll('.vault-fp').forEach(function(b){b.classList.remove('on');});
-  if(btn)btn.classList.add('on');
+var VAULT_NAV_MAP={all:'nav-vault-all',Proposals:'nav-vault-proposals',MOMs:'nav-vault-moms',Decks:'nav-vault-decks','Payroll Policy':'nav-vault-policy',Templates:'nav-vault-templates',Other:'nav-vault-other'};
+function toggleVaultSection(){
+  var body=document.getElementById('nav-vault-body');
+  var hdr=document.getElementById('nav-vault-hdr');
+  if(!body)return;
+  body.classList.toggle('open');
+  if(hdr)hdr.classList.toggle('open');
+}
+function goVault(cat){
+  VAULT_FILTER=cat||'all';
+  go('vault');
+}
+function vaultSyncNav(){
+  document.querySelectorAll('#nav-vault-body .nav-tool-item').forEach(function(b){b.classList.remove('active');});
+  var activeId=VAULT_NAV_MAP[VAULT_FILTER]||'nav-vault-all';
+  var activeEl=document.getElementById(activeId);
+  if(activeEl)activeEl.classList.add('active');
+  var body=document.getElementById('nav-vault-body');
+  var hdr=document.getElementById('nav-vault-hdr');
+  if(body&&!body.classList.contains('open')){body.classList.add('open');if(hdr)hdr.classList.add('open');}
+}
+function vaultFilter(cat){
+  VAULT_FILTER=cat||'all';
+  vaultSyncNav();
   renderVault();
 }
 function renderVault(){
+  vaultSyncNav();
   var canAdd=CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god';
   var addBtn=document.getElementById('vault-add-btn');
   if(addBtn)addBtn.style.display=canAdd?'flex':'none';
@@ -2034,6 +2086,8 @@ function renderVault(){
   var items=VAULT_FILTER==='all'?VAULT_ITEMS:VAULT_ITEMS.filter(function(v){return v.category===VAULT_FILTER;});
   var countEl=document.getElementById('vault-count');
   if(countEl)countEl.textContent=items.length+' file'+(items.length!==1?'s':'');
+  var catLbl=document.getElementById('vault-cat-label');
+  if(catLbl)catLbl.textContent=VAULT_FILTER==='all'?'All files':VAULT_FILTER;
 
   var grid=document.getElementById('vault-grid');
   if(!grid)return;

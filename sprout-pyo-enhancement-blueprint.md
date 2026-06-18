@@ -1321,6 +1321,23 @@ Stored in `localStorage` key `pyo_vault` as `VAULT_ITEMS` array:
 ### Supabase integration (future)
 Add a `vault_items` table to replace localStorage for multi-user sync. Columns: `id`, `name`, `category`, `type`, `url`, `file_name`, `file_path` (Supabase Storage path), `notes`, `uploaded_by`, `uploaded_at`. File uploads should go to Supabase Storage bucket instead of base64 in localStorage.
 
+### Category filter — sidebar sub-navigation ✅ Coded (June 19, 2026)
+Filter pills removed from `page-vault`. Categories are now an indented sub-panel under **Implementation Vault** in the sidebar, matching the Clients dropdown pattern.
+
+| Sub-item | ID | Dot color |
+|---|---|---|
+| All | `nav-vault-all` | `#94a3b8` |
+| Proposals | `nav-vault-proposals` | `#1679FA` |
+| MOMs | `nav-vault-moms` | `#239A0D` |
+| Decks | `nav-vault-decks` | `#8139EE` |
+| Payroll Policy | `nav-vault-policy` | `#FF7F00` |
+| Templates | `nav-vault-templates` | `#0891b2` |
+| Other | `nav-vault-other` | `#64748b` |
+
+**New functions:** `toggleVaultSection()`, `goVault(cat)`, `vaultSyncNav()`
+**`renderVault()`**: calls `vaultSyncNav()` on every render; updates `#vault-cat-label` with active category name
+**Main content**: filter pills replaced with `#vault-cat-label` (bold category name) + `#vault-count`
+
 ---
 
 ## 22. Settings — Upload Project Timeline ✅ Coded (June 19, 2026)
