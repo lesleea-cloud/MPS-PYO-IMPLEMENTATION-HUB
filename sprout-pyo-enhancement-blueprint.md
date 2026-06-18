@@ -1668,20 +1668,19 @@ var _snap = { clients:{}, addons:{}, milestones:{}, afterho:{} };
 
 ### Result
 
-## Section 36 — Local File Login (file:// fallback) ✅ Coded (June 18, 2026)
+## Section 36 — Local File Login (password-based) ✅ Coded (June 18, 2026)
 
-Google OAuth requires an `http://` or `https://` redirect URL. When the app is opened directly from the filesystem (`file://`), `window.location.origin` returns `"null"` in Chrome, making the redirect URL invalid — the Google button silently fails.
+Google OAuth requires an `http://` or `https://` redirect URL. When the app is opened directly from the filesystem (`file://`), `window.location.origin` returns `"null"` in Chrome — the Google button silently fails.
 
-### Fix
+### Fix (revised — protocol detection removed)
 
-`initLoginMode()` runs immediately on page load. If `window.location.protocol === 'file:'`:
-- Hides the Google Sign In button (`lf-google-btn`)
-- Shows `lf-local-form` — a user dropdown + password field
-- Populates the dropdown from the `USERS` array (sorted alphabetically, shows username · Role)
+The password login form (`lf-local-form`) is now **visible by default in HTML** (`display:block`) and the Google button is **hidden by default** (`display:none`). No protocol detection needed — form is always shown regardless of how the file is opened.
+
+`initLoginMode()` IIFE runs on page load (wrapped in try-catch) to populate the user dropdown from the `USERS` array (sorted alphabetically, shows `username · Role`). The IIFE is defensive — even if it throws, the form is already visible.
 
 `doLocalLogin()` authenticates against the `USERS` array (username + password match), sets `CURRENT_ROLE` and `CURRENT_NAME`, triggers `loadFromSupabase()` to pull latest cloud data, then calls `startApp()`.
 
-When served via HTTP/HTTPS (e.g. GitHub Pages, localhost), the Google button shows as normal and local form is hidden — no behaviour change for web deployments.
+The `ll-user` select has a default `— Select your name —` placeholder option embedded in HTML as fallback if JS fails to populate it.
 
 Each user's save touches **only the records they actually changed**. Two users can edit different clients simultaneously with zero collision. Feature updates by Claude never affect Supabase, so implementer changes always survive code updates.
 

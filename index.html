@@ -879,7 +879,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <div class="lf-title">Sign in to continue</div>
           <div class="lf-sub">Use your Sprout work account. You'll land on your role's dashboard automatically.</div>
           <div class="lf-error" id="login-error" style="display:none;"></div>
-          <button class="lf-btn" id="lf-google-btn" onclick="doGoogleLogin()">
+          <button class="lf-btn" id="lf-google-btn" onclick="doGoogleLogin()" style="display:none;">
             <svg width="16" height="16" viewBox="0 0 48 48">
               <path fill="#D2F612" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.07 17.74 9.5 24 9.5z"/>
               <path fill="#A6EB93" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
@@ -888,10 +888,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             </svg>
             Sign in with Google
           </button>
-          <!-- Local file login — shown automatically when opened from file:// -->
-          <div id="lf-local-form" style="display:none;width:100%;">
+          <!-- Password login — primary login method -->
+          <div id="lf-local-form" style="display:block;width:100%;">
             <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Your account</div>
-            <select id="ll-user" class="lf-select" style="margin-bottom:12px;"></select>
+            <select id="ll-user" class="lf-select" style="margin-bottom:12px;"><option value="">— Select your name —</option></select>
             <div style="font-size:10px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Password</div>
             <input id="ll-pass" type="password" class="lf-input" placeholder="Enter your password" style="margin-bottom:16px;" onkeydown="if(event.key==='Enter')doLocalLogin()">
             <button onclick="doLocalLogin()" style="width:100%;padding:12px;background:#32CE13;border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);letter-spacing:.01em;">Sign In</button>
@@ -6578,21 +6578,24 @@ function doLocalLogin(){
 }
 
 (function initLoginMode(){
-  if(window.location.protocol!=='file:')return;
-  // Running as a local file — Google OAuth won't work, switch to password login
-  var gBtn=document.getElementById('lf-google-btn');
-  var lForm=document.getElementById('lf-local-form');
-  if(gBtn)gBtn.style.display='none';
-  if(!lForm)return;
-  var sel=document.getElementById('ll-user');
-  var sorted=USERS.slice().sort(function(a,b){return a.username.localeCompare(b.username);});
-  sorted.forEach(function(u){
-    var opt=document.createElement('option');
-    opt.value=u.username;
-    opt.textContent=u.username+' · '+u.role.charAt(0).toUpperCase()+u.role.slice(1);
-    sel.appendChild(opt);
-  });
-  lForm.style.display='block';
+  try{
+    var gBtn=document.getElementById('lf-google-btn');
+    var lForm=document.getElementById('lf-local-form');
+    if(gBtn)gBtn.style.display='none';
+    if(!lForm)return;
+    var sel=document.getElementById('ll-user');
+    if(sel){
+      sel.innerHTML='<option value="">— Select your name —</option>';
+      var sorted=USERS.slice().sort(function(a,b){return a.username.localeCompare(b.username);});
+      sorted.forEach(function(u){
+        var opt=document.createElement('option');
+        opt.value=u.username;
+        opt.textContent=u.username+' · '+u.role.charAt(0).toUpperCase()+u.role.slice(1);
+        sel.appendChild(opt);
+      });
+    }
+    lForm.style.display='block';
+  }catch(e){console.warn('initLoginMode error',e);}
 })();
 
 function doLogin(){
