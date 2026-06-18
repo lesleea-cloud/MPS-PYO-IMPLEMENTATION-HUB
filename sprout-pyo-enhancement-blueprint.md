@@ -9,12 +9,11 @@
 
 **Root cause:** Google's Identity Services `renderButton` silently fails from `file://` URLs because the origin isn't in the authorized JavaScript origins list in Google Cloud Console. Even when the GSI library loads, it injects an invisible iframe (so children.length > 0), making detection unreliable. `google.accounts.id.prompt()` also silently fails on `file://`.
 
-**Fix applied (final — Jun 18, 2026 revision 4):**
-- Login HTML: single dark `.lf-btn` button "Sign in with Google" (Google G SVG + yellow-green text on #092903 bg) — matches original screenshot 12 exactly. Hidden `#ll-local-fallback` with 7 hardcoded user picker buttons below it.
-- `handleSignInClick()`: called when the dark button is clicked. If `file://` → toggles `#ll-local-fallback` visible (user picks their name → `llPickUser()`). If Vercel/HTTPS → calls `google.accounts.id.prompt()` → Google One-Tap → `handleGoogleCredential` → `startApp()`.
-- `initGoogleSignIn()`: if `file://` → returns immediately. If Vercel → waits for GIS library (retries via setTimeout), then calls `google.accounts.id.initialize()`.
-- `llPickUser(email)`: looks up user, sets role/name, saves to localStorage, calls `startApp()`.
-- **Vercel:** dark button → click → Google One-Tap signs you in. **Local file:** dark button → click → reveals user picker → click name → signed in.
+**Fix applied (final — Jun 18, 2026 revision 5):**
+- Login HTML: dark `.lf-btn` button ("Sign in with Google") wrapped in a `position:relative` div. An invisible `#google-signin-btn` overlay div sits on top (`position:absolute`, `opacity:0.001`, `z-index:2`).
+- **Overlay technique (Vercel):** `initGoogleSignIn()` calls `google.accounts.id.renderButton()` into the overlay, then shows it. User sees and clicks the dark button, but the GIS iframe sitting on top receives the click and handles the real OAuth flow → `handleGoogleCredential` → `startApp()`. This is reliable — `google.accounts.id.prompt()` was unreliable (Google can suppress it silently).
+- **Local file:** overlay stays `display:none`. Dark button calls `handleSignInClick()` → toggles user picker list below → click name → `llPickUser()` → `startApp()`.
+- `initGoogleSignIn()`: if `file://` → returns immediately. If Vercel → retries until GIS loads, then `initialize()` + `renderButton()` into overlay + sets dark button `pointer-events:none`.
 - **DO NOT delete Supabase or Google Cloud Console.** Vercel authorized origin is already set up.
 
 ---
