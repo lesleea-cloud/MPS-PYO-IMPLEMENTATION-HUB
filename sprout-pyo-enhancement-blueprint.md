@@ -276,6 +276,8 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 | **`mfNormBankType` incorrectly mapped non-bank values to 'Savings'** | index.html | Removed redundant `includes('savings')` branch — simplified to: 'current' → `Current`, any other non-empty string → `Savings`. |
 | **Dashboard "Resource Workload" and "Avg Progress by Resource" panels empty for Admin** | index.html | `renderDashboard()` had `var rl=['Ana','Bea','Carl','Dana','Eli']` hardcoded — replaced with `TEAM_CONFIG.implementers`. Also added inline RC color refresh so new implementers get a color even if team config was never re-saved. (June 19, 2026) |
 | **Upload Project Timeline extracts no dates** | index.html | Two bugs in `tlParseFile`: (1) `raw:false` caused SheetJS to format Excel date serials as plain number strings like `"46207"` instead of keeping the numeric value; (2) `String(row[4]||'')` converted any number to a string before `parseImportDate`, defeating its `typeof val==='number'` branch. Fixed: changed to `raw:true` and pass `row[4]` directly to `parseImportDate`. (June 19, 2026) |
+| **Audit Trail page always empty — changes never appeared** | index.html | `go()` handled `page==='audit'` with a standalone `if` that only added the nav active class — `renderAudit()` was never in the `else if` render chain. Every other page had a render call; audit was the only one missing. Fixed by adding `else if(page==='audit')renderAudit()` to the chain. (June 19, 2026) |
+| **Client table row spacing improved across all tabs** | index.html | `.ctd` and `.cth` padding increased from `8px 12px` to `10px 14px`. `.ph-cell` given `min-height:44px` + `justify-content:center` so Implementation Phases rows are uniform height whether or not a date exists. (June 19, 2026) |
 | **"Turned Over" checkbox not persisting after logout** | index.html + Supabase | `_supaFlush()` afterho upsert only saved `csm` and `processor` — `turned_over` was silently dropped. Load code also never read it back. Fixed: added `turned_over: !!a.turnedOver` to upsert payload, added `turnedOver: a.turned_over?1:0` to load. Also added `_supaFlush()` call in `ahToggleCb` for immediate persistence. Supabase: requires `ALTER TABLE client_afterho ADD COLUMN IF NOT EXISTS turned_over BOOLEAN DEFAULT FALSE`. (June 19, 2026) |
 | **Dead mapped key `'Previous Employer Taxable Salaries'`** | index.html | Removed — no matching column in MF_COLUMNS or PayrollPie template; was silently dropped on every export. |
 | **Inactive/terminated employees exported as `Status=ADD`** | index.html | Reverted — early employment status filter was causing data transfer issues in testing. Deferred pending further investigation. |
@@ -1312,8 +1314,8 @@ The parser (`tlParseFile`) scans all rows and detects phase headers by keyword m
 | Phase keyword | Target date field |
 |---|---|
 | `PHASE 1` or `KICK OFF` | `komDate` — first sub-task with a Target Start Date |
-| `PHASE 3` or `SIMULATION` | `simDate` — first sub-task with a Target Start Date |
-| `PHASE 6` or `PARALLEL RUN` | `parDate` — first sub-task with a Target Start Date |
+| `PHASE 3` or `SIMULATION` | `simDate` — **last** sub-task with a Target Start Date (e.g. "Payroll Discussion") |
+| `PHASE 6` or `PARALLEL RUN` | `parDate` — **last** sub-task with a Target Start Date (e.g. "Variance Analysis Discussion") |
 | `PHASE 7` or `SIGN OFF` | `handOver` — "Project Handover" task, or first task with a date |
 
 ### Client matching
