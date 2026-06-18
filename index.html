@@ -5821,7 +5821,7 @@ function mfEscXml(s){
 
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
-  manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','issues']},
+  manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','issues','settings']},
   admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'weekly',hideNav:['impl','my-clients','issues']},
   implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','clients']},
   god:{pill:'rp-god',pillText:'God Mode',avatarBg:'#7c3aed',defaultPage:'dashboard',hideNav:[]}
@@ -5866,8 +5866,8 @@ function renderSettings(){
   // Show/hide panels by role
   document.getElementById('st-panel-data').style.display=(isAdmin||isImpl)?'':'none';
   document.getElementById('st-panel-addclient').style.display=(isAdmin||isImpl)?'':'none';
-  document.getElementById('st-panel-team').style.display=isMgr?'':'none';
-  document.getElementById('st-panel-github').style.display=(isAdmin||isMgr)?'':'none';
+  document.getElementById('st-panel-team').style.display=isAdmin?'':'none';
+  document.getElementById('st-panel-github').style.display=isAdmin?'':'none';
 
   if(isAdmin||isImpl){
     var months=[];
@@ -5879,9 +5879,9 @@ function renderSettings(){
     document.getElementById('st-file-input').value='';
   }
 
-  if(isMgr) tcRenderTeam();
+  if(isAdmin) tcRenderTeam();
 
-  if(isAdmin||isMgr){
+  if(isAdmin){
     var ghCfg=getGitHubConfig();
     if(ghCfg){
       var el;
