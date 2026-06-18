@@ -377,6 +377,13 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-alerts-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#FF7F00 0%,#CC5C02 100%);border-bottom:none;}
 .impl-alerts-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
 .impl-alerts-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
+/* Follow up panel — amber, mirrors Needs Attention prominence */
+@keyframes followup-pulse{0%,100%{box-shadow:0 4px 20px rgba(217,119,6,.18),0 1px 4px rgba(217,119,6,.12);}50%{box-shadow:0 0 0 4px rgba(217,119,6,.18),0 6px 28px rgba(217,119,6,.38);}}
+.impl-followup-panel{border:1.5px solid #FDE68A;box-shadow:0 4px 20px rgba(217,119,6,.15),0 1px 4px rgba(217,119,6,.1);}
+.impl-followup-panel.has-items{border-color:#f59e0b;animation:followup-pulse 2.4s ease-in-out infinite;}
+.impl-followup-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#d97706 0%,#b45309 100%);border-bottom:none;cursor:pointer;user-select:none;}
+.impl-followup-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
+.impl-followup-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
 .impl-attn-body{padding:.5rem .85rem;overflow-y:auto;max-height:280px;background:#fffaf7;}
 .impl-attn-legend{background:#fff3e8;border-top:1px solid #fed7aa;}
 .impl-proj-list{overflow-y:auto;max-height:310px;padding:.3rem .5rem;}
@@ -1610,21 +1617,21 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             </div>
           </div>
 
-          <!-- Pending Items Reminder -->
-          <div class="impl-cpanel" id="cpanel-pending" style="display:none;">
-            <div class="impl-cpanel-hdr" onclick="toggleCPanel('pending')">
-              <div class="impl-cpanel-title">
-                <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
-                Pending Items
-                <span id="impl-pending-badge" style="font-size:10px;padding:0px 6px;border-radius:8px;background:#fef3c7;color:#92400e;font-weight:700;line-height:1.6;display:none;"></span>
+          <!-- Follow up with the client panel -->
+          <div class="impl-followup-panel impl-cpanel" id="cpanel-pending" style="display:none;">
+            <div class="impl-followup-hdr" onclick="toggleCPanel('pending')">
+              <div class="impl-followup-title">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                Follow up with the client
+                <span id="impl-pending-badge" style="font-size:10px;padding:2px 9px;border-radius:10px;background:rgba(255,255,255,.25);color:#fff;font-weight:700;border:1px solid rgba(255,255,255,.4);display:none;"></span>
               </div>
-              <svg class="impl-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg class="impl-chev" style="stroke:#fff;" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
             <div class="impl-cpanel-body" id="cpbody-pending"></div>
           </div>
 
-          <!-- PRIORITY 3 — My Projects -->
-          <div class="impl-cpanel" id="cpanel-projects">
+          <!-- PRIORITY 3 — My Projects (shown only in drill mode) -->
+          <div class="impl-cpanel" id="cpanel-projects" style="display:none;">
             <div class="impl-cpanel-hdr" onclick="toggleCPanel('projects')">
               <div class="impl-cpanel-title">
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--g);display:inline-block;"></span>
@@ -1685,7 +1692,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </div>
 
           <!-- PRIORITY 4 — Selected Project (collapsible) -->
-          <div class="impl-cpanel" id="cpanel-project">
+          <div class="impl-cpanel" id="cpanel-project" style="display:none;">
             <div class="impl-cpanel-hdr" onclick="toggleCPanel('project')">
               <div class="impl-cpanel-title">
                 <span style="width:6px;height:6px;border-radius:50%;background:var(--v);display:inline-block;"></span>
@@ -3928,6 +3935,7 @@ function implKpiClick(filter,label,el){
 
 function implSetMode(mode){
   var attn=document.getElementById('cpanel-attn');
+  var pend=document.getElementById('cpanel-pending');
   var stats=document.getElementById('cpanel-stats');
   var projs=document.getElementById('cpanel-projects');
   var proj=document.getElementById('cpanel-project');
@@ -3935,6 +3943,7 @@ function implSetMode(mode){
   var back=document.getElementById('impl-kpi-back');
   if(mode==='drill'){
     if(attn)attn.style.display='none';
+    if(pend)pend.style.display='none';
     if(stats)stats.style.display='none';
     if(projs){projs.style.display='';projs.classList.remove('collapsed');}
     if(proj)proj.style.display='none';
@@ -3949,6 +3958,9 @@ function implSetMode(mode){
     if(back)back.style.display='none';
     var titleEl=document.getElementById('impl-proj-panel-title');
     if(titleEl)titleEl.textContent='My Projects';
+    /* Restore follow-up panel based on current pending items */
+    var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+    renderPendingPanel(myD);
   }
 }
 
@@ -4085,14 +4097,8 @@ function renderImpl(){
   /* Pending Items */
   renderPendingPanel(myD);
 
-  /* Project list */
-  implRenderProjects();
-
-  /* Show placeholder until user clicks a project */
-  var ph=document.getElementById('impl-drill-placeholder');
-  if(ph)ph.style.display='';
-  var proj=document.getElementById('cpanel-project');
-  if(proj)proj.style.display='none';
+  /* Default view: Needs Attention + Pending Items + Project Status only */
+  implSetMode('default');
   SELECTED_PROJECT=null;
 }
 
@@ -4115,10 +4121,12 @@ function renderPendingPanel(myD){
 
   if(!totalPending){
     panel.style.display='none';
+    panel.classList.remove('has-items');
     return;
   }
 
   panel.style.display='';
+  panel.classList.add('has-items');
   if(badge){badge.textContent=totalPending;badge.style.display='';}
 
   var html='<div style="padding:4px 10px 10px;">';
@@ -4416,8 +4424,11 @@ function selProject(no){
   var dr=function(k,v){return '<div class="impl-dr"><span class="impl-dk">'+k+'</span><span class="impl-dv'+(v?'':' none')+'">'+( v||'—')+'</span></div>';};
   var secHdr=function(label,color){return '<div class="impl-sec-hdr"><div class="impl-sec-dot" style="background:'+color+';"></div>'+label+'</div>';};
 
-  /* Phases */
-  var phases=[{k:'kom',l:'KOM (Kickoff)'},{k:'sim',l:'Simulation'},{k:'par',l:'Parallel Run'},{k:'live',l:'Live Run'}];
+  /* Phases — PS uses Project Checklist instead of Parallel Run */
+  var isPS=d.service==='Payroll Starter';
+  var phases=isPS
+    ?[{k:'kom',l:'KOM (Kickoff)'},{k:'sim',l:'Simulation'},{k:'checklist',l:'Project Checklist'},{k:'live',l:'Live Run'}]
+    :[{k:'kom',l:'KOM (Kickoff)'},{k:'sim',l:'Simulation'},{k:'par',l:'Parallel Run'},{k:'live',l:'Live Run'}];
   var phaseHTML=phases.map(function(s){
     var done=d[s.k]===1;
     var dotColor=done?'#16a34a':'var(--s2)';

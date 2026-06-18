@@ -1381,3 +1381,213 @@ The parser (`tlParseFile`) scans all rows and detects phase headers by keyword m
 - `XLSX.read()` / `XLSX.utils.sheet_to_json()` — SheetJS already loaded
 - `parseImportDate()` — existing date normalizer (handles MM/DD/YYYY, YYYY-MM-DD, Excel serials)
 - `logAudit()`, `autoSave()`, `_supaFlush()` — standard save pipeline
+
+---
+
+## 23. Project Timeline — Last Task Date Extraction ✅ Coded (June 19, 2026)
+
+### What changed
+`tlParseFile` was updated so that **Simulation** and **Parallel Run** dates are taken from the **last** sub-task in the phase (not the first). This ensures the date reflects the final activity (e.g. "Payroll Discussion" for Simulation, "Variance Analysis Discussion" for Parallel Run) rather than the kickoff task.
+
+### Before
+```js
+else if(phase==='sim'&&!filled.sim){dates.simDate=d;filled.sim=true;}
+else if(phase==='par'&&!filled.par){dates.parDate=d;filled.par=true;}
+```
+
+### After
+```js
+else if(phase==='sim'){dates.simDate=d;}   // always overwrite → last task wins
+else if(phase==='par'){dates.parDate=d;}   // always overwrite → last task wins
+```
+
+KOM and Hand Over continue to use the **first** task (first KOM task, first Sign Off task).
+
+---
+
+## 24. Payroll Starter — Project Checklist Phase ✅ Coded (June 19, 2026)
+
+### What was added
+Payroll Starter clients have a different implementation flow than PYO. After Simulation, PS clients do a **Project Checklist** (not a Parallel Run). A new phase was introduced for PS clients throughout the app.
+
+### New field: `checklist` and `checklistDate`
+| Field | Type | Description |
+|---|---|---|
+| `checklist` | int (0/1) | Project Checklist phase checkbox — PS only |
+| `checklistDate` | string (MM/DD/YYYY) | Project Checklist date — PS only |
+
+These are persisted in `D[]` alongside existing phase fields, included in all save/load paths.
+
+### Implementation Phases tab changes
+When `CL_TYPE === 'ps'`:
+- **Parallel Run column** (`ph-th-par`) → `display:none`
+- **Project Checklist column** (`ph-th-checklist`) → shown (normally `display:none`)
+- Phase sequence: `['kom','sim','checklist','live']`
+- Row rendering: `phCell('checklist', d.checklist||0, d.checklistDate||'')` replaces `phCell('par', ...)`
+
+### Project Timeline parser (`tlParseFile`) — PS mapping
+Phase 5 (`PROJECT REVIEW`) → `checklistDate` (PS only — guarded by `isPS` flag)
+
+### Needs Attention — PS-aware alerts
+All alert rules in `implRenderAttention` were made service-aware via `var isPS = d.service === 'Payroll Starter'`:
+- Completion check: PS uses `kom+sim+checklist+live+post`; PYO uses `kom+sim+par+live+post`
+- Priority 2 overdue alert: PS → "Project Checklist not started"; PYO → "Parallel Run not started"
+- Priority 6 nudge: PS → "Project Checklist not yet scheduled"; PYO → "Parallel Run not yet scheduled"
+- PS clients are **never** flagged for missing Parallel Run
+
+### Supabase SQL required
+```sql
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS checklist INT DEFAULT 0;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS checklist_date TEXT DEFAULT '';
+```
+
+---
+
+## 25. Pending Items Bank — Redesign ✅ Coded (June 19, 2026)
+
+### Problem with old design
+The old UI had two tabs ("Manage Library" / "Client Items") that were confusing — it wasn't obvious how to go from a library template to a specific client's checklist.
+
+### New three-view single-page layout
+
+**View 1 — Main** (default): Client dropdown + per-client checklist
+- Client dropdown shows only the implementer's own clients (admin/manager see all)
+- Each option shows `ClientName (done/total)` count
+- Progress bar + "X / Y done" counter
+- Items grouped by phase with colored dot headers
+- Done items collapsed under "✓ Completed" section (strikethrough + 45% opacity)
+- Two action buttons: **+ Add from Library** → Picker view | **+ Custom Item** → inline form with phase selector
+
+**View 2 — Picker**: Select library items to add to current client
+- All library templates grouped by phase
+- Already-assigned items greyed out + pre-checked (disabled)
+- "Add Selected" applies; "Cancel" returns
+
+**View 3 — Library**: Manage the master template list
+- All templates grouped by phase + delete buttons
+- "Add to library" form: label + phase + category
+- "← Back" returns to main (preserves selected client)
+
+### State variables
+```js
+var PIB_VIEW = 'main';    // 'main' | 'picker' | 'library'
+var PIB_CLIENT = 0;       // selected client no
+var PIB_PHASES = ['kom','sim','par','checklist','live','general'];
+var PIB_PHASE_LBL = {kom:'KOM', sim:'Simulation', par:'Parallel Run', checklist:'Project Checklist', live:'Live Run', general:'General'};
+var PIB_PHASE_CLR = {kom:'#2563eb', sim:'#7c3aed', par:'#ea580c', checklist:'#0e7490', live:'#16a34a', general:'#64748b'};
+```
+
+### Data migration
+Old phase keys (`'1'`,`'2'`,`'3'`,`'4'`,`'Common'`) are migrated to new names on load:
+```js
+var OLD_PIB_MAP = {'1':'kom','2':'sim','3':'par','4':'live','Common':'general'};
+```
+
+---
+
+## 26. Implementer Dashboard — Pending Items Reminder Panel ✅ Coded (June 19, 2026)
+
+### What was added
+A collapsible **Pending Items** panel in the left column of the Implementer Dashboard, between Needs Attention and My Projects. It surfaces unresolved CLIENT_PENDING items for the implementer's own clients so they are not forgotten.
+
+### Panel visibility
+- Hidden (`display:none`) when there are no unresolved items for the implementer's clients
+- Shown automatically when any unresolved items exist
+- Amber badge in the header shows total unresolved count
+
+### Content
+- Items grouped by client name
+- Each item shows: checkbox (check off directly), label text, phase tag (e.g. "Simulation")
+- Checking an item calls `dashPendingToggle(clientNo, idx, checked)` → updates `CLIENT_PENDING` + re-renders panel
+- "Manage in Pending Items Bank →" link opens the full Pending Items Bank tool (`openTool('pending-bank')`)
+
+### HTML panel
+```html
+<div class="impl-followup-panel impl-cpanel" id="cpanel-pending" style="display:none;">
+  <div class="impl-followup-hdr" onclick="toggleCPanel('pending')">
+    <div class="impl-followup-title">
+      <svg><!-- chat bubble icon --></svg>
+      Follow up with the client
+      <span id="impl-pending-badge" ...white pill style...></span>
+    </div>
+    <svg class="impl-chev" style="stroke:#fff;" ...></svg>
+  </div>
+  <div class="impl-cpanel-body" id="cpbody-pending"></div>
+</div>
+```
+
+### CSS — amber follow-up panel (mirrors Needs Attention)
+```css
+@keyframes followup-pulse { /* amber glow pulse */ }
+.impl-followup-panel   { border:1.5px solid #FDE68A; box-shadow: amber glow; }
+.impl-followup-panel.has-items { border-color:#f59e0b; animation:followup-pulse 2.4s infinite; }
+.impl-followup-hdr     { background: linear-gradient(135deg,#d97706,#b45309); padding:.85rem 1rem; }
+.impl-followup-title   { font-size:11px; font-weight:700; color:#fff; uppercase; }
+```
+
+`renderPendingPanel` adds `.has-items` class when items exist (drives pulse), removes it when none.
+
+### New JS functions
+| Function | Purpose |
+|---|---|
+| `renderPendingPanel(myD)` | Shows/hides panel, renders grouped checklist per client |
+| `dashPendingToggle(clientNo, idx, done)` | Checks/unchecks an item inline from the dashboard |
+| `openPendingBank()` | Opens Pending Items Bank tool via `openTool('pending-bank')` |
+
+### Wiring in `renderImpl()`
+```js
+implRenderAttention(myD);
+renderPendingPanel(myD);   // ← added
+implRenderProjects();
+```
+
+---
+
+## 27. Implementer Dashboard — Clean Sign-In State ✅ Coded (June 19, 2026)
+
+### What changed
+`cpanel-project` (Selected Project panel) now has `style="display:none;"` in the HTML itself, not only hidden by `renderImpl()`. This prevents a brief flash where the empty panel was visible before JavaScript ran.
+
+### Sign-in layout (canonical) — screenshot 26
+On every sign-in (and when clicking Avg Progress), the dashboard shows exactly these panels and nothing else:
+
+| Column | Panel | Condition |
+|---|---|---|
+| Left | Needs Attention | Always visible |
+| Left | Pending Items | Only if unresolved items exist for this implementer's clients |
+| Right | Project Status by Module | Always visible, expanded |
+
+`cpanel-projects` (My Projects) and `impl-drill-placeholder` are **hidden** in default mode.
+
+### KPI drill mode — clicking any KPI except Avg Progress
+| Column | Panel |
+|---|---|
+| Left | My Projects (with filter pre-set to clicked KPI, e.g. Live / Ongoing) |
+| Right | "Select a client" placeholder → replaced by Selected Project on row click |
+| Left | Needs Attention — **hidden** in drill mode |
+| Right | Project Status by Module — **hidden** in drill mode |
+
+### Show/hide triggers
+| Trigger | Action |
+|---|---|
+| `renderImpl()` | Calls `implSetMode('default')` — shows Needs Attention + Follow-up + Project Status, hides My Projects + placeholder |
+| `implKpiClick('overview')` (Avg Progress) | `implSetMode('default')` — same as sign-in |
+| `implKpiClick(filter)` (My Projects / Live / Ongoing / Not Started / Churned) | `implSetMode('drill')` + `implRenderProjects()` — shows filtered project list, **hides** Follow-up panel |
+| `selProject(no)` | Hides placeholder, shows Selected Project detail panel |
+| `implKpiBack()` | `implSetMode('default')` — returns to sign-in state, re-runs `renderPendingPanel` to restore Follow-up panel |
+
+### Drill mode — Follow-up panel excluded
+`implSetMode('drill')` explicitly hides `cpanel-pending`. On return to default, `implSetMode('default')` calls `renderPendingPanel(myD)` to restore it only if unresolved items exist.
+
+### Selected Project detail — PS-aware phases
+`selProject()` now checks `d.service === 'Payroll Starter'` and shows:
+- **PYO**: KOM · Simulation · Parallel Run · Live Run
+- **PS**: KOM · Simulation · Project Checklist · Live Run
+
+### Code changes
+- `renderImpl()` ending replaced: removed `implRenderProjects()` + manual display manipulation; now calls `implSetMode('default')` + resets `SELECTED_PROJECT=null`
+- `implSetMode('drill')`: added `if(pend)pend.style.display='none'`
+- `implSetMode('default')`: added `renderPendingPanel(myD)` call to restore Follow-up panel
+- `selProject()`: phases array now branches on `isPS`
+- `cpanel-projects` HTML: added `style="display:none;"` to prevent pre-JS flash
+- `cpanel-project` HTML: added `style="display:none;"` to prevent pre-JS flash
