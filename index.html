@@ -128,21 +128,19 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .il-del-btn:hover{background:#fee2e2;color:#dc2626;}
 /* ══ PENDING ITEMS BANK ══ */
 .pib-wrap{display:flex;flex-direction:column;gap:0;}
-.pib-tabs{display:flex;gap:0;border-bottom:1px solid var(--s2);margin-bottom:1rem;}
-.pib-tab{padding:7px 18px;font-size:12px;font-weight:500;color:var(--s5);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;}
-.pib-tab.on{color:var(--g4);border-bottom-color:var(--g);font-weight:700;}
-.pib-section-lbl{font-size:9.5px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px;}
 .pib-item{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:8px;border:1px solid var(--s1);margin-bottom:4px;background:#fff;font-size:12px;color:var(--s7);}
 .pib-item:hover{border-color:var(--s2);background:var(--s0);}
-.pib-phase-dot{display:inline-block;width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .pib-cat{font-size:9px;color:var(--s4);background:var(--s1);padding:1px 6px;border-radius:4px;white-space:nowrap;}
 .pib-del{margin-left:auto;color:var(--s3);font-size:13px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;border:none;background:transparent;}
 .pib-del:hover{background:#fee2e2;color:#dc2626;}
 .pib-check-item{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid var(--s1);margin-bottom:4px;background:#fff;}
-.pib-check-item.done{opacity:.5;}
+.pib-check-item.done{opacity:.45;}
 .pib-check-item.done .pib-check-label{text-decoration:line-through;color:var(--s4);}
 .pib-check-label{font-size:12px;color:var(--s7);flex:1;line-height:1.45;}
 .pib-check-cb{width:14px;height:14px;accent-color:var(--g);margin-top:2px;flex-shrink:0;cursor:pointer;}
+.pib-phase-hdr{font-size:10px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;padding:10px 0 5px;display:flex;align-items:center;gap:6px;}
+.pib-picker-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:12px;color:var(--s7);}
+.pib-picker-item.assigned{opacity:.35;pointer-events:none;}
 .pib-add-inp{display:flex;gap:6px;margin-top:6px;}
 .pib-add-inp input,.pib-add-inp select{padding:5px 8px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;}
 .pib-add-inp input{flex:1;}
@@ -2723,7 +2721,7 @@ var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
 var CL_ISSUES=(function(){try{var s=localStorage.getItem('pyo_issues');return s?JSON.parse(s):[];}catch(e){return [];}})();
 var CL_AUDIT=(function(){try{var s=localStorage.getItem('pyo_audit');return s?JSON.parse(s):[];}catch(e){return [];}})();
-var PENDING_BANK=(function(){try{var s=localStorage.getItem('pyo_pending_bank');if(s)return JSON.parse(s);var def=[{id:'pb1',label:'Complete Employee Masterfile',phase:'1',category:'Data'},{id:'pb2',label:'Submit Government IDs (SSS, PhilHealth, HDMF)',phase:'1',category:'Document'},{id:'pb3',label:'CRF submission and approval',phase:'2',category:'Approval'},{id:'pb4',label:'Sandbox account setup confirmation',phase:'2',category:'Account'},{id:'pb5',label:'Simulation result sign-off',phase:'2',category:'Approval'},{id:'pb6',label:'Parallel run variance resolved',phase:'3',category:'Data'},{id:'pb7',label:'Final payroll register sign-off',phase:'3',category:'Approval'},{id:'pb8',label:'SLA signed and submitted',phase:'4',category:'Document'},{id:'pb9',label:'Go-live confirmation from client',phase:'4',category:'Approval'}];localStorage.setItem('pyo_pending_bank',JSON.stringify(def));return def;}catch(e){return [];}})();
+var PENDING_BANK=(function(){try{var s=localStorage.getItem('pyo_pending_bank');if(s){var p=JSON.parse(s);var map={'1':'kom','2':'sim','3':'par','4':'live','Common':'general'};p.forEach(function(i){if(map[i.phase])i.phase=map[i.phase];});return p;}var def=[{id:'pb1',label:'Complete Employee Masterfile',phase:'kom',category:'Data'},{id:'pb2',label:'Submit Government IDs (SSS, PhilHealth, HDMF)',phase:'kom',category:'Document'},{id:'pb3',label:'CRF submission and approval',phase:'sim',category:'Approval'},{id:'pb4',label:'Sandbox account setup confirmation',phase:'sim',category:'Account'},{id:'pb5',label:'Simulation result sign-off',phase:'sim',category:'Approval'},{id:'pb6',label:'Parallel run variance resolved',phase:'par',category:'Data'},{id:'pb7',label:'Final payroll register sign-off',phase:'par',category:'Approval'},{id:'pb8',label:'SLA signed and submitted',phase:'live',category:'Document'},{id:'pb9',label:'Go-live confirmation from client',phase:'live',category:'Approval'}];localStorage.setItem('pyo_pending_bank',JSON.stringify(def));return def;}catch(e){return [];}})();
 var CLIENT_PENDING=(function(){try{var s=localStorage.getItem('pyo_client_pending');return s?JSON.parse(s):{};}catch(e){return {};}})();
 
 // Snapshot of last known Supabase state — used to diff before saving so we only
@@ -4087,8 +4085,10 @@ function implRenderAttention(myD){
   var alerts=[];
 
   myD.forEach(function(d){
-    /* Skip fully completed clients (all 5 phases done) */
-    if(d.kom===1&&d.sim===1&&d.par===1&&d.live===1&&d.post===1)return;
+    /* Skip fully completed clients (all phases done) */
+    var isPS=d.service==='Payroll Starter';
+    if(isPS&&d.kom===1&&d.sim===1&&d.checklist===1&&d.live===1&&d.post===1)return;
+    if(!isPS&&d.kom===1&&d.sim===1&&d.par===1&&d.live===1&&d.post===1)return;
     /* Skip churned */
     if(d.remarks==='Churned')return;
 
@@ -4134,9 +4134,8 @@ function implRenderAttention(myD){
       }
     }
 
-    /* ── OVERDUE: simulation done but parallel run 15+ days idle ── */
-    /* Uses d.simDate once that field is added to the schema; no-ops until then */
-    if(d.sim===1&&d.par!==1&&d.simDate){
+    /* ── OVERDUE: simulation done but next phase 15+ days idle ── */
+    if(!isPS&&d.sim===1&&d.par!==1&&d.simDate){
       var simRef=new Date(d.simDate);
       var parIdle=Math.round((TODAY-simRef)/(1000*60*60*24));
       if(parIdle>=15){
@@ -4153,6 +4152,23 @@ function implRenderAttention(myD){
         return;
       }
     }
+    if(isPS&&d.sim===1&&d.checklist!==1&&d.simDate){
+      var simRefPS=new Date(d.simDate);
+      var clIdle=Math.round((TODAY-simRefPS)/(1000*60*60*24));
+      if(clIdle>=15){
+        alerts.push({
+          no:d.no,priority:2,
+          color:'#dc2626',
+          name:d.client,
+          sub:'Simulation done — Project Checklist not started · '+clIdle+' days idle',
+          dateLabel:'',dateVal:'',dateColor:'',
+          badge:'Overdue',badgeCls:'background:#fecaca;color:#991b1b',
+          phase:'Project Checklist',
+          daysLabel:clIdle+'d idle',daysColor:'#dc2626'
+        });
+        return;
+      }
+    }
 
     /* ── UPCOMING: live run within 7 days (orange) ── */
     if(d.liveRun&&d.live!==1){
@@ -4163,7 +4179,7 @@ function implRenderAttention(myD){
           no:d.no,priority:3,
           color:'#ea580c',
           name:d.client,
-          sub:d.par===1?'Parallel run done · Go-live approaching':'Parallel run not started · Live run soon',
+          sub:isPS?(d.checklist===1?'Project Checklist done · Go-live approaching':'Project Checklist not started · Live run soon'):(d.par===1?'Parallel run done · Go-live approaching':'Parallel run not started · Live run soon'),
           dateLabel:'Live run',dateVal:d.liveRun,dateColor:'',
           badge:diffU+' day'+(diffU===1?'':'s'),badgeCls:'background:#fed7aa;color:#9a3412',
           phase:'Live run',
@@ -4201,8 +4217,8 @@ function implRenderAttention(myD){
       });
     }
 
-    /* ── UPCOMING: parallel run not yet scheduled (blue nudge) ── */
-    if(d.sim===1&&d.par!==1&&!d.liveRun){
+    /* ── UPCOMING: next phase not yet scheduled (blue nudge) ── */
+    if(!isPS&&d.sim===1&&d.par!==1&&!d.liveRun){
       alerts.push({
         no:d.no,priority:6,
         color:'#2563eb',
@@ -4211,6 +4227,18 @@ function implRenderAttention(myD){
         dateLabel:'Hand over target',dateVal:d.handOver||'TBD',dateColor:'',
         badge:'Schedule',badgeCls:'background:#dbeafe;color:#1d4ed8',
         phase:'Parallel run',
+        daysLabel:'',daysColor:''
+      });
+    }
+    if(isPS&&d.sim===1&&d.checklist!==1&&!d.liveRun){
+      alerts.push({
+        no:d.no,priority:6,
+        color:'#2563eb',
+        name:d.client,
+        sub:'Simulation done · Project Checklist not yet scheduled',
+        dateLabel:'Hand over target',dateVal:d.handOver||'TBD',dateColor:'',
+        badge:'Schedule',badgeCls:'background:#dbeafe;color:#1d4ed8',
+        phase:'Project Checklist',
         daysLabel:'',daysColor:''
       });
     }
@@ -4633,80 +4661,176 @@ function openTool(val){
 }
  
 /* ══ PENDING ITEMS BANK ══ */
-var PIB_TAB='bank';
+var PIB_VIEW='main'; // 'main' | 'picker' | 'library'
 var PIB_CLIENT=0;
-var PIB_PHASE_COLORS={'1':'#f59e0b','2':'#3b82f6','3':'#a855f7','4':'#10b981','Common':'#64748b'};
+var PIB_PHASES=['kom','sim','par','checklist','live','general'];
+var PIB_PHASE_LBL={kom:'KOM',sim:'Simulation',par:'Parallel Run',checklist:'Project Checklist',live:'Live Run',general:'General'};
+var PIB_PHASE_CLR={kom:'#2563eb',sim:'#7c3aed',par:'#ea580c',checklist:'#0e7490',live:'#16a34a',general:'#64748b'};
 
 function pibSave(){try{localStorage.setItem('pyo_pending_bank',JSON.stringify(PENDING_BANK));}catch(e){}}
 function pibSavePending(){try{localStorage.setItem('pyo_client_pending',JSON.stringify(CLIENT_PENDING));}catch(e){}}
 
-function renderPendingBankUI(tab){
-  PIB_TAB=tab||PIB_TAB;
-  var phaseMap={'1':'Phase 1 — Setup','2':'Phase 2 — Simulation','3':'Phase 3 — Parallel Run','4':'Phase 4 — Go Live','Common':'Common'};
-  var clientOpts='<option value="0">Select client…</option>'+D.map(function(d){return '<option value="'+d.no+'"'+(PIB_CLIENT===d.no?' selected':'')+'>'+d.client+'</option>';}).join('');
+function pibPhaseDot(ph){
+  return '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+(PIB_PHASE_CLR[ph]||'#64748b')+';flex-shrink:0;"></span>';
+}
 
-  var bankHtml='';
-  if(PIB_TAB==='bank'){
-    ['Common','1','2','3','4'].forEach(function(ph){
+function renderPendingBankUI(view){
+  if(view!==undefined)PIB_VIEW=view;
+  var cl=PIB_CLIENT>0?D.find(function(d){return d.no===PIB_CLIENT;}):null;
+  var pending=cl?(CLIENT_PENDING[PIB_CLIENT]||[]):[];
+  var done=pending.filter(function(i){return i.done;}).length;
+  var total=pending.length;
+  var pct=total>0?Math.round(done/total*100):0;
+  var clientOpts='<option value="0">— Select a client —</option>'+D.map(function(d){
+    var cnt=(CLIENT_PENDING[d.no]||[]).length;
+    var dnCnt=(CLIENT_PENDING[d.no]||[]).filter(function(i){return i.done;}).length;
+    var badge=cnt>0?' ('+dnCnt+'/'+cnt+')':'';
+    return '<option value="'+d.no+'"'+(PIB_CLIENT===d.no?' selected':'')+'>'+d.client+badge+'</option>';
+  }).join('');
+
+  var html='';
+
+  /* ── Header bar ── */
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">'
+    +'<div style="font-size:13px;font-weight:700;color:var(--s8);">Pending Items</div>'
+    +'<button onclick="renderPendingBankUI(PIB_VIEW===\'library\'?\'main\':\'library\')" style="font-size:11px;color:var(--s5);background:none;border:1px solid var(--s2);cursor:pointer;padding:3px 10px;border-radius:6px;font-family:var(--font);">'
+    +(PIB_VIEW==='library'?'← Back':'⚙ Manage Library')
+    +'</button>'
+    +'</div>';
+
+  if(PIB_VIEW==='library'){
+    /* ── LIBRARY VIEW ── */
+    html+='<div style="font-size:11px;color:var(--s5);margin-bottom:12px;">Standard items you can assign to any client. Add, edit, or remove templates here.</div>';
+    PIB_PHASES.forEach(function(ph){
       var items=PENDING_BANK.filter(function(i){return i.phase===ph;});
-      if(!items.length&&ph!=='Common')return;
-      var dot='<span class="pib-phase-dot" style="background:'+(PIB_PHASE_COLORS[ph]||'#64748b')+';"></span>';
-      bankHtml+='<div class="pib-section-lbl">'+dot+' '+phaseMap[ph]+'</div>';
-      bankHtml+=items.map(function(item){
-        return '<div class="pib-item">'
+      if(!items.length)return;
+      html+='<div class="pib-phase-hdr">'+pibPhaseDot(ph)+PIB_PHASE_LBL[ph]+'</div>';
+      items.forEach(function(item){
+        html+='<div class="pib-item">'
           +'<span style="flex:1;font-size:12px;color:var(--s7);">'+item.label+'</span>'
           +'<span class="pib-cat">'+item.category+'</span>'
           +'<button class="pib-del" onclick="pibDeleteTemplate(\''+item.id+'\')">✕</button>'
           +'</div>';
-      }).join('');
+      });
     });
-    bankHtml+='<div class="pib-section-lbl" style="margin-top:14px;">Add new template</div>'
+    if(!PENDING_BANK.length){
+      html+='<div style="text-align:center;padding:1.5rem;color:var(--s4);font-size:12px;">Library is empty. Add your first standard item below.</div>';
+    }
+    html+='<div style="border-top:1px solid var(--s1);margin-top:14px;padding-top:12px;">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Add to library</div>'
       +'<div class="pib-add-inp">'
-      +'<input type="text" id="pib-new-label" placeholder="Pending item label…"/>'
-      +'<select id="pib-new-phase"><option value="Common">Common</option><option value="1">Phase 1</option><option value="2">Phase 2</option><option value="3">Phase 3</option><option value="4">Phase 4</option></select>'
+      +'<input type="text" id="pib-new-label" placeholder="Item description…"/>'
+      +'<select id="pib-new-phase">'+PIB_PHASES.map(function(ph){return '<option value="'+ph+'">'+PIB_PHASE_LBL[ph]+'</option>';}).join('')+'</select>'
       +'<select id="pib-new-cat"><option>Data</option><option>Document</option><option>Approval</option><option>Account</option><option>Other</option></select>'
       +'<button onclick="pibAddTemplate()">Add</button>'
+      +'</div></div>';
+
+  } else if(PIB_VIEW==='picker'){
+    /* ── PICKER VIEW ── */
+    html+='<div style="font-size:11px;color:var(--s5);margin-bottom:12px;">Select items to add to <strong>'+(cl?cl.client:'this client')+'</strong>. Already assigned items are greyed out.</div>';
+    var assigned=(CLIENT_PENDING[PIB_CLIENT]||[]).map(function(i){return i.label;});
+    var hasAny=false;
+    PIB_PHASES.forEach(function(ph){
+      var items=PENDING_BANK.filter(function(i){return i.phase===ph;});
+      if(!items.length)return;
+      hasAny=true;
+      html+='<div class="pib-phase-hdr">'+pibPhaseDot(ph)+PIB_PHASE_LBL[ph]+'</div>';
+      items.forEach(function(item){
+        var already=assigned.indexOf(item.label)>=0;
+        html+='<div class="pib-picker-item'+(already?' assigned':'')+'">'
+          +'<input type="checkbox" class="pib-check-cb" id="pk-'+item.id+'"'+(already?' checked disabled':'')+' style="margin-top:0;"/>'
+          +'<label for="pk-'+item.id+'" style="flex:1;cursor:'+(already?'default':'pointer')+';">'+item.label+'</label>'
+          +'<span class="pib-cat">'+item.category+'</span>'
+          +'</div>';
+      });
+    });
+    if(!hasAny){
+      html+='<div style="text-align:center;padding:1.5rem;color:var(--s4);font-size:12px;">Library is empty. <span style="color:var(--g4);cursor:pointer;text-decoration:underline;" onclick="renderPendingBankUI(\'library\')">Add items to the library first.</span></div>';
+    }
+    html+='<div style="display:flex;gap:8px;margin-top:14px;">'
+      +'<button onclick="pibAddSelected()" style="flex:1;padding:7px 12px;border-radius:8px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">Add Selected</button>'
+      +'<button onclick="renderPendingBankUI(\'main\')" style="padding:7px 14px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:12px;cursor:pointer;font-family:var(--font);">Cancel</button>'
       +'</div>';
+
   } else {
-    var pending=PIB_CLIENT>0?(CLIENT_PENDING[PIB_CLIENT]||[]):[];
-    bankHtml+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'
-      +'<select style="flex:1;padding:6px 9px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;" onchange="PIB_CLIENT=parseInt(this.value);renderPendingBankUI(\'tracker\')">'
+    /* ── MAIN VIEW ── */
+    /* Client selector */
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(cl&&total>0?'6px':'14px')+'">'
+      +'<select style="flex:1;padding:7px 10px;border:1px solid var(--s2);border-radius:8px;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;background:#fff;" onchange="PIB_CLIENT=parseInt(this.value);PIB_VIEW=\'main\';renderPendingBankUI()">'
       +clientOpts+'</select>'
-      +(PIB_CLIENT>0?'<button onclick="pibAddFromBank()" style="padding:6px 13px;border-radius:7px;border:1.5px solid var(--g);background:#fff;color:var(--g4);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">+ From Bank</button>':'')
+      +(cl&&total>0?'<span style="font-size:11px;color:'+(done===total&&total>0?'var(--g)':'var(--s5)')+';white-space:nowrap;font-weight:600;">'+done+' / '+total+' done</span>':'')
       +'</div>';
-    if(PIB_CLIENT>0){
-      if(pending.length){
-        bankHtml+=pending.map(function(item,idx){
-          var doneCls=item.done?'done':'';
-          var safeLbl=item.label.replace(/"/g,'&quot;');
-          return '<div class="pib-check-item '+doneCls+'">'
-            +'<input type="checkbox" class="pib-check-cb"'+(item.done?' checked':'')
-            +' onchange="pibToggleItem('+PIB_CLIENT+','+idx+',this.checked)"/>'
-            +'<span class="pib-check-label">'+item.label+'</span>'
-            +'<button class="pib-del" onclick="pibDeleteItem('+PIB_CLIENT+','+idx+')">✕</button>'
-            +'</div>';
-        }).join('');
-      } else {
-        bankHtml+='<div style="font-size:12px;color:var(--s4);padding:1rem 0;text-align:center;">No pending items for this client. Click <strong>+ From Bank</strong> to assign standard items or add a custom one below.</div>';
-      }
-      bankHtml+='<div class="pib-add-inp" style="margin-top:10px;">'
-        +'<input type="text" id="pib-custom-label" placeholder="Add custom pending item…"/>'
-        +'<button onclick="pibAddCustom()">Add</button>'
+
+    /* Progress bar */
+    if(cl&&total>0){
+      html+='<div style="height:5px;border-radius:3px;background:var(--s1);margin-bottom:16px;">'
+        +'<div style="height:100%;border-radius:3px;background:var(--g);width:'+pct+'%;transition:width .3s;"></div>'
         +'</div>';
+    }
+
+    if(!cl){
+      html+='<div style="text-align:center;padding:2.5rem 1rem;color:var(--s4);font-size:12px;border:1.5px dashed var(--s2);border-radius:10px;">'
+        +'Select a client above to view and manage their pending items.'
+        +'</div>';
+    } else {
+      if(total===0){
+        html+='<div style="text-align:center;padding:1.5rem 1rem;color:var(--s4);font-size:12px;border:1.5px dashed var(--s2);border-radius:10px;margin-bottom:12px;">'
+          +'No pending items yet for <strong>'+cl.client+'</strong>.<br>Use the buttons below to add items.'
+          +'</div>';
+      } else {
+        /* Pending items — not done, grouped by phase */
+        var byPhase={};
+        pending.forEach(function(item,idx){var ph=item.phase||'general';if(!byPhase[ph])byPhase[ph]=[];byPhase[ph].push({item:item,idx:idx});});
+        var hasPending=pending.some(function(i){return !i.done;});
+        var hasDone=pending.some(function(i){return i.done;});
+        PIB_PHASES.forEach(function(ph){
+          var entries=(byPhase[ph]||[]).filter(function(e){return !e.item.done;});
+          if(!entries.length)return;
+          html+='<div class="pib-phase-hdr">'+pibPhaseDot(ph)+PIB_PHASE_LBL[ph]+'</div>';
+          entries.forEach(function(e){
+            html+='<div class="pib-check-item">'
+              +'<input type="checkbox" class="pib-check-cb" onchange="pibToggleItem('+PIB_CLIENT+','+e.idx+',this.checked)"/>'
+              +'<span class="pib-check-label">'+e.item.label+'</span>'
+              +'<button class="pib-del" onclick="pibDeleteItem('+PIB_CLIENT+','+e.idx+')">✕</button>'
+              +'</div>';
+          });
+        });
+        /* Done items — collapsed at bottom */
+        if(hasDone){
+          html+='<div class="pib-phase-hdr" style="color:var(--s3);">✓ Completed</div>';
+          PIB_PHASES.forEach(function(ph){
+            (byPhase[ph]||[]).filter(function(e){return e.item.done;}).forEach(function(e){
+              html+='<div class="pib-check-item done">'
+                +'<input type="checkbox" class="pib-check-cb" checked onchange="pibToggleItem('+PIB_CLIENT+','+e.idx+',this.checked)"/>'
+                +'<span class="pib-check-label">'+e.item.label+'</span>'
+                +'<button class="pib-del" onclick="pibDeleteItem('+PIB_CLIENT+','+e.idx+')">✕</button>'
+                +'</div>';
+            });
+          });
+        }
+      }
+
+      /* Action buttons */
+      html+='<div style="display:flex;gap:8px;margin-top:14px;">'
+        +'<button onclick="renderPendingBankUI(\'picker\')" style="flex:1;padding:7px 12px;border-radius:8px;border:1.5px solid var(--g);background:#fff;color:var(--g4);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">+ Add from Library</button>'
+        +'<button onclick="pibShowCustom()" style="flex:1;padding:7px 12px;border-radius:8px;border:1.5px solid var(--s2);background:#fff;color:var(--s6);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">+ Custom Item</button>'
+        +'</div>';
+      /* Custom add row (hidden by default) */
+      html+='<div id="pib-custom-row" style="display:none;margin-top:8px;">'
+        +'<div class="pib-add-inp">'
+        +'<input type="text" id="pib-custom-label" placeholder="Type pending item…"/>'
+        +'<select id="pib-custom-phase">'+PIB_PHASES.map(function(ph){return '<option value="'+ph+'">'+PIB_PHASE_LBL[ph]+'</option>';}).join('')+'</select>'
+        +'<button onclick="pibAddCustom()">Add</button>'
+        +'</div></div>';
     }
   }
 
   document.getElementById('tool-modal-body').innerHTML=
     '<div class="pib-wrap">'
-    +'<div class="pib-tabs">'
-    +'<div class="pib-tab'+(PIB_TAB==='bank'?' on':'')+'" onclick="renderPendingBankUI(\'bank\')">Item Bank</div>'
-    +'<div class="pib-tab'+(PIB_TAB==='tracker'?' on':'')+'" onclick="renderPendingBankUI(\'tracker\')">Client Tracker</div>'
-    +'</div>'
-    +'<div style="max-height:420px;overflow-y:auto;padding-right:4px;">'+bankHtml+'</div>'
+    +'<div style="max-height:450px;overflow-y:auto;padding-right:4px;">'+html+'</div>'
     +'<div style="display:flex;justify-content:flex-end;margin-top:12px;">'
     +'<button onclick="closeTool()" style="padding:8px 20px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button>'
-    +'</div>'
-    +'</div>';
+    +'</div></div>';
 }
 
 function pibAddTemplate(){
@@ -4715,44 +4839,52 @@ function pibAddTemplate(){
   var cat=document.getElementById('pib-new-cat').value;
   if(!label)return;
   PENDING_BANK.push({id:'pb'+Date.now(),label:label,phase:phase,category:cat});
-  pibSave();renderPendingBankUI('bank');
+  pibSave();renderPendingBankUI('library');
 }
 
 function pibDeleteTemplate(id){
   var idx=PENDING_BANK.findIndex(function(i){return i.id===id;});
-  if(idx>=0){PENDING_BANK.splice(idx,1);pibSave();renderPendingBankUI('bank');}
+  if(idx>=0){PENDING_BANK.splice(idx,1);pibSave();renderPendingBankUI('library');}
 }
 
 function pibToggleItem(clientNo,idx,done){
   if(!CLIENT_PENDING[clientNo])return;
   CLIENT_PENDING[clientNo][idx].done=done;
   pibSavePending();
+  renderPendingBankUI('main');
 }
 
 function pibDeleteItem(clientNo,idx){
   if(!CLIENT_PENDING[clientNo])return;
   CLIENT_PENDING[clientNo].splice(idx,1);
-  pibSavePending();renderPendingBankUI('tracker');
+  pibSavePending();renderPendingBankUI('main');
+}
+
+function pibShowCustom(){
+  var row=document.getElementById('pib-custom-row');
+  if(row){row.style.display='block';var inp=document.getElementById('pib-custom-label');if(inp)inp.focus();}
 }
 
 function pibAddCustom(){
   var label=(document.getElementById('pib-custom-label').value||'').trim();
+  var phase=(document.getElementById('pib-custom-phase')||{}).value||'general';
   if(!label||!PIB_CLIENT)return;
   if(!CLIENT_PENDING[PIB_CLIENT])CLIENT_PENDING[PIB_CLIENT]=[];
-  CLIENT_PENDING[PIB_CLIENT].push({label:label,done:false});
-  pibSavePending();renderPendingBankUI('tracker');
+  CLIENT_PENDING[PIB_CLIENT].push({label:label,phase:phase,done:false});
+  pibSavePending();renderPendingBankUI('main');
 }
 
-function pibAddFromBank(){
+function pibAddSelected(){
   if(!PIB_CLIENT)return;
   if(!CLIENT_PENDING[PIB_CLIENT])CLIENT_PENDING[PIB_CLIENT]=[];
   var existing=CLIENT_PENDING[PIB_CLIENT].map(function(i){return i.label;});
-  var added=0;
-  PENDING_BANK.forEach(function(t){
-    if(existing.indexOf(t.label)<0){CLIENT_PENDING[PIB_CLIENT].push({label:t.label,done:false});added++;}
+  PENDING_BANK.forEach(function(item){
+    var cb=document.getElementById('pk-'+item.id);
+    if(cb&&cb.checked&&!cb.disabled&&existing.indexOf(item.label)<0){
+      CLIENT_PENDING[PIB_CLIENT].push({label:item.label,phase:item.phase,done:false});
+    }
   });
-  pibSavePending();renderPendingBankUI('tracker');
-  if(!added)alert('All bank items are already assigned to this client.');
+  pibSavePending();renderPendingBankUI('main');
 }
 
 function closeTool(){

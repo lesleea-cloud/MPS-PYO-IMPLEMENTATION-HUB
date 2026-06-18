@@ -26,16 +26,18 @@ The Needs Attention panel was redesigned from a simple two-section list (Overdue
 |---|---|---|---|
 | 0 | Red `#dc2626` | Live run date has passed but `live` phase not ticked | Overdue |
 | 1 | Red `#dc2626` | KOM done but Simulation not started — 15+ days idle | Overdue |
-| 2 | Red `#dc2626` | Simulation done but Parallel Run not started — 15+ days idle | Overdue |
+| 2 | Red `#dc2626` | Simulation done but Parallel Run not started — 15+ days idle **(PYO only)** | Overdue |
+| 2 | Red `#dc2626` | Simulation done but Project Checklist not started — 15+ days idle **(PS only)** | Overdue |
 | 3 | Orange `#ea580c` | Live run date within **7 days** | X days |
 | 4 | Yellow `#f59e0b` | Live run date within **8–14 days** | X days |
 | 5 | Blue `#2563eb` | KOM done, Simulation not yet scheduled (no live run date) | Schedule |
-| 6 | Blue `#2563eb` | Simulation done, Parallel Run not yet scheduled | Schedule |
+| 6 | Blue `#2563eb` | Simulation done, Parallel Run not yet scheduled **(PYO only)** | Schedule |
+| 6 | Blue `#2563eb` | Simulation done, Project Checklist not yet scheduled **(PS only)** | Schedule |
 
 ### What was removed
 - Section sub-headers ("OVERDUE", "UPCOMING — LIVE RUN", etc.) — redundant since each row badge communicates the same thing
 - "On track" / "All clear" section — only projects needing action appear
-- Completed projects (all 5 phases done) are excluded entirely
+- Completed projects (all phases done) are excluded — PS uses `kom+sim+checklist+live+post`; PYO uses `kom+sim+par+live+post`
 - Churned projects are excluded
 
 ### New row anatomy
@@ -77,8 +79,11 @@ Each alert row now shows:
 - Updates `#impl-attn-count` badge with live count
 - Shows/hides `#impl-attn-legend` based on whether alerts exist
 
-### Known limitation — Priority 2
-Priority 2 (Simulation done, Parallel Run 15+ days idle) is gated on `d.simDate`. Since `simDate` is not yet in the data schema (see §Data Schema Changes), this alert does not fire until `simDate` is added. This prevents false positives from using `d.komDate` as a proxy. No code change needed when `simDate` is added — the alert activates automatically.
+### Priority 2 — service-aware
+Priority 2 is gated on `d.simDate` and branches by `d.service`:
+- PYO clients: fires when `d.sim===1 && d.par!==1 && simDate 15+ days ago`
+- PS clients: fires when `d.sim===1 && d.checklist!==1 && simDate 15+ days ago`
+PS clients are never flagged for missing Parallel Run.
 
 ---
 
@@ -841,24 +846,45 @@ When switching to IMPL, `IMPL_USER` is set to `CURRENT_NAME` (the god user's dis
 **Nav location:** Common band alongside MOM Generator
 
 **Data structures:**
-- `PENDING_BANK` array — standard reusable templates: `{id, label, phase, category}`; pre-loaded with 9 default items (phases 1–4); saved to `pyo_pending_bank`
-- `CLIENT_PENDING` object — per-client assignments: `{clientNo: [{label, done}]}`; saved to `pyo_client_pending`
+- `PENDING_BANK` array — standard reusable templates: `{id, label, phase, category}`; phases use real names (`kom`,`sim`,`par`,`checklist`,`live`,`general`); saved to `pyo_pending_bank`
+- `CLIENT_PENDING` object — per-client assignments: `{clientNo: [{label, phase, done}]}`; saved to `pyo_client_pending`
+- Old phase keys ('1','2','3','4','Common') are migrated to new names on load
 
-**Tool modal (820px wide) — two tabs:**
+**Redesigned single-view UI (no tabs):**
 
-**Item Bank tab:**
-- Lists all templates grouped by phase (Common, Phase 1–4) with colored phase dots
-- Add new template form: label + phase + category (Data/Document/Approval/Account/Other)
-- Delete button per template
+**Header bar:**
+- "Pending Items" title on the left
+- "⚙ Manage Library" button on the right (toggles to library view)
 
-**Client Tracker tab:**
-- Client dropdown (all clients in `D`)
-- Shows assigned pending items as checkboxes — check to mark done, checked items get strikethrough + 50% opacity
-- "+ From Bank" button: assigns all bank templates not yet assigned to the selected client
-- "Add custom item" input: one-off items not from bank
-- Delete button per item
+**Main view (default):**
+- Client dropdown — each option shows `ClientName (done/total)` count at a glance
+- Progress bar (green fill, 0–100%) + "X / Y done" counter shown when client has items
+- Pending items grouped by phase with colored phase dot headers (KOM, Simulation, Parallel Run, Project Checklist, Live Run, General)
+- Done items collapsed under a "✓ Completed" section (strikethrough + 45% opacity)
+- Two action buttons: **+ Add from Library** (→ picker view) | **+ Custom Item** (reveals inline input with phase selector)
 
-**Key functions:** `renderPendingBankUI(tab)`, `pibAddTemplate()`, `pibDeleteTemplate(id)`, `pibToggleItem(clientNo, idx, done)`, `pibDeleteItem(clientNo, idx)`, `pibAddCustom()`, `pibAddFromBank()`
+**Picker view (replaces main content):**
+- Shows all library items grouped by phase with checkboxes
+- Already-assigned items shown greyed out and pre-checked (disabled)
+- "Add Selected" applies checked items; "Cancel" returns to main
+
+**Library view (replaces main content):**
+- Lists all library templates grouped by phase with delete buttons
+- "Add to library" form: label + phase + category
+- "← Back" returns to main (client selection preserved)
+
+**Phase system:**
+
+| Key | Label | Color |
+|---|---|---|
+| `kom` | KOM | `#2563eb` |
+| `sim` | Simulation | `#7c3aed` |
+| `par` | Parallel Run | `#ea580c` |
+| `checklist` | Project Checklist | `#0e7490` |
+| `live` | Live Run | `#16a34a` |
+| `general` | General | `#64748b` |
+
+**Key functions:** `renderPendingBankUI(view)`, `pibAddTemplate()`, `pibDeleteTemplate(id)`, `pibToggleItem(clientNo, idx, done)`, `pibDeleteItem(clientNo, idx)`, `pibShowCustom()`, `pibAddCustom()`, `pibAddSelected()`
 
 ---
 
