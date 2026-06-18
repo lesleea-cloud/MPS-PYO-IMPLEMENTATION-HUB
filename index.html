@@ -2857,7 +2857,7 @@ function svcEditEnd(no){
 function clUpdateResource(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.resource;d.resource=val;logAudit(no,'Resource Team','resource','Resource',old,val);}autoSave();renderClients();}
 function clUpdateOtkImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.otkImpl||'';d.otkImpl=val;logAudit(no,'Resource Team','otkImpl','OTK Implementer',old,val);}autoSave();}
 function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.days;d.days=parseInt(val)||0;logAudit(no,'Overview','days','Days',old,d.days);}autoSave();renderClients();}
-function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.remarks;d.remarks=val;logAudit(no,'Overview','status','Status',old,val);}autoSave();renderClients();}
+function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.remarks;d.remarks=val;logAudit(no,'Overview','status','Status',old,val);}autoSave();_supaFlush();renderClients();}
 function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pm;d.pm=val;logAudit(no,'Overview','pm','Project Manager',old,val);}autoSave();}
 function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.hri;d.hri=val;logAudit(no,'Resource Team','hri','HR-I',old,val);}autoSave();}
 function clUpdateGov(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.gov;d.gov=val;logAudit(no,'Resource Team','gov','Gov Resource',old,val);}autoSave();}
@@ -2997,6 +2997,7 @@ function submitAddClient(){
   };
   if(addons.sg||addons.ba||addons.sd||addons.std||addons.otk||addons.pd)CL_ADDONS[newNo]=addons;
   autoSave();
+  _supaFlush();
   closeAddClientModal();
   clPg=1;
   renderClients();
@@ -6566,37 +6567,41 @@ async function loadFromSupabase(){
 
 var _supaSaveTimer=null;
 async function _supaFlush(){
+  if(!_supa)return;
   try{
-    // Only upsert rows that changed vs the Supabase snapshot — never overwrite other users' edits
     var changedClients=D.filter(function(d){return JSON.stringify(d)!==_snap.clients[d.no];});
     if(changedClients.length){
-      var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,par:d.par,live:d.live,post:d.post,updated_at:new Date().toISOString()};});
-      await _supa.from('clients').upsert(rows,{onConflict:'no'});
-      changedClients.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});
+      var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,par:d.par,live:d.live,post:d.post};});
+      var r1=await _supa.from('clients').upsert(rows,{onConflict:'no'});
+      if(r1.error){console.warn('clients save error:',r1.error.message);}
+      else{changedClients.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});}
     }
     var changedAddons=Object.keys(CL_ADDONS).filter(function(k){return JSON.stringify(CL_ADDONS[k])!==_snap.addons[k];});
     if(changedAddons.length){
       var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk,payroll_disbursement:!!a.pd};});
-      await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
-      changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});
+      var r2=await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
+      if(r2.error){console.warn('addons save error:',r2.error.message);}
+      else{changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});}
     }
     var changedMilestones=Object.keys(CL_MILESTONES).filter(function(k){return JSON.stringify(CL_MILESTONES[k])!==_snap.milestones[k];});
     if(changedMilestones.length){
       var mr=changedMilestones.map(function(k){var m=CL_MILESTONES[k];return{client_no:parseInt(k),churn_date:m.churnDate||'',billing_month:m.billingMonth||'',month_completed:m.monthCompleted||''};});
-      await _supa.from('client_milestones').upsert(mr,{onConflict:'client_no'});
-      changedMilestones.forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});
+      var r3=await _supa.from('client_milestones').upsert(mr,{onConflict:'client_no'});
+      if(r3.error){console.warn('milestones save error:',r3.error.message);}
+      else{changedMilestones.forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});}
     }
     var changedAfterho=Object.keys(CL_AFTERHO).filter(function(k){return JSON.stringify(CL_AFTERHO[k])!==_snap.afterho[k];});
     if(changedAfterho.length){
       var hr=changedAfterho.map(function(k){var a=CL_AFTERHO[k];return{client_no:parseInt(k),csm:a.csm||'',processor:a.processor||''};});
-      await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
-      changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});
+      var r4=await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
+      if(r4.error){console.warn('afterho save error:',r4.error.message);}
+      else{changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});}
     }
-  }catch(e){console.warn('Supabase save failed (localStorage backup preserved):',e);}
+  }catch(e){console.warn('Supabase save failed:',e);}
 }
 function supabaseSave(){
   clearTimeout(_supaSaveTimer);
-  _supaSaveTimer=setTimeout(_supaFlush,1500);
+  _supaSaveTimer=setTimeout(_supaFlush,800);
 }
 
 function doGoogleLogin(){
