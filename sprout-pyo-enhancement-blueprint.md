@@ -857,7 +857,7 @@ When switching to IMPL, `IMPL_USER` is set to `CURRENT_NAME` (the god user's dis
 - "⚙ Manage Library" button on the right (toggles to library view)
 
 **Main view (default):**
-- Client dropdown — each option shows `ClientName (done/total)` count at a glance
+- Client dropdown — filtered by role: implementers see only their assigned clients (`d.resource === IMPL_USER`); admins/managers see all. Each option shows `ClientName (done/total)` count at a glance.
 - Progress bar (green fill, 0–100%) + "X / Y done" counter shown when client has items
 - Pending items grouped by phase with colored phase dot headers (KOM, Simulation, Parallel Run, Project Checklist, Live Run, General)
 - Done items collapsed under a "✓ Completed" section (strikethrough + 45% opacity)

@@ -4681,7 +4681,8 @@ function renderPendingBankUI(view){
   var done=pending.filter(function(i){return i.done;}).length;
   var total=pending.length;
   var pct=total>0?Math.round(done/total*100):0;
-  var clientOpts='<option value="0">— Select a client —</option>'+D.map(function(d){
+  var pibClients=CURRENT_ROLE==='implementer'?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var clientOpts='<option value="0">— Select a client —</option>'+pibClients.map(function(d){
     var cnt=(CLIENT_PENDING[d.no]||[]).length;
     var dnCnt=(CLIENT_PENDING[d.no]||[]).filter(function(i){return i.done;}).length;
     var badge=cnt>0?' ('+dnCnt+'/'+cnt+')':'';
