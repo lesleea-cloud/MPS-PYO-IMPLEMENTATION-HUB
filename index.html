@@ -1796,14 +1796,10 @@ function fd(src,q,mon,st,res){
   });
 }
  
-var TEAM_CONFIG = {
-  implPYO: ['Ana','Bea','Carl','Dana','Eli'],
-  implGov: [],
-  implHR:  [],
-  implOTK: [],
-  implementers: ['Ana','Bea','Carl','Dana','Eli'],
-  pms: ['Marcus','Sofia','Javier','Isabel','Diego']
-};
+var TEAM_CONFIG = (function(){
+  try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);return t;}}catch(e){}
+  return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
+})();
 var ST_PREVIEW = null;
 var USERS_DEFAULT=/*USERS_DATA*/[{"username":"Leslee","email":"lesleea@sprout.ph","password":"Leslee09151992","role":"implementer"},{"username":"Zona","email":"zmerto@sprout.ph","password":"Password1234","role":"admin"},{"username":"Denise","email":"mgonowon@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Armie","email":"armiev@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Pau","email":"pvaflor@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Mhae","email":"alorenzo@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Arianne","email":"arianneo@sprout.ph","password":"Password1234","role":"manager"}]/*END_USERS_DATA*/;
 var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){return JSON.parse(s);}if(USERS_DEFAULT.length){localStorage.setItem('pyo_users',JSON.stringify(USERS_DEFAULT));}return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}catch(e){return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}})();
@@ -6052,6 +6048,7 @@ function stSaveTeam(){
   TEAM_CONFIG.implOTK=collect('otk');
   TEAM_CONFIG.pms    =collect('pm');
   TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK);
+  try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
   var colors=['#16a34a','#2563eb','#7c3aed','#ea580c','#9d174d','#0e7490','#854d0e','#4f46e5','#be185d','#15803d'];
   Object.keys(RC).forEach(function(k){delete RC[k];});
   TEAM_CONFIG.implementers.forEach(function(n,i){if(n)RC[n]=colors[i%colors.length];});
@@ -6219,6 +6216,7 @@ async function loadFromSupabase(){
       if(rt.data.impl_otk)TEAM_CONFIG.implOTK=rt.data.impl_otk;
       TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK);
       if(rt.data.pms)TEAM_CONFIG.pms=rt.data.pms;
+      try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
     }
     try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));}catch(e){}
   }catch(e){console.warn('Supabase load failed, using localStorage backup:',e);}
