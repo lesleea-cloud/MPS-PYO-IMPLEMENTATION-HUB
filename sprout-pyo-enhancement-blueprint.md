@@ -1702,3 +1702,74 @@ When `v.clientName` is set, a small person-icon + client name appears below the 
 - `vaultHideForm()`: added `'vf-client'` to the fields cleared on close
 - `vaultSaveItem()`: reads `vf-client`, stores as `clientName` on both link and file items
 - `renderVault()` card: conditionally renders client name row when `v.clientName` is truthy
+
+---
+
+## 21. Google Login — Open Access for @sprout.ph Emails ✅ Coded (June 19, 2026)
+
+### What changed
+Any `@sprout.ph` Google account can now sign in — even if not registered in `USERS` or `USERS_DEFAULT`. Previously, unregistered emails were blocked with "Your account is not authorized."
+
+### Behavior
+| User type | Result |
+|---|---|
+| Registered in USERS/USERS_DEFAULT | Signs in with their assigned role (manager, admin, implementer, god) |
+| `@sprout.ph` email NOT in USERS | Signs in as **Implementer** — sees My Dashboard with empty project list |
+| Non-`@sprout.ph` email | Blocked — error message shown, Supabase session signed out |
+
+### Empty dashboard for unassigned users
+Since the implementer dashboard filters projects by `IMPL_USER` matching the `resource` field in client records, an unregistered user will naturally see zero projects — no extra code needed.
+
+### Display name for unregistered users
+- **OAuth flow** (`onAuthSuccess`): reads from `user.user_metadata.full_name` → `user.user_metadata.name` → email prefix before `@`
+- **One-tap GSI flow** (`handleGoogleCredential`): reads from `payload.name` → `payload.given_name` → email prefix before `@`
+
+### Functions changed
+| Function | Change |
+|---|---|
+| `onAuthSuccess(user)` | Added `@sprout.ph` fallback before the "not authorized" block — extracts display name from Google metadata, sets `CURRENT_ROLE='implementer'`, calls `loadFromSupabase()` then `startApp()` |
+| `handleGoogleCredential(response)` | Added `@sprout.ph` fallback; also now checks `USERS_DEFAULT` in addition to `USERS` (was inconsistent before) |
+
+---
+
+## 22. Resource Dropdowns — Always Synced from Team Configuration ✅ Coded (June 19, 2026)
+
+### Problem
+Resource dropdowns (`cr` filter, Add Client modal, edit selects) and the resource color map (`RC`) were only updated when a user visited Settings and saved the Team Configuration. On every fresh login, the app showed stale or placeholder names (Ana, Bea, Carl, Dana, Eli).
+
+### Root causes
+1. `RC` was hardcoded as `{Ana:'#32CE13', Bea:'#1679FA', Carl:'#8139EE', Dana:'#FF7F00', Eli:'#D2F612'}`
+2. The `cr` resource filter dropdown had hardcoded `<option>` tags in the HTML
+3. The dropdown sync code existed only inside `saveTeamConfig()` — never called on login
+4. Weekly view (`renderWeekly`) and MOM Generator had hardcoded fallback arrays `['Ana','Bea','Carl','Dana','Eli']`
+
+### Fix
+
+#### New shared function: `_syncTeamDropdowns()`
+Extracted from `saveTeamConfig()` into a standalone function. Called in two places:
+- `startApp()` — runs on every login after Supabase data loads
+- `saveTeamConfig()` — runs when the user saves team config (unchanged behavior)
+
+What `_syncTeamDropdowns()` does:
+1. Clears and rebuilds `RC` from `TEAM_CONFIG.implementers` using the standard 10-color palette
+2. Repopulates `#cr` (resource filter dropdown) from `TEAM_CONFIG.implementers`
+3. Repopulates `#login-impl-name` (login implementer selector) from `TEAM_CONFIG.implementers`
+4. Repopulates `#acm-impl` (Add Client modal — implementer) from `TEAM_CONFIG.implPYO`
+5. Repopulates `#acm-pm` (Add Client modal — PM) from `TEAM_CONFIG.pms`
+6. Repopulates `#acm-hri` (Add Client modal — HR-I) from `TEAM_CONFIG.implHR`
+7. Repopulates `#acm-gov` (Add Client modal — Gov) from `TEAM_CONFIG.implGov`
+8. Repopulates `#acm-otk-impl` (Add Client modal — OTK) from `TEAM_CONFIG.implOTK`
+
+#### HTML changes
+- `#cr` dropdown: removed hardcoded `<option>` tags (Ana, Bea, Carl, Dana, Eli) — now populated dynamically
+
+#### JS variable changes
+- `var RC` initial value changed from hardcoded name→color map to `{}` (empty; filled by `_syncTeamDropdowns()` on login)
+
+#### Fallback changes
+| Location | Before | After |
+|---|---|---|
+| `renderWeekly()` — no-data fallback | `['Ana','Bea','Carl','Dana','Eli']` | Removed — falls back to `TEAM_CONFIG.implementers` only |
+| `renderMOMUI()` — default staff | `['Ana','Bea','Carl','Dana','Eli']` | Removed — uses `TEAM_CONFIG.implementers + pms` only |
+| `momExtract()` — sproutStaff param | `['Ana','Bea','Carl','Dana','Eli']` | `TEAM_CONFIG.implementers` |
+| MOM parse step | `['Ana','Bea','Carl','Dana','Eli']` | `TEAM_CONFIG.implementers` |

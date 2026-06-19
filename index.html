@@ -1384,7 +1384,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </div>
         </div>
         <select id="cst" onchange="renderClients()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);outline:none;"><option value="">All statuses</option><option>Live</option><option>Ongoing</option><option>Not yet started</option><option>Churned</option><option>On-Hold</option><option>For Turnover</option></select>
-        <select id="cr" onchange="renderClients()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);outline:none;"><option value="">All resources</option><option>Ana</option><option>Bea</option><option>Carl</option><option>Dana</option><option>Eli</option></select>
+        <select id="cr" onchange="renderClients()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);outline:none;"><option value="">All resources</option></select>
         <div class="svc-ms-wrap" id="svc-ms-wrap">
           <button class="svc-ms-btn" id="svc-ms-btn" onclick="toggleSvcMs(event)" type="button">
             <span class="svc-ms-label" id="svc-ms-label">All services</span>
@@ -1943,7 +1943,7 @@ var CURRENT_ROLE='manager';
 var CURRENT_NAME='';
  
 var SC={Live:'#32CE13',Ongoing:'#1679FA','Not yet started':'#FF7F00',Churned:'#dc2626','On-Hold':'#64748b','For Turnover':'#8139EE','On-Hold Back to Sales':'#CC5C02'};
-var RC={Ana:'#32CE13',Bea:'#1679FA',Carl:'#8139EE',Dana:'#FF7F00',Eli:'#D2F612'};
+var RC={};
  
 function pct(d){
   if(d.service==='Payroll Starter'){
@@ -2357,7 +2357,6 @@ function renderWeekly(){
     D.forEach(function(d){if(d.resource&&d.resource.trim())_seen[d.resource.trim()]=true;});
     rl=Object.keys(_seen).sort();
     if(!rl.length)rl=(TEAM_CONFIG.implementers||[]).filter(Boolean);
-    if(!rl.length)rl=['Ana','Bea','Carl','Dana','Eli'];
   }
 
   /* shared helpers */
@@ -5131,7 +5130,6 @@ var MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',resul
 
 function renderMOMUI(){
   var defaultStaff=(TEAM_CONFIG.implementers||[]).concat(TEAM_CONFIG.pms||[]).filter(Boolean);
-  if(!defaultStaff.length) defaultStaff=['Ana','Bea','Carl','Dana','Eli'];
   if(!MOM_STATE.sproutStaff||!MOM_STATE.sproutStaff.length) MOM_STATE.sproutStaff=defaultStaff.slice();
 
   document.getElementById('tool-modal-body').innerHTML=
@@ -5486,7 +5484,7 @@ function momMapPdfSections(pdfText){
 
 // ── SUGGESTION 1+2+3+4+5: Full improved extraction ──
 function momExtract(transcriptText,pdfText,clientName,meetingDate,slidesName,sproutStaff){
-  sproutStaff=sproutStaff||['Ana','Bea','Carl','Dana','Eli'];
+  sproutStaff=sproutStaff||(TEAM_CONFIG.implementers||[]).filter(Boolean);
 
   var rawLines=transcriptText.split(/\n/).map(function(l){return l.trim();}).filter(function(l){return l.length>2;});
 
@@ -5801,7 +5799,7 @@ async function momGenerate(){
     // Step 3 — parse speakers, clean lines, resolve context
     momShowOverlay(3,'Parsing speakers and cleaning transcript lines…');
     await new Promise(function(r){setTimeout(r,300);});
-    var sproutStaff=MOM_STATE.sproutStaff||['Ana','Bea','Carl','Dana','Eli'];
+    var sproutStaff=MOM_STATE.sproutStaff||(TEAM_CONFIG.implementers||[]).filter(Boolean);
     var extracted=momExtract(transcriptText,pdfText,clientName,meetingDate,MOM_STATE.slidesName||'',sproutStaff);
 
     // Step 4 — map PDF slide sections
@@ -6882,23 +6880,7 @@ function stSaveTeam(){
   TEAM_CONFIG.pms    =collect('pm');
   TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK);
   try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
-  var colors=['#16a34a','#2563eb','#7c3aed','#ea580c','#9d174d','#0e7490','#854d0e','#4f46e5','#be185d','#15803d'];
-  Object.keys(RC).forEach(function(k){delete RC[k];});
-  TEAM_CONFIG.implementers.forEach(function(n,i){if(n)RC[n]=colors[i%colors.length];});
-  var implSel=document.getElementById('login-impl-name');
-  if(implSel){implSel.innerHTML='<option value="">Select implementer…</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var aImpl=document.getElementById('acm-impl');
-  if(aImpl){aImpl.innerHTML='<option value="">— Select implementer —</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var crSel=document.getElementById('cr');
-  if(crSel){crSel.innerHTML='<option value="">All resources</option>'+TEAM_CONFIG.implementers.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var aPm=document.getElementById('acm-pm');
-  if(aPm){aPm.innerHTML='<option value="">— Select PM —</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var aHri=document.getElementById('acm-hri');
-  if(aHri){aHri.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var aGov=document.getElementById('acm-gov');
-  if(aGov){aGov.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var aOtkImpl=document.getElementById('acm-otk-impl');
-  if(aOtkImpl){aOtkImpl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  _syncTeamDropdowns();
   tcRenderTeam();
   if(typeof _supa!=='undefined'&&_supa){
     _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){
@@ -7015,10 +6997,16 @@ function handleGoogleCredential(response){
     var b64=response.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
     var payload=JSON.parse(atob(b64));
     var email=(payload.email||'').toLowerCase();
-    var user=USERS.find(function(u){return (u.email||'').toLowerCase()===email;});
-    if(!user){showLoginError('Your account ('+email+') is not authorized. Contact your administrator.');return;}
+    var user=USERS.find(function(u){return (u.email||'').toLowerCase()===email;})
+            ||USERS_DEFAULT.find(function(u){return (u.email||'').toLowerCase()===email;});
     var errEl=document.getElementById('login-error');
     if(errEl){errEl.style.display='none';errEl.classList.remove('show');}
+    if(!user){
+      if(!email.endsWith('@sprout.ph')){showLoginError('Your account ('+email+') is not authorized. Contact your administrator.');return;}
+      var displayName=payload.name||payload.given_name||email.split('@')[0];
+      CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=displayName;
+      startApp();return;
+    }
     CURRENT_ROLE=user.role||'implementer';
     if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
     CURRENT_NAME=user.username;
@@ -7134,9 +7122,14 @@ function onAuthSuccess(user){
   var found=USERS.find(function(u){return(u.email||'').toLowerCase()===email;})
             ||USERS_DEFAULT.find(function(u){return(u.email||'').toLowerCase()===email;});
   if(!found){
-    showLoginError('Your account ('+email+') is not authorized. Contact your administrator.');
-    _supa.auth.signOut();
-    _authHandled=false;
+    if(!email.endsWith('@sprout.ph')){
+      showLoginError('Your account ('+email+') is not authorized. Contact your administrator.');
+      _supa.auth.signOut();_authHandled=false;return;
+    }
+    var meta=user.user_metadata||{};
+    var displayName=meta.full_name||meta.name||email.split('@')[0];
+    CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=displayName;
+    loadFromSupabase().then(function(){startApp();}).catch(function(){startApp();});
     return;
   }
   CURRENT_ROLE=found.role||'implementer';
@@ -7208,7 +7201,27 @@ function doLogin(){
 }
  
 function showLoginError(msg){var el=document.getElementById('login-error');el.textContent=msg;el.style.display='block';el.classList.add('show');}
- 
+
+function _syncTeamDropdowns(){
+  var colors=['#16a34a','#2563eb','#7c3aed','#ea580c','#9d174d','#0e7490','#854d0e','#4f46e5','#be185d','#15803d'];
+  Object.keys(RC).forEach(function(k){delete RC[k];});
+  TEAM_CONFIG.implementers.forEach(function(n,i){if(n)RC[n]=colors[i%colors.length];});
+  var crSel=document.getElementById('cr');
+  if(crSel)crSel.innerHTML='<option value="">All resources</option>'+TEAM_CONFIG.implementers.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  var implSel=document.getElementById('login-impl-name');
+  if(implSel)implSel.innerHTML='<option value="">Select implementer…</option>'+TEAM_CONFIG.implementers.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  var aImpl=document.getElementById('acm-impl');
+  if(aImpl)aImpl.innerHTML='<option value="">— Select implementer —</option>'+(TEAM_CONFIG.implPYO||[]).filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  var aPm=document.getElementById('acm-pm');
+  if(aPm)aPm.innerHTML='<option value="">— Select PM —</option>'+(TEAM_CONFIG.pms||[]).filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  var aHri=document.getElementById('acm-hri');
+  if(aHri)aHri.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implHR||[]).filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  var aGov=document.getElementById('acm-gov');
+  if(aGov)aGov.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implGov||[]).filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  var aOtkImpl=document.getElementById('acm-otk-impl');
+  if(aOtkImpl)aOtkImpl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+}
+
 function startApp(){
   var cfg=ROLE_CONFIG[CURRENT_ROLE];
   document.getElementById('role-pill').className='role-pill '+cfg.pill;
@@ -7230,6 +7243,7 @@ function startApp(){
   if(clAuditNavBtn)clAuditNavBtn.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
   if(godSwitchEl)godSwitchEl.className='god-switch'+(_IS_GOD?' visible':'');
+  _syncTeamDropdowns();
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('app-header').style.display='flex';
   document.getElementById('app-body').style.display='flex';
