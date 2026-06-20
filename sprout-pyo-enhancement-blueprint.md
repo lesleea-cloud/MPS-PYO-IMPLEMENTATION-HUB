@@ -2323,3 +2323,77 @@ Four new alert types added to `implRenderAttention()` that fire when key meeting
 ### New JS functions/helpers
 - `_vaultCount(clientName, category)` — counts vault entries for a given client + category (used by both the panel and the alerts)
 - `renderMissingProposalPanel(myD)` — renders the amber proposals panel; auto-hides when no clients are missing proposals
+
+---
+
+## 42. Minor Removals ✅ Coded (June 20, 2026)
+
+### Audit Trail — Clear Log button removed
+The "Clear Log" button was removed from the Audit Trail page. The search bar remains. Reason: the button allowed permanent deletion of the audit history which should be preserved.
+
+### Vault form — Name field removed (final)
+The NAME (optional) field added in Section 39 was removed from the vault New Entry form after user review (screenshots 16 & 17 — visible in both Decks and Payroll Policy categories). Entry names continue to auto-generate as `[Category] — [date]` (e.g. "Decks — 6/20/2026"). The form now opens with focus on the URL field. `vf-name` references removed from `vaultHideForm()`, `vaultSaveItem()`, and `vaultShowForm()`.
+
+---
+
+## 43. Payroll Policy Excel Generator ✅ Coded (June 20, 2026)
+
+### What was built
+A new administration tool — **Payroll Policy Excel Generator** — integrated into the existing tool modal under Phase 3 — Parallel Run in the sidebar. No new page was added; the tool opens in the standard #tool-modal overlay used by all other admin tools.
+
+### How it works
+1. User opens the tool via **Administration → Phase 3 → Payroll Policy Excel Generator**
+2. Tool modal opens (max-width 780px) with:
+   - **Claude API Key** input — stored in localStorage under key sprout_ai_key (shared across AI tools). Pre-fills if previously saved.
+   - **PDF upload zone** — drag & drop or click to browse. Accepts .pdf files. FileReader reads the file as base64 (pdfB64).
+   - **Extract Policy with AI** button — disabled until a PDF is uploaded. On click, sends the PDF as a base64 document attachment to Claude (claude-sonnet-4-6) via https://api.anthropic.com/v1/messages and requests a structured JSON extraction of all 27 policy fields.
+   - **Status bar** — shows loading spinner, success, or error messages.
+   - **Review form** (appears after extraction) — scrollable (max-height 380px) grid with all 27 editable fields grouped into 4 sections: Company Information, Payroll Computation, Government Deductions, Others.
+   - **Download Excel** button (appears after extraction) — loads the embedded base64 template, fills all 27 cells using SheetJS (XLSX.read / XLSX.writeFile), and downloads as Payroll Policy — [Company Name].xlsx.
+
+### Field-to-cell mapping (Policy for handover Standard Template.xlsx)
+| Field | Cell | Field | Cell |
+|---|---|---|---|
+| company_name | C4 | payroll_frequency | D11 |
+| company_code | D5 | payroll_cutoff | D12 |
+| payroll_accounts | D6 | cutoff_remarks | D13 |
+| work_days_per_year | D7 | employee_type | D14 |
+| work_hours_per_day | D8 | new_hire_proration | D15 |
+| work_months_per_year | D9 | allowances | D16 |
+| absent_deduction | D17 | sss_contribution | D23 |
+| late_deduction | D18 | sss_loans | D24 |
+| overtime | D19 | phic_contribution | D25 |
+| thirteenth_month | D20 | hdmf_contribution | D26 |
+| final_pay | D21 | hdmf_loans | D27 |
+| company_deductions | D30 | bir_tax | D28 |
+| reports | D32 | services | D34 |
+| poc | D36 | | |
+
+### New global variables
+- PP_STATE — {pdfFile, pdfB64, apiKey, extracted} — reset on closeTool()
+- PP_TEMPLATE_B64 — base64-encoded Policy for handover Standard Template.xlsx (~22.5 KB, embedded inline)
+- PP_FIELDS — ordered array of the 27 field keys
+- PP_CELL_MAP — maps field keys to Excel cell addresses
+
+### New JS functions
+| Function | Purpose |
+|---|---|
+| enderPayrollPolicyUI() | Renders full tool modal body HTML |
+| ppReviewFormHTML() | Returns the review form HTML (4 sections, 27 fields) |
+| ppHandleFile(f) | Reads uploaded PDF file as base64 via FileReader |
+| ppDragOver(e) / ppDragLeave() / ppDrop(e) | Drag-and-drop handlers for upload zone |
+| ppSaveKey() | Saves API key to localStorage |
+| ppSetStatus(msg, type) | Shows loading/success/error status bar |
+| ppExtract() | Async — calls Claude API, parses JSON response, populates form |
+| ppPopulateForm(data) | Fills all form fields from extracted JSON data |
+| ppDownload() | Loads template, fills cells with form values, downloads xlsx |
+
+### Changes to existing functions
+- openTool('payroll-policy') — added else if branch: sets max-width 780px, resets PP_STATE, calls enderPayrollPolicyUI()
+- closeTool() — resets PP_STATE on close
+
+### No Supabase changes required
+Entirely client-side. No data persisted to the database.
+
+### Standalone tool
+A standalone version was also created at C:\Users\lesleea_sprout\Desktop\Claude AI Project\payroll-policy-generator.html for offline or out-of-app use.
