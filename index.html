@@ -1567,10 +1567,6 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <div class="panel" id="vault-form" style="display:none;">
         <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:1rem;">New Entry</div>
         <div style="margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Name <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
-          <input id="vf-name" type="text" placeholder="e.g. RACH Proposal Q3 2026" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-        </div>
-        <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Category <span style="color:var(--r)">*</span></div>
           <select id="vf-cat" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select category —</option>
@@ -2105,11 +2101,11 @@ function vaultShowForm(){
     vfClient.innerHTML='<option value="">— Select client (optional) —</option>'
       +clientList.map(function(d){return '<option value="'+d.client+'">'+d.client+'</option>';}).join('');
   }
-  document.getElementById('vf-name').focus();
+  document.getElementById('vf-url').focus();
 }
 function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
-  ['vf-name','vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('vf-cat').value='';
   var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
 }
@@ -2122,8 +2118,7 @@ function vaultSaveItem(){
   if(!cat){err.textContent='Please select a category.';err.style.display='inline';return;}
   if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
   var today=_vaultToday();
-  var name=(document.getElementById('vf-name').value||'').trim();
-  if(!name)name=cat+' — '+today;
+  var name=cat+' — '+today;
   var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
   VAULT_ITEMS.unshift(item);
   vaultSaveToStorage();
