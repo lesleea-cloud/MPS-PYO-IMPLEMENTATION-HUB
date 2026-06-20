@@ -1130,6 +1130,14 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#0891b2;flex-shrink:0;"></span>
           Payroll Starter
         </button>
+        <button class="nav-tool-item" id="nav-cl-gov" onclick="goClients('gov')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#8139EE;flex-shrink:0;"></span>
+          Sprout Gov
+        </button>
+        <button class="nav-tool-item" id="nav-cl-pd" onclick="goClients('pd')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF7F00;flex-shrink:0;"></span>
+          Payroll Disbursement
+        </button>
         <button class="nav-tool-item" id="nav-cl-audit" style="display:none;" onclick="goAudit()">
           <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
           Audit Trail
@@ -1837,7 +1845,13 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 
         <div style="font-size:11px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">OTK Resource</div>
         <div id="st-otk-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.5rem;"></div>
-        <button onclick="tcAddRow('otk')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1.25rem;">
+        <button onclick="tcAddRow('otk')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1rem;">
+          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Add
+        </button>
+
+        <div style="font-size:11px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Payroll Disbursement Implementer</div>
+        <div id="st-pd-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.5rem;"></div>
+        <button onclick="tcAddRow('pd')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1.25rem;">
           <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Add
         </button>
 
@@ -1964,7 +1978,7 @@ function fd(src,q,mon,st,res){
  
 var TEAM_CONFIG = (function(){
   try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);t._fromLocalStorage=true;return t;}}catch(e){}
-  return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
+  return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implPD:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
 })();
 var ST_PREVIEW = null;
 var USERS_DEFAULT=/*USERS_DATA*/[{"username":"Leslee","email":"lesleea@sprout.ph","password":"Leslee09151992","role":"implementer"},{"username":"Zona","email":"zmerto@sprout.ph","password":"Password1234","role":"admin"},{"username":"Denise","email":"mgonowon@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Armie","email":"armiev@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Pau","email":"pvaflor@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Mhae","email":"alorenzo@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Arianne","email":"arianneo@sprout.ph","password":"Password1234","role":"manager"}]/*END_USERS_DATA*/;
@@ -2301,10 +2315,14 @@ function go(page){
   // Clear new clients dropdown active states
   var clPyoBtn=document.getElementById('nav-cl-pyo');
   var clPsBtn=document.getElementById('nav-cl-ps');
+  var clGovBtn=document.getElementById('nav-cl-gov');
+  var clPdBtn=document.getElementById('nav-cl-pd');
   var clIssBtn=document.getElementById('nav-cl-issues');
   var clAuditBtn=document.getElementById('nav-cl-audit');
   if(clPyoBtn)clPyoBtn.classList.remove('active');
   if(clPsBtn)clPsBtn.classList.remove('active');
+  if(clGovBtn)clGovBtn.classList.remove('active');
+  if(clPdBtn)clPdBtn.classList.remove('active');
   if(clIssBtn)clIssBtn.classList.remove('active');
   if(clAuditBtn)clAuditBtn.classList.remove('active');
   var pg=document.getElementById('page-'+page);
@@ -2317,6 +2335,8 @@ function go(page){
   // Sync new clients dropdown active state and keep it open
   if(page==='clients'){
     if(CL_TYPE==='ps'){if(clPsBtn)clPsBtn.classList.add('active');}
+    else if(CL_TYPE==='gov'){if(clGovBtn)clGovBtn.classList.add('active');}
+    else if(CL_TYPE==='pd'){if(clPdBtn)clPdBtn.classList.add('active');}
     else{if(clPyoBtn)clPyoBtn.classList.add('active');}
     var clBody=document.getElementById('nav-clients-body');
     var clHdr=document.getElementById('nav-clients-hdr');
@@ -3767,8 +3787,12 @@ function setClType(type){
   document.getElementById('ctb-ps').classList.toggle('active',type==='ps');
   var clPyoBtn=document.getElementById('nav-cl-pyo');
   var clPsBtn=document.getElementById('nav-cl-ps');
+  var clGovBtn=document.getElementById('nav-cl-gov');
+  var clPdBtn=document.getElementById('nav-cl-pd');
   if(clPyoBtn)clPyoBtn.classList.toggle('active',type==='pyo');
   if(clPsBtn)clPsBtn.classList.toggle('active',type==='ps');
+  if(clGovBtn)clGovBtn.classList.toggle('active',type==='gov');
+  if(clPdBtn)clPdBtn.classList.toggle('active',type==='pd');
   renderClients();
 }
 
@@ -3776,8 +3800,11 @@ function renderClients(){
   var baseData=(CURRENT_ROLE==='implementer')?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
   // Client type filter
   baseData=baseData.filter(function(d){
-    if(CL_TYPE==='ps') return d.service==='Payroll Starter';
-    return d.service!=='Payroll Starter';
+    if(CL_TYPE==='ps')  return d.service==='Payroll Starter';
+    if(CL_TYPE==='gov') return d.service==='Sprout Gov'||d.service==='Statutory Disbursement';
+    if(CL_TYPE==='pd')  return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].pd);
+    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement
+    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement';
   });
   // Update toggle count label
   var pyoCnt=D.filter(function(d){return d.service!=='Payroll Starter';}).length;
@@ -3828,7 +3855,7 @@ function renderClients(){
       var statuses=['Live','Ongoing','Not yet started','Churned','On-Hold Back to Sales'];
       var stOpts=statuses.map(function(s){return '<option'+(d.remarks===s?' selected':'')+' value="'+s+'">'+s+'</option>';}).join('');
       var a=CL_ADDONS[d.no]||{};
-      var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg||a.ba||a.std);
+      var isGov=(d.service&&(/gov/i.test(d.service)||/statutory/i.test(d.service)))||(a.sg||a.ba||a.std);
       var inpStyle='border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:80px;cursor:text;border-radius:4px;padding:2px 4px;';
       var govCell=isGov
         ?(ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.gov||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateGov('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'"'+(n===d.gov?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
@@ -4013,6 +4040,7 @@ function renderIssuesPage(){
 }
 
 function renderIssueLog(rows){
+  var canEdit=CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='god';
   var clientNos=rows.map(function(d){return d.no;});
   var issues=CL_ISSUES.filter(function(i){return clientNos.indexOf(i.clientNo)>=0;});
   issues.sort(function(a,b){
@@ -4026,7 +4054,7 @@ function renderIssueLog(rows){
   var html='<div class="il-wrap">'
     +'<div class="il-add-bar">'
     +'<span style="font-size:12px;font-weight:600;color:var(--s6);">'+issues.length+' issue'+(issues.length!==1?'s':'')+' &nbsp;<span style="color:var(--s4);font-weight:400;">('+(issues.filter(function(i){return i.status==='open';}).length)+' open)</span></span>'
-    +'<button class="il-add-btn" onclick="ilShowForm()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Issue</button>'
+    +(canEdit?'<button class="il-add-btn" onclick="ilShowForm()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Issue</button>':'')
     +'</div>'
     +'<div class="il-form" id="il-form">'
     +'<div class="il-form-row">'
@@ -4045,18 +4073,19 @@ function renderIssueLog(rows){
       var stCls=i.status==='open'?'il-open':'il-resolved';
       var stLbl=i.status==='open'?'Open':'Resolved';
       var safeRes=(i.resolution||'').replace(/"/g,'&quot;');
-      var resRow=i.status==='resolved'?'<div><input class="il-res-inp" placeholder="Resolution notes…" value="'+safeRes+'" onblur="ilUpdateRes(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/></div>':'';
+      var resRow=canEdit&&i.status==='resolved'?'<div><input class="il-res-inp" placeholder="Resolution notes…" value="'+safeRes+'" onblur="ilUpdateRes(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/></div>':(i.resolution?'<div style="font-size:11px;color:var(--s5);margin-top:3px;">'+safeRes+'</div>':'');
+      var statusCell=canEdit?'<button class="il-status '+stCls+'" onclick="ilToggleStatus(\''+i.id+'\')">'+stLbl+'</button>':'<span class="il-status '+stCls+'" style="cursor:default;">'+stLbl+'</span>';
       return '<div class="il-row">'
         +'<span style="font-size:11.5px;font-weight:500;color:var(--s7);">'+i.clientName+'</span>'
         +'<span style="font-size:11px;color:var(--s4);">'+i.date+'</span>'
         +'<span><span class="il-pri '+priCls+'">'+i.priority+'</span></span>'
         +'<span style="font-size:12px;color:var(--s7);">'+i.description+resRow+'</span>'
-        +'<span><button class="il-status '+stCls+'" onclick="ilToggleStatus(\''+i.id+'\')">'+stLbl+'</button></span>'
-        +'<span><button class="il-del-btn" onclick="ilDelete(\''+i.id+'\')" title="Delete">✕</button></span>'
+        +'<span>'+statusCell+'</span>'
+        +'<span>'+(canEdit?'<button class="il-del-btn" onclick="ilDelete(\''+i.id+'\')" title="Delete">✕</button>':'')+'</span>'
         +'</div>';
     }).join('');
   } else {
-    html+='<div style="text-align:center;padding:2rem 0;font-size:12px;color:var(--s4);">No issues logged yet. Click <strong>Log Issue</strong> to add one.</div>';
+    html+='<div style="text-align:center;padding:2rem 0;font-size:12px;color:var(--s4);">No issues logged yet.'+(canEdit?' Click <strong>Log Issue</strong> to add one.':'')+'</div>';
   }
   html+='</div>';
   document.getElementById('cl-body-issues').innerHTML=html;
@@ -6559,8 +6588,8 @@ function mfEscXml(s){
 
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
-  manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','issues','settings']},
-  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'dashboard',hideNav:['impl','my-clients','issues']},
+  manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','settings']},
+  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'dashboard',hideNav:['impl','my-clients']},
   implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','clients']},
   god:{pill:'rp-god',pillText:'God Mode',avatarBg:'#7c3aed',defaultPage:'dashboard',hideNav:[]}
 };
@@ -6870,8 +6899,8 @@ function stConfirmReplace(){
   showImportToast('success',D.length+' records loaded. Go to All Clients to review.');
 }
 
-var TC_MAP={pyo:'implPYO',gov:'implGov',hr:'implHR',otk:'implOTK',pm:'pms'};
-var TC_LIST_ID={pyo:'st-pyo-list',gov:'st-gov-list',hr:'st-hr-list',otk:'st-otk-list',pm:'st-pm-list'};
+var TC_MAP={pyo:'implPYO',gov:'implGov',hr:'implHR',otk:'implOTK',pd:'implPD',pm:'pms'};
+var TC_LIST_ID={pyo:'st-pyo-list',gov:'st-gov-list',hr:'st-hr-list',otk:'st-otk-list',pd:'st-pd-list',pm:'st-pm-list'};
 
 function tcRenderTeam(){
   var inp='padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;flex:1;min-width:0;';
@@ -6884,9 +6913,9 @@ function tcRenderTeam(){
         +'</div>';
     }).join('');
   }
-  ['pyo','gov','hr','otk','pm'].forEach(function(t){
+  ['pyo','gov','hr','otk','pd','pm'].forEach(function(t){
     var el=document.getElementById(TC_LIST_ID[t]);
-    if(el) el.innerHTML=rows(TEAM_CONFIG[TC_MAP[t]],t);
+    if(el) el.innerHTML=rows(TEAM_CONFIG[TC_MAP[t]]||[],t);
   });
 }
 
@@ -6954,13 +6983,14 @@ function stSaveTeam(){
   TEAM_CONFIG.implGov=collect('gov');
   TEAM_CONFIG.implHR =collect('hr');
   TEAM_CONFIG.implOTK=collect('otk');
+  TEAM_CONFIG.implPD =collect('pd');
   TEAM_CONFIG.pms    =collect('pm');
-  TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK);
-  try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
+  TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD);
+  try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD,pms:TEAM_CONFIG.pms}));}catch(e){}
   _syncTeamDropdowns();
   tcRenderTeam();
   if(typeof _supa!=='undefined'&&_supa){
-    _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){
+    _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,impl_pd:TEAM_CONFIG.implPD,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){
       if(r.error){
         console.warn('Full team_config save failed, trying PM-only fallback:',r.error);
         _supa.from('team_config').upsert({id:1,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r2){if(r2.error)console.warn('PM-only save failed:',r2.error);});
@@ -7133,9 +7163,10 @@ async function loadFromSupabase(){
       if(rt.data.impl_gov)TEAM_CONFIG.implGov=rt.data.impl_gov;
       if(rt.data.impl_hr) TEAM_CONFIG.implHR =rt.data.impl_hr;
       if(rt.data.impl_otk)TEAM_CONFIG.implOTK=rt.data.impl_otk;
-      TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK);
+      if(rt.data.impl_pd) TEAM_CONFIG.implPD =rt.data.impl_pd;
+      TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD||[]);
       if(rt.data.pms && !TEAM_CONFIG._fromLocalStorage)TEAM_CONFIG.pms=rt.data.pms;
-      try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
+      try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD||[],pms:TEAM_CONFIG.pms}));}catch(e){}
     }
     try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));}catch(e){}
     // Load vault items from Supabase — merges with localStorage, preserving offline base64
@@ -7350,7 +7381,7 @@ function startApp(){
   var adminNavSec=document.getElementById('nav-admin-section');
   if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
   var clIssuesBtn=document.getElementById('nav-cl-issues');
-  if(clIssuesBtn)clIssuesBtn.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
+  if(clIssuesBtn)clIssuesBtn.style.display='flex';
   var clAuditNavBtn=document.getElementById('nav-cl-audit');
   if(clAuditNavBtn)clAuditNavBtn.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
@@ -7391,7 +7422,7 @@ function godSwitch(role){
   var adminNavSec=document.getElementById('nav-admin-section');
   if(adminNavSec)adminNavSec.style.display=(role==='implementer'||role==='god')?'flex':'none';
   var clIssuesBtn=document.getElementById('nav-cl-issues');
-  if(clIssuesBtn)clIssuesBtn.style.display=(role==='implementer'||role==='god')?'flex':'none';
+  if(clIssuesBtn)clIssuesBtn.style.display='flex';
   document.querySelectorAll('.god-sw-btn').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-role')===role);});
   go(cfg.defaultPage);
 }
