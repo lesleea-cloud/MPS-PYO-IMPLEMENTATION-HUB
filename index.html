@@ -2264,6 +2264,29 @@ async function _vaultSupaDelete(id,filePath){
   }catch(e){console.warn('vault Supabase delete failed:',e);}
 }
 
+// ── Generic Supabase helpers ──
+async function _supaUpsert(table,row,conflict){
+  if(!_supa)return;
+  try{var r=await _supa.from(table).upsert(row,{onConflict:conflict});if(r.error)console.warn(table+' upsert error:',r.error.message);}
+  catch(e){console.warn(table+' error:',e);}
+}
+async function _supaInsert(table,row){
+  if(!_supa)return;
+  try{var r=await _supa.from(table).insert(row);if(r.error)console.warn(table+' insert error:',r.error.message);}
+  catch(e){console.warn(table+' error:',e);}
+}
+async function _supaDelete(table,col,val){
+  if(!_supa)return;
+  try{var r=await _supa.from(table).delete().eq(col,val);if(r.error)console.warn(table+' delete error:',r.error.message);}
+  catch(e){console.warn(table+' error:',e);}
+}
+function _ilSupaUpsert(issue){
+  _supaUpsert('client_issues',{id:issue.id,client_no:issue.clientNo,client_name:issue.clientName,date:issue.date,description:issue.description,priority:issue.priority,status:issue.status,resolution:issue.resolution||'',created_by:issue.createdBy||''},'id');
+}
+function _cpSupaSave(clientNo){
+  _supaUpsert('client_pending',{client_no:clientNo,items:CLIENT_PENDING[clientNo]||[]},'client_no');
+}
+
 function go(page){
   ['dashboard','weekly','monthly','clients','impl','settings','issues','vault','audit'].forEach(function(p){
     var pg=document.getElementById('page-'+p);
@@ -3112,15 +3135,18 @@ function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt
 function logAudit(clientNo,tab,field,label,oldVal,newVal){
   if(String(oldVal||'')===String(newVal||''))return;
   var d=D.find(function(x){return x.no===clientNo;});
-  CL_AUDIT.unshift({ts:new Date().toISOString(),clientNo:clientNo,client:d?d.client:'#'+clientNo,tab:tab,field:field,label:label,old:String(oldVal||''),new:String(newVal||''),by:CURRENT_NAME||CURRENT_ROLE||'—'});
+  var entry={ts:new Date().toISOString(),clientNo:clientNo,client:d?d.client:'#'+clientNo,tab:tab,field:field,label:label,old:String(oldVal||''),new:String(newVal||''),by:CURRENT_NAME||CURRENT_ROLE||'—'};
+  CL_AUDIT.unshift(entry);
   if(CL_AUDIT.length>2000)CL_AUDIT.length=2000;
   try{localStorage.setItem('pyo_audit',JSON.stringify(CL_AUDIT));}catch(e){}
+  _supaInsert('audit_log',{ts:entry.ts,client_no:entry.clientNo,client_name:entry.client,tab:entry.tab,field:entry.field,label:entry.label,val_from:entry.old,val_to:entry.new,changed_by:entry.by});
 }
 
 function clearAudit(){
   if(!confirm('Clear the entire audit log? This cannot be undone.'))return;
   CL_AUDIT=[];
   try{localStorage.removeItem('pyo_audit');}catch(e){}
+  if(_supa)_supa.from('audit_log').delete().gte('id',0).then(function(r){if(r.error)console.warn('audit clear error:',r.error.message);});
   renderAudit();
 }
 
@@ -4047,8 +4073,10 @@ function ilSave(){
   if(!desc){alert('Please enter a description.');return;}
   var clientRow=D.find(function(d){return d.no===no;});
   var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');
-  CL_ISSUES.push({id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:_m+'/'+_d+'/'+today.getFullYear(),description:desc,priority:pri,status:'open',resolution:'',createdBy:IMPL_USER||CURRENT_NAME});
+  var issue={id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:_m+'/'+_d+'/'+today.getFullYear(),description:desc,priority:pri,status:'open',resolution:'',createdBy:IMPL_USER||CURRENT_NAME};
+  CL_ISSUES.push(issue);
   ilSaveToStorage();
+  _ilSupaUpsert(issue);
   ilHideForm();
   renderIssuesPage();
   if(typeof implRenderAttention==='function')implRenderAttention();
@@ -4059,18 +4087,19 @@ function ilToggleStatus(id){
   if(!issue)return;
   issue.status=issue.status==='open'?'resolved':'open';
   ilSaveToStorage();
+  _ilSupaUpsert(issue);
   renderIssuesPage();
   if(typeof implRenderAttention==='function')implRenderAttention();
 }
 
 function ilUpdateRes(id,val){
   var issue=CL_ISSUES.find(function(i){return i.id===id;});
-  if(issue){issue.resolution=val;ilSaveToStorage();}
+  if(issue){issue.resolution=val;ilSaveToStorage();_ilSupaUpsert(issue);}
 }
 
 function ilDelete(id){
   var idx=CL_ISSUES.findIndex(function(i){return i.id===id;});
-  if(idx>=0){CL_ISSUES.splice(idx,1);ilSaveToStorage();renderIssuesPage();if(typeof implRenderAttention==='function')implRenderAttention();}
+  if(idx>=0){CL_ISSUES.splice(idx,1);ilSaveToStorage();_supaDelete('client_issues','id',id);renderIssuesPage();if(typeof implRenderAttention==='function')implRenderAttention();}
 }
 
 var IMPL_FILTER='all';
@@ -4342,7 +4371,7 @@ function renderPendingPanel(myD){
 function dashPendingToggle(clientNo,idx,done){
   if(!CLIENT_PENDING[clientNo]||CLIENT_PENDING[clientNo][idx]===undefined)return;
   CLIENT_PENDING[clientNo][idx].done=done;
-  pibSavePending();
+  pibSavePending();_cpSupaSave(clientNo);
   var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
   renderPendingPanel(myD);
 }
@@ -5113,26 +5142,30 @@ function pibAddTemplate(){
   var phase=document.getElementById('pib-new-phase').value;
   var cat=document.getElementById('pib-new-cat').value;
   if(!label)return;
-  PENDING_BANK.push({id:'pb'+Date.now(),label:label,phase:phase,category:cat});
-  pibSave();renderPendingBankUI('library');
+  var item={id:'pb'+Date.now(),label:label,phase:phase,category:cat};
+  PENDING_BANK.push(item);
+  pibSave();
+  _supaUpsert('pending_bank',{id:item.id,label:item.label,phase:item.phase,category:item.category},'id');
+  renderPendingBankUI('library');
 }
 
 function pibDeleteTemplate(id){
   var idx=PENDING_BANK.findIndex(function(i){return i.id===id;});
-  if(idx>=0){PENDING_BANK.splice(idx,1);pibSave();renderPendingBankUI('library');}
+  if(idx>=0){PENDING_BANK.splice(idx,1);pibSave();_supaDelete('pending_bank','id',id);renderPendingBankUI('library');}
 }
 
 function pibToggleItem(clientNo,idx,done){
   if(!CLIENT_PENDING[clientNo])return;
   CLIENT_PENDING[clientNo][idx].done=done;
   pibSavePending();
+  _cpSupaSave(clientNo);
   renderPendingBankUI('main');
 }
 
 function pibDeleteItem(clientNo,idx){
   if(!CLIENT_PENDING[clientNo])return;
   CLIENT_PENDING[clientNo].splice(idx,1);
-  pibSavePending();renderPendingBankUI('main');
+  pibSavePending();_cpSupaSave(clientNo);renderPendingBankUI('main');
 }
 
 function pibShowCustom(){
@@ -5146,7 +5179,7 @@ function pibAddCustom(){
   if(!label||!PIB_CLIENT)return;
   if(!CLIENT_PENDING[PIB_CLIENT])CLIENT_PENDING[PIB_CLIENT]=[];
   CLIENT_PENDING[PIB_CLIENT].push({label:label,phase:phase,done:false});
-  pibSavePending();renderPendingBankUI('main');
+  pibSavePending();_cpSupaSave(PIB_CLIENT);renderPendingBankUI('main');
 }
 
 function pibAddSelected(){
@@ -5159,7 +5192,7 @@ function pibAddSelected(){
       CLIENT_PENDING[PIB_CLIENT].push({label:item.label,phase:item.phase,done:false});
     }
   });
-  pibSavePending();renderPendingBankUI('main');
+  pibSavePending();_cpSupaSave(PIB_CLIENT);renderPendingBankUI('main');
 }
 
 function closeTool(){
@@ -7114,6 +7147,31 @@ async function loadFromSupabase(){
       var fromSupa=rv.data.map(function(v){var local=localMap[v.id];return{id:v.id,name:v.name,category:v.category,clientName:v.client_name||null,type:v.type,url:v.url||'',fileName:v.file_name||'',filePath:v.file_path||null,fileType:v.file_type||'',fileData:(local&&local.fileData)||'',notes:v.notes||'',uploadedBy:v.uploaded_by||'',uploadedAt:v.uploaded_at||''};});
       VAULT_ITEMS=fromSupa.concat(localOnly);
       vaultSaveToStorage();
+    }
+    // Load issue log
+    var ris=await _supa.from('client_issues').select('*').order('date',{ascending:false});
+    if(!ris.error&&ris.data&&ris.data.length){
+      CL_ISSUES=ris.data.map(function(r){return{id:r.id,clientNo:r.client_no,clientName:r.client_name||'',date:r.date||'',description:r.description||'',priority:r.priority||'medium',status:r.status||'open',resolution:r.resolution||'',createdBy:r.created_by||''};});
+      try{localStorage.setItem('pyo_issues',JSON.stringify(CL_ISSUES));}catch(e){}
+    }
+    // Load audit log
+    var rau=await _supa.from('audit_log').select('ts,client_no,client_name,tab,field,label,val_from,val_to,changed_by').order('ts',{ascending:false}).limit(2000);
+    if(!rau.error&&rau.data&&rau.data.length){
+      CL_AUDIT=rau.data.map(function(r){return{ts:r.ts,clientNo:r.client_no,client:r.client_name||'',tab:r.tab,field:r.field,label:r.label,old:r.val_from||'',new:r.val_to||'',by:r.changed_by||''};});
+      try{localStorage.setItem('pyo_audit',JSON.stringify(CL_AUDIT));}catch(e){}
+    }
+    // Load pending items bank
+    var rpb=await _supa.from('pending_bank').select('*');
+    if(!rpb.error&&rpb.data&&rpb.data.length){
+      PENDING_BANK=rpb.data.map(function(r){return{id:r.id,label:r.label||'',phase:r.phase||'general',category:r.category||'Other'};});
+      try{localStorage.setItem('pyo_pending_bank',JSON.stringify(PENDING_BANK));}catch(e){}
+    }
+    // Load client pending items
+    var rcp=await _supa.from('client_pending').select('*');
+    if(!rcp.error&&rcp.data&&rcp.data.length){
+      CLIENT_PENDING={};
+      rcp.data.forEach(function(r){CLIENT_PENDING[r.client_no]=r.items||[];});
+      try{localStorage.setItem('pyo_client_pending',JSON.stringify(CLIENT_PENDING));}catch(e){}
     }
     _takeFullSnapshot(); // snapshot Supabase state — future saves only upsert changed rows
   }catch(e){console.warn('Supabase load failed, using localStorage backup:',e);}

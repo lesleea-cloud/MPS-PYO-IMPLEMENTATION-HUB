@@ -310,15 +310,26 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 - **Authorized JS origin:** `https://mps-pyo-implementation-hub.vercel.app`
 - **Redirect URI:** `https://jchqgxyectvsqfmrnype.supabase.co/auth/v1/callback`
 
-### Database tables created
+### Database tables — complete (no localStorage-only gaps as of June 20, 2026)
 | Table | Purpose |
 |---|---|
 | `clients` | Main D[] array — all client records |
-| `client_addons` | CL_ADDONS (sg, ba, sd, std, otk, pd) — Supabase column: `payroll_disbursement` |
+| `client_addons` | CL_ADDONS (sg, ba, sd, std, otk, pd) |
 | `client_milestones` | CL_MILESTONES (churnDate, billingMonth, monthCompleted) |
-| `client_afterho` | CL_AFTERHO (csm, processor) |
+| `client_afterho` | CL_AFTERHO (csm, processor, turnedOver) |
 | `team_config` | TEAM_CONFIG implementers + pms arrays |
 | `user_roles` | Maps @sprout.ph email → role + implementer_name |
+| `vault_items` | Implementation Vault entries (links + file metadata) |
+| `impl_moms` | MOMs synced from Gmail via Apps Script |
+| `client_issues` | CL_ISSUES — Issue Log entries |
+| `audit_log` | CL_AUDIT — append-only audit trail |
+| `pending_bank` | PENDING_BANK — shared library of pending item templates |
+| `client_pending` | CLIENT_PENDING — per-client pending checklists (JSONB array per client_no) |
+
+### Storage buckets
+| Bucket | Purpose |
+|---|---|
+| `vault-files` | File uploads from Implementation Vault (private, signed URLs) |
 
 ### Login flow
 - Login screen replaced with "Sign in with Google" button — dark green-black background (`#0f1f0c`), Sprout green text and G icon (`#32CE13`), matching the sidebar aesthetic
