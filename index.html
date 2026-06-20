@@ -837,6 +837,17 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .vault-del-btn{padding:6px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s4);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .1s;}
 .vault-del-btn:hover{border-color:var(--r1);background:var(--r0);color:var(--r);}
 .vault-mom-body{font-size:11px;color:var(--s5);line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.vault-cgroup{background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}
+.vault-cgroup-hdr{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--s0);border-bottom:1px solid var(--s2);font-size:12px;font-weight:700;color:var(--s8);}
+.vault-cgroup-count{margin-left:auto;font-size:10px;font-weight:600;color:var(--s4);background:var(--s1);border-radius:10px;padding:2px 8px;}
+.vault-entry-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--s1);transition:background .1s;}
+.vault-entry-row:last-child{border-bottom:none;}
+.vault-entry-row:hover{background:var(--s0);}
+.vault-cat-icon-sm{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.vault-cat-icon-sm svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.vault-entry-name{font-size:12px;font-weight:600;color:var(--s8);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.vault-entry-meta{font-size:10px;color:var(--s4);white-space:nowrap;}
+.vault-entry-acts{display:flex;gap:6px;flex-shrink:0;}
 .vault-mom-body-full{font-size:11px;color:var(--s5);line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow-y:auto;}
 .vault-mom-expand{background:none;border:none;color:var(--g4);font-size:10px;font-weight:700;cursor:pointer;padding:0;font-family:var(--font);text-decoration:underline;}
 .vault-mom-expand:hover{color:var(--g5);}
@@ -1539,6 +1550,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <div class="panel" id="vault-form" style="display:none;">
         <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:1rem;">New Entry</div>
         <div style="margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Name <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+          <input id="vf-name" type="text" placeholder="e.g. RACH Proposal Q3 2026" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+        </div>
+        <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Category <span style="color:var(--r)">*</span></div>
           <select id="vf-cat" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select category —</option>
@@ -2055,7 +2070,7 @@ function vaultShowForm(){
 }
 function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
-  ['vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['vf-name','vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('vf-cat').value='';
   var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
 }
@@ -2068,7 +2083,8 @@ function vaultSaveItem(){
   if(!cat){err.textContent='Please select a category.';err.style.display='inline';return;}
   if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
   var today=_vaultToday();
-  var name=clientName?clientName+' — '+cat:cat+' — '+today;
+  var name=(document.getElementById('vf-name').value||'').trim();
+  if(!name)name=cat+' — '+today;
   var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
   VAULT_ITEMS.unshift(item);
   vaultSaveToStorage();
@@ -2190,35 +2206,47 @@ function renderVault(){
     grid.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><div class="vault-empty-title">No files yet</div><div class="vault-empty-sub">'+(canAdd?'Click "Add File" to upload your first entry.':'No entries in this category.')+'</div></div>';
     return;
   }
-  var h='<div class="vault-grid">';
+  // Group by clientName
+  var vaultGrouped={};var vaultUngrp=[];
   items.forEach(function(v){
+    if(v.clientName){if(!vaultGrouped[v.clientName])vaultGrouped[v.clientName]=[];vaultGrouped[v.clientName].push(v);}
+    else{vaultUngrp.push(v);}
+  });
+  function _vaultEntryRow(v){
     var cfg=VAULT_CAT[v.category]||VAULT_CAT['Other'];
     var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&v.uploadedBy===CURRENT_NAME);
     var openHref=v.type==='link'?v.url:'javascript:vaultOpenFile(\''+v.id+'\')';
     var openTarget=v.type==='link'?' target="_blank" rel="noopener"':'';
-    h+='<div class="vault-card">';
-    h+='<div class="vault-card-top">';
-    h+='<div class="vault-cat-icon" style="background:'+cfg.bg+';color:'+cfg.c+'"><svg viewBox="0 0 24 24">'+vaultCatIcon(v.category)+'</svg></div>';
-    h+='<div style="flex:1;min-width:0;">';
-    h+='<div class="vault-name">'+v.name+'</div>';
-    if(v.clientName)h+='<div style="font-size:11px;font-weight:600;color:var(--s6);margin:2px 0 4px;display:flex;align-items:center;gap:4px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+v.clientName+'</div>';
-    h+='<span class="vault-cat-badge" style="background:'+cfg.bg+';color:'+cfg.c+';">'+cfg.label+'</span>';
-    h+='</div></div>';
-    if(v.notes)h+='<div class="vault-notes">'+v.notes+'</div>';
-    h+='<div class="vault-meta">';
-    h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+v.uploadedBy;
-    h+='<span style="color:var(--s2)">·</span>';
-    h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'+v.uploadedAt;
-    h+='<span style="color:var(--s2)">·</span>';
-    h+='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+(v.type==='link'?'<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>':'<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>')+'</svg>'+(v.type==='link'?'Link':'File');
-    if(v.fileName)h+='<span style="color:var(--s3)">· '+v.fileName+'</span>';
-    h+='</div>';
-    h+='<div class="vault-actions">';
-    h+='<a class="vault-open-btn" href="'+openHref+'"'+openTarget+'><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">'+(v.type==='link'?'<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>':'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>')+'</svg>'+(v.type==='link'?'Open Link':'Download')+'</a>';
-    if(canDel)h+='<button class="vault-del-btn" onclick="vaultDelete(\''+v.id+'\')">Delete</button>';
+    var r='<div class="vault-entry-row">';
+    r+='<div class="vault-cat-icon-sm" style="background:'+cfg.bg+';color:'+cfg.c+'"><svg viewBox="0 0 24 24">'+vaultCatIcon(v.category)+'</svg></div>';
+    r+='<div style="flex:1;min-width:0;">';
+    r+='<div class="vault-entry-name">'+v.name+'</div>';
+    if(v.notes)r+='<div style="font-size:10px;color:var(--s4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+v.notes+'</div>';
+    r+='</div>';
+    r+='<span class="vault-cat-badge" style="background:'+cfg.bg+';color:'+cfg.c+';flex-shrink:0;">'+cfg.label+'</span>';
+    r+='<div class="vault-entry-meta">'+v.uploadedBy+' · '+v.uploadedAt+'</div>';
+    r+='<div class="vault-entry-acts">';
+    r+='<a class="vault-open-btn" href="'+openHref+'"'+openTarget+' style="padding:5px 10px;font-size:11px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Open</a>';
+    if(canDel)r+='<button class="vault-del-btn" onclick="vaultDelete(\''+v.id+'\')">Delete</button>';
+    r+='</div></div>';
+    return r;
+  }
+  var h='';
+  Object.keys(vaultGrouped).sort().forEach(function(cname){
+    var entries=vaultGrouped[cname];
+    h+='<div class="vault-cgroup">';
+    h+='<div class="vault-cgroup-hdr"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+cname+'<span class="vault-cgroup-count">'+entries.length+' item'+(entries.length!==1?'s':'')+'</span></div>';
+    h+='<div>';
+    entries.forEach(function(v){h+=_vaultEntryRow(v);});
     h+='</div></div>';
   });
-  h+='</div>';
+  if(vaultUngrp.length){
+    h+='<div class="vault-cgroup">';
+    h+='<div class="vault-cgroup-hdr" style="color:var(--s5);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>General<span class="vault-cgroup-count">'+vaultUngrp.length+' item'+(vaultUngrp.length!==1?'s':'')+'</span></div>';
+    h+='<div>';
+    vaultUngrp.forEach(function(v){h+=_vaultEntryRow(v);});
+    h+='</div></div>';
+  }
   grid.innerHTML=h;
 }
 function vaultOpenFile(id){

@@ -2195,3 +2195,54 @@ Proposals and documents are stored in individual client folders in Google Drive.
 - **`vaultSaveItem()`:** Removed file upload branch; always saves as `type:'link'`
 - **`vaultHideForm()`:** Removed `vf-file` clear, radio reset, and `vaultTypeToggle()` call
 - **`vaultTypeToggle()`:** Function removed entirely
+
+---
+
+## 38. Implementation Vault — Name Field Removed + Category Auto-Select Fix ✅ Coded (June 20, 2026)
+
+### Name field removed
+The NAME * field was removed from the vault Add form. Entry names are now auto-generated on save:
+- If a client is selected: `[ClientName] — [Category]` (e.g. "CIS Bayad Center — Proposals")
+- If no client: `[Category] — [date]` (e.g. "Proposals — 6/20/2026")
+
+Form now only requires: **Category** and **Google Drive URL**. Client and Notes remain optional.
+
+### Category auto-select bug fixed
+When a user had the form open on one category (e.g. MOMs) and clicked a different category in the sidebar (e.g. Proposals), the form stayed open with the old category.
+
+**Fix:** `goVault(cat)` now calls `vaultHideForm()` before navigating, so the form always resets cleanly when switching categories. The form reopens fresh with the correct category auto-selected when the user clicks "+ Add File".
+
+---
+
+## 39. Implementation Vault — Client-Grouped Display + Optional Name Field ✅ Coded (June 20, 2026)
+
+### Problem
+When multiple entries were uploaded for the same client (e.g. two Proposals for "CIS Bayad Center"), each appeared as a separate card with an auto-generated name like "CIS Bayad Center — Proposals". This made the vault look like duplicate entries rather than organized records per client.
+
+### Solution: Client-grouped display
+Vault entries are now displayed grouped by client instead of as a flat card grid:
+- Each client gets one **group card** with a header showing the client name and item count
+- All entries for that client are listed as rows inside the group card
+- Entries with no client selected appear under a **"General"** group at the bottom
+- Groups are sorted alphabetically by client name
+
+Each row shows: category icon, entry name, notes (if any), category badge, uploaded-by + date, and Open/Delete buttons.
+
+### Name field restored as optional
+The NAME field is back in the vault form (optional, no asterisk) as the first field:
+- If the user fills in a name, that name is used as-is
+- If left blank, the name is auto-generated as `[Category] — [date]` (e.g. "Proposals — 6/20/2026")
+- The client name is **not** used in auto-generation to avoid duplicate-looking names
+
+### New CSS classes
+- `.vault-cgroup` — outer group card container
+- `.vault-cgroup-hdr` — client header row with person icon + client name + item count badge
+- `.vault-cgroup-count` — pill badge showing item count
+- `.vault-entry-row` — individual entry row within a group
+- `.vault-cat-icon-sm` — smaller 28px category icon for entry rows
+- `.vault-entry-name` — truncating entry name label
+- `.vault-entry-meta` — small uploader + date text
+- `.vault-entry-acts` — Open + Delete button container
+
+### Helper function
+`_vaultEntryRow(v)` — inline helper defined inside `renderVault()` to build the HTML for one entry row (avoids repeating the row template for both grouped and ungrouped entries).
