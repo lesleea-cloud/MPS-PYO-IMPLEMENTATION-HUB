@@ -2290,3 +2290,36 @@ Vault categories (Proposals, Decks, etc.) now open in a **client-first tile view
 - `vaultDrillBack()` — clears `VAULT_DRILL_CLIENT` and re-renders
 - `_tileColor(name)` — deterministic color picker from `_TILE_COLORS`
 - `_tileInitials(name)` — 2-letter initials from client name
+
+---
+
+## 41. Vault Upload Reminders — Dashboard Panel + Needs Attention Alerts ✅ Coded (June 20, 2026)
+
+### Missing Proposals Panel (implementer dashboard)
+A new amber collapsible panel `cpanel-missproposal` appears in the implementer dashboard between the New Assignments panel and Needs Attention, whenever an implementer has clients with no Proposals uploaded in the vault.
+
+- Amber gradient header (matches warning urgency without being as critical as red)
+- Lists each client without a proposal, with service + month, and an "+ Upload" button that navigates to Vault → Proposals
+- Hides automatically when all clients have proposals on file
+- Panel is hidden in "drill" mode (when viewing project detail)
+- New CSS: `.impl-missprop-panel`, `.impl-missprop-hdr`, `.impl-missprop-title`, `@keyframes missprop-pulse`
+
+### Vault Document Alerts in Needs Attention
+Four new alert types added to `implRenderAttention()` that fire when key meeting dates are within 14 days and the corresponding vault document has not yet been uploaded:
+
+| Alert | Triggers when | Vault check |
+|---|---|---|
+| KOM Deck missing | `komDate` ≤ 14 days away, KOM not done | `Decks` count for client < 1 |
+| Payroll Discussion Deck missing | `simDate` ≤ 14 days away, Simulation not done | `Decks` count for client < 2 |
+| Parallel Run Deck missing | `parDate` ≤ 14 days away, Parallel Run not done (non-PS only) | `Decks` count for client < 3 |
+| Payroll Policy missing | `handOver` ≤ 14 days away | `Payroll Policy` count for client < 1 |
+
+- Alert color: purple (`#7c3aed`) with `background:#f3e8ff;color:#6b21a8` badge
+- Badge shows days remaining (e.g. "7d") or "Today" if due today
+- Clicking any alert row selects the client in the project list
+- Priority 3.5 — appears after orange "due within 7 days" alerts, before yellow 14-day alerts
+- Deck count logic: decks are expected to be uploaded sequentially (KOM → Payroll Discussion → Parallel Run), so count thresholds of 1/2/3 are used
+
+### New JS functions/helpers
+- `_vaultCount(clientName, category)` — counts vault entries for a given client + category (used by both the panel and the alerts)
+- `renderMissingProposalPanel(myD)` — renders the amber proposals panel; auto-hides when no clients are missing proposals

@@ -390,6 +390,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-newassign-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#1679FA 0%,#0d5fd4 100%);border-bottom:none;cursor:pointer;user-select:none;}
 .impl-newassign-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
 .impl-newassign-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
+/* Missing Proposals panel — Amber */
+@keyframes missprop-pulse{0%,100%{box-shadow:0 4px 20px rgba(245,158,11,.18),0 1px 4px rgba(245,158,11,.12);}50%{box-shadow:0 0 0 4px rgba(245,158,11,.18),0 6px 28px rgba(245,158,11,.35);}}
+.impl-missprop-panel{border:1.5px solid #fde68a;box-shadow:0 4px 20px rgba(245,158,11,.15),0 1px 4px rgba(245,158,11,.1);animation:missprop-pulse 2.4s ease-in-out infinite;}
+.impl-missprop-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border-bottom:none;cursor:pointer;user-select:none;}
+.impl-missprop-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
+.impl-missprop-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
 .impl-attn-body{padding:.5rem .85rem;overflow-y:auto;max-height:280px;background:#fffaf7;}
 .impl-attn-legend{background:#fff3e8;border-top:1px solid #fed7aa;}
 .impl-proj-list{overflow-y:auto;max-height:310px;padding:.3rem .5rem;}
@@ -1673,6 +1679,19 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
               <svg class="impl-chev" style="stroke:#fff;" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
             <div class="impl-cpanel-body" id="cpbody-newassign"></div>
+          </div>
+
+          <!-- Missing Proposals panel -->
+          <div class="impl-missprop-panel impl-cpanel" id="cpanel-missproposal" style="display:none;">
+            <div class="impl-missprop-hdr" onclick="toggleCPanel('missproposal')">
+              <div class="impl-missprop-title">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                Proposals Not Yet Uploaded
+                <span id="impl-missprop-badge" style="background:rgba(255,255,255,.25);color:#fff;font-size:10px;font-weight:700;padding:1px 8px;border-radius:20px;min-width:18px;text-align:center;"></span>
+              </div>
+              <svg class="impl-chev" style="stroke:#fff;" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="impl-cpanel-body" id="cpbody-missproposal"></div>
           </div>
 
           <!-- PRIORITY 1 — Needs Attention (always visible, prominent) -->
@@ -4246,6 +4265,7 @@ function implKpiClick(filter,label,el){
 
 function implSetMode(mode){
   var nassign=document.getElementById('cpanel-newassign');
+  var missprop=document.getElementById('cpanel-missproposal');
   var attn=document.getElementById('cpanel-attn');
   var pend=document.getElementById('cpanel-pending');
   var stats=document.getElementById('cpanel-stats');
@@ -4255,6 +4275,7 @@ function implSetMode(mode){
   var back=document.getElementById('impl-kpi-back');
   if(mode==='drill'){
     if(nassign)nassign.style.display='none';
+    if(missprop)missprop.style.display='none';
     if(attn)attn.style.display='none';
     if(pend)pend.style.display='none';
     if(stats)stats.style.display='none';
@@ -4273,6 +4294,7 @@ function implSetMode(mode){
     if(titleEl)titleEl.textContent='My Projects';
     var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
     renderNewAssignPanel(myD);
+    renderMissingProposalPanel(myD);
     renderPendingPanel(myD);
   }
 }
@@ -4407,6 +4429,9 @@ function renderImpl(){
   /* New Assignments */
   renderNewAssignPanel(myD);
 
+  /* Missing Proposals */
+  renderMissingProposalPanel(myD);
+
   /* Needs Attention */
   implRenderAttention(myD);
 
@@ -4418,6 +4443,30 @@ function renderImpl(){
   SELECTED_PROJECT=null;
 }
 
+function _vaultCount(clientName,category){
+  return VAULT_ITEMS.filter(function(v){return v.clientName===clientName&&v.category===category;}).length;
+}
+function renderMissingProposalPanel(myD){
+  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var panel=document.getElementById('cpanel-missproposal');
+  var body=document.getElementById('cpbody-missproposal');
+  var badge=document.getElementById('impl-missprop-badge');
+  if(!panel||!body)return;
+  var missing=myD.filter(function(d){return d.remarks!=='Churned'&&_vaultCount(d.client,'Proposals')===0;});
+  if(!missing.length){panel.style.display='none';return;}
+  panel.style.display='';
+  if(badge){badge.textContent=missing.length;badge.style.display='';}
+  body.innerHTML='<div style="padding:6px 0 8px;">'
+    +'<div style="font-size:11px;color:var(--s5);padding:0 1rem 6px;">These clients have no proposal on file:</div>'
+    +missing.map(function(d){
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 1rem;border-bottom:1px solid var(--s1);">'
+        +'<div><div style="font-size:12px;font-weight:600;color:var(--s8);">'+d.client+'</div>'
+        +'<div style="font-size:10px;color:var(--s4);">'+d.service+(d.month?' · '+d.month:'')+'</div></div>'
+        +'<button onclick="goVault(\'Proposals\')" style="font-size:11px;padding:4px 12px;border-radius:6px;border:1.5px solid #f59e0b;background:#fffbeb;color:#b45309;cursor:pointer;font-family:var(--font);font-weight:600;white-space:nowrap;">+ Upload</button>'
+        +'</div>';
+    }).join('')
+    +'</div>';
+}
 function renderPendingPanel(myD){
   if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
   var panel=document.getElementById('cpanel-pending');
@@ -4706,6 +4755,57 @@ function implRenderAttention(myD){
     var priMap={high:{p:0,color:'#dc2626',badgeBg:'#fecaca',badgeTxt:'#991b1b'},medium:{p:1,color:'#ea580c',badgeBg:'#fed7aa',badgeTxt:'#9a3412'},low:{p:2,color:'#f59e0b',badgeBg:'#fef9c3',badgeTxt:'#854d0e'}};
     var pm=priMap[i.priority]||priMap['medium'];
     alerts.push({no:i.clientNo,priority:-1+pm.p,color:pm.color,name:i.clientName,sub:i.description,dateLabel:'Logged',dateVal:i.date,dateColor:'',badge:i.priority.charAt(0).toUpperCase()+i.priority.slice(1),badgeCls:'background:'+pm.badgeBg+';color:'+pm.badgeTxt,phase:'Issue',daysLabel:'',daysColor:''});
+  });
+
+  /* ── Vault document alerts (missing deck/policy before key dates) ── */
+  var _DAY=86400000;
+  myD.forEach(function(d){
+    if(d.remarks==='Churned')return;
+    var isPS=d.service==='Payroll Starter';
+    // KOM Deck — alert if komDate within 14 days and no Decks uploaded yet
+    if(d.komDate&&d.kom!==1){
+      var komDt=new Date(d.komDate);var dKOM=Math.round((komDt-TODAY)/_DAY);
+      if(dKOM>=0&&dKOM<=14&&_vaultCount(d.client,'Decks')<1){
+        alerts.push({no:d.no,priority:3.5,color:'#7c3aed',name:d.client,
+          sub:'KOM deck not yet uploaded to vault',
+          dateLabel:'KOM date',dateVal:d.komDate,dateColor:'',
+          badge:dKOM===0?'Today':dKOM+'d',badgeCls:'background:#f3e8ff;color:#6b21a8',
+          phase:'KOM Deck',daysLabel:'',daysColor:''});
+      }
+    }
+    // Payroll Discussion Deck — alert if simDate within 14 days and <2 Decks uploaded
+    if(d.simDate&&d.sim!==1){
+      var simDt=new Date(d.simDate);var dSIM=Math.round((simDt-TODAY)/_DAY);
+      if(dSIM>=0&&dSIM<=14&&_vaultCount(d.client,'Decks')<2){
+        alerts.push({no:d.no,priority:3.5,color:'#7c3aed',name:d.client,
+          sub:'Payroll Discussion deck not yet uploaded to vault',
+          dateLabel:'Simulation date',dateVal:d.simDate,dateColor:'',
+          badge:dSIM===0?'Today':dSIM+'d',badgeCls:'background:#f3e8ff;color:#6b21a8',
+          phase:'PD Deck',daysLabel:'',daysColor:''});
+      }
+    }
+    // Parallel Run Deck — alert if parDate within 14 days and <3 Decks uploaded (non-PS only)
+    if(!isPS&&d.parDate&&d.par!==1){
+      var parDt=new Date(d.parDate);var dPAR=Math.round((parDt-TODAY)/_DAY);
+      if(dPAR>=0&&dPAR<=14&&_vaultCount(d.client,'Decks')<3){
+        alerts.push({no:d.no,priority:3.5,color:'#7c3aed',name:d.client,
+          sub:'Parallel Run deck not yet uploaded to vault',
+          dateLabel:'Parallel Run date',dateVal:d.parDate,dateColor:'',
+          badge:dPAR===0?'Today':dPAR+'d',badgeCls:'background:#f3e8ff;color:#6b21a8',
+          phase:'PR Deck',daysLabel:'',daysColor:''});
+      }
+    }
+    // Payroll Policy — alert if handOver within 14 days and no Payroll Policy uploaded
+    if(d.handOver){
+      var hoDt=new Date(d.handOver);var dHO=Math.round((hoDt-TODAY)/_DAY);
+      if(dHO>=0&&dHO<=14&&_vaultCount(d.client,'Payroll Policy')<1){
+        alerts.push({no:d.no,priority:3.5,color:'#7c3aed',name:d.client,
+          sub:'Payroll Policy not yet uploaded to vault',
+          dateLabel:'Handover date',dateVal:d.handOver,dateColor:'',
+          badge:dHO===0?'Today':dHO+'d',badgeCls:'background:#f3e8ff;color:#6b21a8',
+          phase:'Payroll Policy',daysLabel:'',daysColor:''});
+      }
+    }
   });
 
   /* Sort by priority */
