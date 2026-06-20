@@ -2397,3 +2397,81 @@ Entirely client-side. No data persisted to the database.
 
 ### Standalone tool
 A standalone version was also created at C:\Users\lesleea_sprout\Desktop\Claude AI Project\payroll-policy-generator.html for offline or out-of-app use.
+
+---
+
+## 44. Needs Attention — Redesigned Row Layout ✅ Coded (June 20, 2026)
+
+### What changed
+The Needs Attention panel alert rows were redesigned to match screenshot 19. Instead of a simple colored dot + text list, each alert now shows a distinct icon-block layout grouped under urgency section headers.
+
+### New row design
+Each alert row has three parts:
+1. **Left icon block** (62px wide) — tinted background matching the alert color, with an action-relevant SVG icon and a short action label below it (e.g., "START SIMULATION", "UPLOAD KOM DECK")
+2. **Center content** — bold action title, client name in muted text, description + date merged into one line
+3. **Right badge** — pill badge showing days idle or days remaining (e.g., "93d idle", "5d")
+
+### Section grouping
+Alerts are now grouped under colored section headers instead of displayed as a flat list:
+
+| Section header | Color | Triggers |
+|---|---|---|
+| OVERDUE — IMMEDIATE ACTION REQUIRED | #991b1b (dark red) | color: #dc2626 alerts |
+| DUE SOON — ACT WITHIN 7 DAYS | #c2410c (dark orange) | color: #ea580c alerts |
+| VAULT — UPLOAD NEEDED | #5b21b6 (deep purple) | color: #7c3aed alerts |
+| DUE IN 14 DAYS | #92400e (brown-amber) | color: #f59e0b alerts |
+| SCHEDULE NEXT PHASE | #1e40af (deep blue) | color: #2563eb alerts |
+
+### Icon mapping
+| Phase | Icon | Label |
+|---|---|---|
+| Simulation, Parallel run, Project Checklist | ▶ play triangle | START SIMULATION / START PARALLEL RUN / START CHECKLIST |
+| Live run | flag | LIVE RUN |
+| KOM Deck, PD Deck, PR Deck, Payroll Policy | upload arrow | UPLOAD KOM DECK / etc. |
+| Issue | warning triangle | OPEN ISSUE |
+
+### CSS changes
+- .impl-attn-body — padding removed (section headers span full width), max-height increased to 310px
+- .impl-attn-row — changed from dot+text to stretch layout (no internal gap/padding)
+- Removed: .impl-attn-dot, .impl-attn-txt, .impl-attn-sub, .impl-attn-date, .impl-attn-right, .impl-attn-phase, .impl-attn-days
+- Added: .impl-attn-section-hdr, .impl-attn-icon-block, .impl-attn-icon-lbl, .impl-attn-content, .impl-attn-title, .impl-attn-client, .impl-attn-desc, .impl-attn-badge-wrap
+- .impl-attn-badge — changed to pill shape (border-radius:20px), font-weight:700
+
+### New JS helpers inside implRenderAttention()
+- _attnIcon(phase) — returns SVG icon string for the left block
+- _attnLbl(phase) — returns short action label (with line break) for under the icon
+- _attnTitle(phase) — returns full title string for the row heading
+- _ATTN_SECS array — defines section groupings with colors and filters
+
+### Legend update
+Added "Vault upload needed" (purple #7c3aed) as a 4th legend item between "Due within 14 days" and "Next phase unscheduled".
+
+---
+
+## 45. Follow Up with Client Panel — Redesigned Layout ✅ Coded (June 20, 2026)
+
+### What changed
+The Follow Up with the Client panel was redesigned to match screenshot 20. Each pending item now shows a structured card row instead of a plain checkbox list.
+
+### New item row design
+Each pending item has three parts:
+1. **Left avatar** — 28px green circle with the implementer's first initial (from IMPL_USER)
+2. **Center content** — bold item label, "No updates yet • {phase} phase" subtitle, and an "↩ Add update" link (green, opens Pending Items Bank)
+3. **Right** — today's date (e.g., "Jun 20") + checkbox to mark as resolved
+
+### Client group header
+Each client group now shows: orange dot + client name (orange uppercase) + "• N items" count — replacing the old gray dot + muted text style.
+
+### Footer
+Replaced the plain "Manage in Pending Items Bank →" link with a two-part footer:
+- Left: "👆 Click a checkbox to mark as resolved" hint
+- Right: "Manage in Pending Items Bank →" green link
+
+### CSS added
+.pend-client-hdr, .pend-client-dot, .pend-client-name, .pend-client-count, .pend-item-row, .pend-item-av, .pend-item-content, .pend-item-title, .pend-item-sub, .pend-item-addupd, .pend-item-right, .pend-item-date, .pend-item-cb, .pend-footer, .pend-footer-hint, .pend-footer-link
+
+### Panel header color
+.impl-followup-hdr background updated from amber (#d97706) to Sprout Carrot orange (#FF7F00 → #CC5C02) to match the Needs Attention panel style.
+
+### No data model changes
+Uses the existing CLIENT_PENDING[clientNo] array. "No updates yet" is always shown (updates per item not yet tracked). "Add update" opens the Pending Items Bank tool.

@@ -381,9 +381,27 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 @keyframes followup-pulse{0%,100%{box-shadow:0 4px 20px rgba(217,119,6,.18),0 1px 4px rgba(217,119,6,.12);}50%{box-shadow:0 0 0 4px rgba(217,119,6,.18),0 6px 28px rgba(217,119,6,.38);}}
 .impl-followup-panel{border:1.5px solid #FDE68A;box-shadow:0 4px 20px rgba(217,119,6,.15),0 1px 4px rgba(217,119,6,.1);}
 .impl-followup-panel.has-items{border-color:#f59e0b;animation:followup-pulse 2.4s ease-in-out infinite;}
-.impl-followup-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#d97706 0%,#b45309 100%);border-bottom:none;cursor:pointer;user-select:none;}
+.impl-followup-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#FF7F00 0%,#CC5C02 100%);border-bottom:none;cursor:pointer;user-select:none;}
 .impl-followup-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
 .impl-followup-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
+.pend-client-hdr{display:flex;align-items:center;gap:6px;padding:7px 14px 5px;background:#fff;}
+.pend-client-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ea580c;flex-shrink:0;}
+.pend-client-name{font-size:10px;font-weight:700;color:#ea580c;text-transform:uppercase;letter-spacing:.05em;}
+.pend-client-count{font-size:10px;font-weight:600;color:#ea580c;opacity:.75;}
+.pend-item-row{display:flex;align-items:flex-start;gap:10px;padding:9px 14px;border-bottom:1px solid var(--s1);background:#fff;}
+.pend-item-av{width:28px;height:28px;border-radius:50%;background:#16a34a;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.pend-item-content{flex:1;min-width:0;}
+.pend-item-title{font-size:12px;font-weight:700;color:var(--s8);margin-bottom:2px;}
+.pend-item-sub{font-size:10px;color:var(--s4);margin-bottom:3px;}
+.pend-item-addupd{font-size:10px;color:var(--g4);font-weight:600;cursor:pointer;display:inline-block;}
+.pend-item-addupd:hover{text-decoration:underline;}
+.pend-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:7px;flex-shrink:0;padding-top:1px;}
+.pend-item-date{font-size:10px;color:var(--s4);white-space:nowrap;}
+.pend-item-cb{width:15px;height:15px;cursor:pointer;accent-color:var(--g);flex-shrink:0;}
+.pend-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-top:1px solid var(--s1);background:#fff;}
+.pend-footer-hint{font-size:10px;color:var(--s4);}
+.pend-footer-link{font-size:11px;font-weight:700;color:var(--g4);cursor:pointer;}
+.pend-footer-link:hover{text-decoration:underline;}
 /* New Assignments panel — Blueberry */
 @keyframes newassign-pulse{0%,100%{box-shadow:0 4px 20px rgba(22,121,250,.18),0 1px 4px rgba(22,121,250,.12);}50%{box-shadow:0 0 0 4px rgba(22,121,250,.18),0 6px 28px rgba(22,121,250,.38);}}
 .impl-newassign-panel{border:1.5px solid #D8EBFF;box-shadow:0 4px 20px rgba(22,121,250,.15),0 1px 4px rgba(22,121,250,.1);animation:newassign-pulse 2.4s ease-in-out infinite;}
@@ -396,7 +414,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-missprop-hdr{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1rem;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);border-bottom:none;cursor:pointer;user-select:none;}
 .impl-missprop-title{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.07em;display:flex;align-items:center;gap:7px;}
 .impl-missprop-title svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;opacity:.9;}
-.impl-attn-body{padding:.5rem .85rem;overflow-y:auto;max-height:280px;background:#fffaf7;}
+.impl-attn-body{padding:0;overflow-y:auto;max-height:310px;background:#fff;}
 .impl-attn-legend{background:#fff3e8;border-top:1px solid #fed7aa;}
 .impl-proj-list{overflow-y:auto;max-height:310px;padding:.3rem .5rem;}
 .impl-sel-scroll{overflow-y:auto;max-height:340px;padding:0 .85rem .85rem;}
@@ -457,17 +475,20 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .impl-attn-body::-webkit-scrollbar-track{background:var(--s1);}
 .impl-attn-body::-webkit-scrollbar-thumb{background:var(--s3);border-radius:3px;}
 .impl-attn-body::-webkit-scrollbar-thumb:hover{background:var(--s4);}
-.impl-attn-row{display:flex;align-items:flex-start;gap:7px;padding:7px 0;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .1s;}
+.impl-attn-section-hdr{display:flex;align-items:center;gap:6px;padding:5px 12px;font-size:9.5px;font-weight:800;color:#fff;letter-spacing:.07em;text-transform:uppercase;}
+.impl-attn-section-hdr svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+.impl-attn-row{display:flex;align-items:stretch;border-bottom:1px solid var(--s1);cursor:pointer;transition:background .1s;}
 .impl-attn-row:last-child{border-bottom:none;}
-.impl-attn-row:hover{background:var(--s0);border-radius:6px;padding-left:4px;}
-.impl-attn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
-.impl-attn-txt{font-size:11px;font-weight:600;color:var(--s8);}
-.impl-attn-sub{font-size:10px;color:var(--s4);margin-top:1px;}
-.impl-attn-date{font-size:10px;color:var(--s4);font-family:var(--mono);margin-top:1px;}
-.impl-attn-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
-.impl-attn-badge{font-size:10px;padding:2px 8px;border-radius:8px;white-space:nowrap;font-weight:600;}
-.impl-attn-phase{font-size:9px;padding:1px 6px;border-radius:8px;background:var(--s1);color:var(--s4);white-space:nowrap;}
-.impl-attn-days{font-size:10px;font-weight:600;font-family:var(--mono);}
+.impl-attn-row:hover{background:var(--s0);}
+.impl-attn-icon-block{width:62px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 5px;}
+.impl-attn-icon-block svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.impl-attn-icon-lbl{font-size:7.5px;font-weight:800;text-align:center;letter-spacing:.03em;line-height:1.25;}
+.impl-attn-content{flex:1;min-width:0;padding:9px 8px;}
+.impl-attn-title{font-size:12px;font-weight:700;color:var(--s8);margin-bottom:2px;}
+.impl-attn-client{font-size:11px;color:var(--s6);margin-bottom:1px;}
+.impl-attn-desc{font-size:10px;color:var(--s4);}
+.impl-attn-badge-wrap{padding:9px 12px 9px 4px;flex-shrink:0;display:flex;align-items:center;}
+.impl-attn-badge{font-size:10px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:700;}
 .impl-attn-legend{display:flex;flex-wrap:wrap;gap:8px;padding:.5rem .85rem;background:var(--s0);border-top:1px solid var(--s1);flex-shrink:0;}
 .impl-attn-leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--s4);}
 .impl-attn-leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
@@ -1704,6 +1725,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
               <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#dc2626;"></div>Overdue</div>
               <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#ea580c;"></div>Due within 7 days</div>
               <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#f59e0b;"></div>Due within 14 days</div>
+              <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#7c3aed;"></div>Vault upload needed</div>
               <div class="impl-attn-leg-item"><div class="impl-attn-leg-dot" style="background:#2563eb;"></div>Next phase unscheduled</div>
             </div>
           </div>
@@ -4469,7 +4491,6 @@ function renderPendingPanel(myD){
   var badge=document.getElementById('impl-pending-badge');
   if(!panel||!body)return;
 
-  /* Collect all unresolved items for this implementer's clients */
   var groups=[];
   var totalPending=0;
   myD.forEach(function(d){
@@ -4489,30 +4510,40 @@ function renderPendingPanel(myD){
   panel.classList.add('has-items');
   if(badge){badge.textContent=totalPending;badge.style.display='';}
 
-  var html='<div style="padding:4px 10px 10px;">';
+  var implInitial=(IMPL_USER||'?').trim().charAt(0).toUpperCase();
+  var now=new Date();
+  var _mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var dateStr=_mo[now.getMonth()]+' '+now.getDate();
+
+  var html='';
   groups.forEach(function(g){
     var clientNo=g.client.no;
-    html+='<div style="margin-bottom:10px;">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;padding:6px 0 4px;display:flex;align-items:center;gap:6px;">'
-      +'<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></span>'
-      +g.client.client
-      +'<span style="font-weight:400;color:var(--s4);">'+g.items.length+' item'+(g.items.length>1?'s':'')+'</span>'
+    html+='<div class="pend-client-hdr">'
+      +'<span class="pend-client-dot"></span>'
+      +'<span class="pend-client-name">'+escHtml(g.client.client)+'</span>'
+      +'<span class="pend-client-count">• '+g.items.length+' item'+(g.items.length>1?'s':'')+'</span>'
       +'</div>';
-    g.items.forEach(function(item,localIdx){
-      /* find real index in CLIENT_PENDING */
+    g.items.forEach(function(item){
       var realIdx=(CLIENT_PENDING[clientNo]||[]).indexOf(item);
-      html+='<div class="pib-check-item" style="margin-bottom:3px;">'
-        +'<input type="checkbox" class="pib-check-cb" onchange="dashPendingToggle('+clientNo+','+realIdx+',this.checked)"/>'
-        +'<span class="pib-check-label">'+item.label+'</span>'
-        +'<span style="font-size:9px;color:var(--s3);white-space:nowrap;padding-left:4px;">'+(PIB_PHASE_LBL[item.phase||'general']||'')+'</span>'
+      var phaseLbl=PIB_PHASE_LBL[item.phase||'general']||'General';
+      html+='<div class="pend-item-row">'
+        +'<div class="pend-item-av">'+implInitial+'</div>'
+        +'<div class="pend-item-content">'
+        +'<div class="pend-item-title">'+escHtml(item.label)+'</div>'
+        +'<div class="pend-item-sub">No updates yet • '+phaseLbl+' phase</div>'
+        +'<span class="pend-item-addupd" onclick="openTool(\'pending-bank\')">↩ Add update</span>'
+        +'</div>'
+        +'<div class="pend-item-right">'
+        +'<span class="pend-item-date">'+dateStr+'</span>'
+        +'<input type="checkbox" class="pend-item-cb" onchange="dashPendingToggle('+clientNo+','+realIdx+',this.checked)">'
+        +'</div>'
         +'</div>';
     });
-    html+='</div>';
   });
-  html+='<div style="text-align:right;margin-top:4px;">'
-    +'<span style="font-size:11px;color:var(--g4);cursor:pointer;font-weight:600;" onclick="openPendingBank()">Manage in Pending Items Bank →</span>'
+  html+='<div class="pend-footer">'
+    +'<span class="pend-footer-hint">👆 Click a checkbox to mark as resolved</span>'
+    +'<span class="pend-footer-link" onclick="openTool(\'pending-bank\')">Manage in Pending Items Bank →</span>'
     +'</div>';
-  html+='</div>';
   body.innerHTML=html;
 }
 
@@ -4807,27 +4838,55 @@ function implRenderAttention(myD){
   alerts.sort(function(a,b){return a.priority-b.priority;});
 
   /* Build row HTML */
+  var _attnIcon=function(phase){
+    if(phase==='Simulation'||phase==='Parallel run'||phase==='Project Checklist')
+      return '<svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none;"><polygon points="5,3 19,12 5,21"/></svg>';
+    if(phase==='Live run')
+      return '<svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>';
+    if(phase==='KOM Deck'||phase==='PD Deck'||phase==='PR Deck'||phase==='Payroll Policy')
+      return '<svg viewBox="0 0 24 24"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>';
+    return '<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  };
+  var _attnLbl=function(phase){
+    var m={Simulation:'START\nSIMULATION','Parallel run':'START\nPARALLEL RUN','Project Checklist':'START\nCHECKLIST','Live run':'LIVE RUN','KOM Deck':'UPLOAD\nKOM DECK','PD Deck':'UPLOAD\nPD DECK','PR Deck':'UPLOAD\nPR DECK','Payroll Policy':'UPLOAD\nPOLICY',Issue:'OPEN\nISSUE'};
+    return (m[phase]||(phase.toUpperCase())).replace('\n','<br>');
+  };
+  var _attnTitle=function(phase){
+    var m={Simulation:'Start Simulation','Parallel run':'Start Parallel Run','Project Checklist':'Start Project Checklist','Live run':'Live Run','KOM Deck':'Upload KOM Deck','PD Deck':'Upload Payroll Discussion Deck','PR Deck':'Upload Parallel Run Deck','Payroll Policy':'Upload Payroll Policy',Issue:'Open Issue'};
+    return m[phase]||phase;
+  };
   var row=function(item){
-    var dateRow=item.dateVal?('<div class="impl-attn-date">'+item.dateLabel+(item.dateLabel?': ':'')+
-      '<span style="font-weight:500;'+(item.dateColor?'color:'+item.dateColor+';':'')+'">'
-      +item.dateVal+'</span></div>'):'';
-    var daysSpan=item.daysLabel?('<span class="impl-attn-days" style="color:'+item.daysColor+';">'+item.daysLabel+'</span>'):'';
+    var badgeTxt=item.daysLabel||item.badge;
+    var descParts=[item.sub];
+    if(item.dateVal)descParts.push((item.dateLabel?item.dateLabel+': ':'')+item.dateVal);
     return '<div class="impl-attn-row" onclick="selProject('+item.no+')">'
-      +'<div class="impl-attn-dot" style="background:'+item.color+';"></div>'
-      +'<div style="flex:1;min-width:0;">'
-      +'<div class="impl-attn-txt">'+item.name+'</div>'
-      +'<div class="impl-attn-sub">'+item.sub+'</div>'
-      +dateRow
-      +'</div>'
-      +'<div class="impl-attn-right">'
-      +'<span class="impl-attn-badge" style="'+item.badgeCls+'">'+item.badge+'</span>'
-      +'<span class="impl-attn-phase">'+item.phase+'</span>'
-      +daysSpan
-      +'</div>'
+      +'<div class="impl-attn-icon-block" style="background:'+item.color+'18;color:'+item.color+';">'+_attnIcon(item.phase)+'<span class="impl-attn-icon-lbl">'+_attnLbl(item.phase)+'</span></div>'
+      +'<div class="impl-attn-content"><div class="impl-attn-title">'+_attnTitle(item.phase)+'</div>'
+      +'<div class="impl-attn-client">'+item.name+'</div>'
+      +'<div class="impl-attn-desc">'+descParts.join(' • ')+'</div></div>'
+      +'<div class="impl-attn-badge-wrap"><span class="impl-attn-badge" style="'+item.badgeCls+'">'+badgeTxt+'</span></div>'
       +'</div>';
   };
-
-  var html=alerts.map(row).join('');
+  /* Section headers */
+  var _ATTN_SECS=[
+    {col:'#991b1b',filter:function(a){return a.color==='#dc2626';},title:'OVERDUE — IMMEDIATE ACTION REQUIRED',
+      icon:'<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'},
+    {col:'#c2410c',filter:function(a){return a.color==='#ea580c';},title:'DUE SOON — ACT WITHIN 7 DAYS',
+      icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>'},
+    {col:'#5b21b6',filter:function(a){return a.color==='#7c3aed';},title:'VAULT — UPLOAD NEEDED',
+      icon:'<svg viewBox="0 0 24 24"><polyline points="16,16 12,12 8,16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>'},
+    {col:'#92400e',filter:function(a){return a.color==='#f59e0b';},title:'DUE IN 14 DAYS',
+      icon:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'},
+    {col:'#1e40af',filter:function(a){return a.color==='#2563eb';},title:'SCHEDULE NEXT PHASE',
+      icon:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'}
+  ];
+  var html='';
+  _ATTN_SECS.forEach(function(sec){
+    var items=alerts.filter(sec.filter);
+    if(!items.length)return;
+    html+='<div class="impl-attn-section-hdr" style="background:'+sec.col+';">'+sec.icon+sec.title+'</div>';
+    items.forEach(function(item){html+=row(item);});
+  });
   if(!html)html='<div style="font-size:11px;color:var(--s4);padding:.75rem 0;text-align:center;">All projects on track — no alerts.</div>';
 
   document.getElementById('impl-attn-body').innerHTML=html;
