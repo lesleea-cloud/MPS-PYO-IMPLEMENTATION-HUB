@@ -1554,7 +1554,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         </div>
         <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Client <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
-          <input id="vf-client" type="text" placeholder="e.g. CIS Bayad Center" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          <select id="vf-client" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select client (optional) —</option></select>
         </div>
         <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Type</div>
@@ -2057,6 +2057,14 @@ function vaultShowForm(){
   document.getElementById('vault-form').style.display='block';
   var catSel=document.getElementById('vf-cat');
   if(catSel&&VAULT_FILTER&&VAULT_FILTER!=='all'){catSel.value=VAULT_FILTER;}
+  var vfClient=document.getElementById('vf-client');
+  if(vfClient){
+    var clientList=CURRENT_ROLE==='implementer'
+      ?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();})
+      :D;
+    vfClient.innerHTML='<option value="">— Select client (optional) —</option>'
+      +clientList.map(function(d){return '<option value="'+d.client+'">'+d.client+'</option>';}).join('');
+  }
   document.getElementById('vf-name').focus();
 }
 function vaultHideForm(){

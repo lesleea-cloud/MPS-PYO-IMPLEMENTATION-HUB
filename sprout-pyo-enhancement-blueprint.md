@@ -2134,3 +2134,48 @@ if(!rack.error && rack.data) rack.data.forEach(r => { IMPL_ACK[r.impl_name] = r.
 
 ### `pyo_impl_ack` added to `HUB_BACKUP_KEYS`
 Ensures the acknowledgment state is included in the hub data export/backup.
+
+---
+
+## 36. Client Dropdowns — Role-Filtered Across All Tools ✅ Coded (June 20, 2026)
+
+### Principle
+Every place in the tool where a user selects an existing client must use a `<select>` dropdown (never a free-text input), and implementers must only see the clients assigned to them.
+
+### Status per tool section
+
+| Section | Element | Type | Implementer filter | Notes |
+|---|---|---|---|---|
+| Issue Log | `#il-client` | `<select>` | ✅ `d.resource === IMPL_USER` | Already done |
+| Pending Items Bank | client select in `renderPendingBankUI()` | `<select>` | ✅ `d.resource === IMPL_USER` | Already done |
+| Implementation Vault — Add form | `#vf-client` | `<select>` ← changed from `<input type="text">` | ✅ populated in `vaultShowForm()` | **Changed this session** |
+| MOM Generator | `#mom-client-name` | `<input type="text">` | n/a — auto-extracted from transcript | Left as text (auto-detect context) |
+
+### Vault `vf-client` change
+
+**Before:** `<input type="text" placeholder="e.g. CIS Bayad Center">`
+
+**After:** `<select id="vf-client">` populated on form open via `vaultShowForm()`:
+```javascript
+var clientList = CURRENT_ROLE==='implementer'
+  ? D.filter(d => d.resource.trim().toLowerCase() === IMPL_USER.trim().toLowerCase())
+  : D;
+vfClient.innerHTML = '<option value="">— Select client (optional) —</option>'
+  + clientList.map(d => '<option value="'+d.client+'">'+d.client+'</option>').join('');
+```
+- Implementer: only their assigned clients appear
+- Admin / God / Manager: all clients appear
+- Field remains optional (blank first option) — vault entries can still be created without a client tag
+
+### Implementation Vault — role permission matrix
+
+| Action | God | Admin | Manager | Implementer |
+|---|---|---|---|---|
+| View all entries | ✅ | ✅ | ✅ (read-only) | ✅ |
+| Add / upload files | ✅ | ✅ | ✗ | ✅ |
+| Delete any entry | ✅ | ✅ | ✗ | ✗ |
+| Delete own entry | ✅ | ✅ | ✗ | ✅ |
+
+Manager read-only is enforced via:
+- `canAdd = admin \|\| implementer \|\| god` — Add File button hidden for manager
+- `canDel = admin \|\| god \|\| (implementer && own)` — Delete button not rendered for manager
