@@ -1538,19 +1538,13 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <!-- Add form -->
       <div class="panel" id="vault-form" style="display:none;">
         <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:1rem;">New Entry</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Name <span style="color:var(--r)">*</span></div>
-            <input id="vf-name" type="text" placeholder="e.g. ACME Corp Proposal Q1 2026" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-          </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Category <span style="color:var(--r)">*</span></div>
-            <select id="vf-cat" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-              <option value="">— Select category —</option>
-              <option>Proposals</option><option>MOMs</option><option>Decks</option>
-              <option>Payroll Policy</option><option>Templates</option><option>Other</option>
-            </select>
-          </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Category <span style="color:var(--r)">*</span></div>
+          <select id="vf-cat" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+            <option value="">— Select category —</option>
+            <option>Proposals</option><option>MOMs</option><option>Decks</option>
+            <option>Payroll Policy</option><option>Templates</option><option>Other</option>
+          </select>
         </div>
         <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Client <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
@@ -2061,19 +2055,20 @@ function vaultShowForm(){
 }
 function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
-  ['vf-name','vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('vf-cat').value='';
   var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
 }
 function vaultSaveItem(){
-  var name=(document.getElementById('vf-name').value||'').trim();
   var cat=document.getElementById('vf-cat').value;
   var clientName=(document.getElementById('vf-client').value||'').trim();
   var url=(document.getElementById('vf-url').value||'').trim();
   var notes=(document.getElementById('vf-notes').value||'').trim();
   var err=document.getElementById('vf-error');
-  if(!name||!cat){err.textContent='Name and category are required.';err.style.display='inline';return;}
+  if(!cat){err.textContent='Please select a category.';err.style.display='inline';return;}
   if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
+  var today=_vaultToday();
+  var name=clientName?clientName+' — '+cat:cat+' — '+today;
   var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
   VAULT_ITEMS.unshift(item);
   vaultSaveToStorage();
@@ -2108,6 +2103,7 @@ function toggleVaultSection(){
 }
 function goVault(cat){
   VAULT_FILTER=cat||'Proposals';
+  vaultHideForm();
   go('vault');
   if(cat==='MOMs')fetchMOMs().then(renderVault);
 }
