@@ -2057,16 +2057,28 @@ function vaultSaveItem(){
     vaultSaveToStorage();
     vaultHideForm();
     renderVault();
+    _vaultSupaUpsert(item);
+    showImportToast('success','Link saved to vault.');
   } else {
     var file=document.getElementById('vf-file').files[0];
     if(!file){err.textContent='Please select a file.';err.style.display='inline';return;}
     var reader=new FileReader();
-    reader.onload=function(e){
-      var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'file',fileName:file.name,fileData:e.target.result,fileType:file.type,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
+    reader.onload=async function(e){
+      var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'file',fileName:file.name,fileData:e.target.result,fileType:file.type,filePath:null,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
       VAULT_ITEMS.unshift(item);
       vaultSaveToStorage();
       vaultHideForm();
       renderVault();
+      if(_supa){
+        try{
+          var safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+          var filePath='vault/'+item.id+'/'+safeName;
+          var up=await _supa.storage.from('vault-files').upload(filePath,file,{contentType:file.type,upsert:true});
+          if(!up.error){item.filePath=filePath;vaultSaveToStorage();}
+        }catch(e){}
+        await _vaultSupaUpsert(item);
+      }
+      showImportToast('success','File saved to vault.');
     };
     reader.readAsDataURL(file);
   }
@@ -2081,9 +2093,11 @@ function vaultDelete(id){
   var canDelete=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&item.uploadedBy===CURRENT_NAME);
   if(!canDelete)return;
   if(!confirm('Delete "'+item.name+'"?'))return;
+  var filePath=item.filePath||null;
   VAULT_ITEMS=VAULT_ITEMS.filter(function(v){return v.id!==id;});
   vaultSaveToStorage();
   renderVault();
+  _vaultSupaDelete(id,filePath);
 }
 var VAULT_NAV_MAP={Proposals:'nav-vault-proposals',MOMs:'nav-vault-moms',Decks:'nav-vault-decks','Payroll Policy':'nav-vault-policy',Templates:'nav-vault-templates',Other:'nav-vault-other'};
 function toggleVaultSection(){
@@ -2213,11 +2227,41 @@ function renderVault(){
 }
 function vaultOpenFile(id){
   var item=VAULT_ITEMS.find(function(v){return v.id===id;});
-  if(!item||!item.fileData)return;
+  if(!item)return;
+  if(item.filePath&&_supa){
+    _supa.storage.from('vault-files').createSignedUrl(item.filePath,3600).then(function(res){
+      if(!res.error&&res.data&&res.data.signedUrl){window.open(res.data.signedUrl,'_blank');}
+      else if(item.fileData){var a=document.createElement('a');a.href=item.fileData;a.download=item.fileName||item.name;a.click();}
+      else{showImportToast('error','File not available. The uploader may need to re-upload it.');}
+    });
+    return;
+  }
+  if(!item.fileData){showImportToast('error','File not available.');return;}
   var a=document.createElement('a');
   a.href=item.fileData;
   a.download=item.fileName||item.name;
   a.click();
+}
+
+async function _vaultSupaUpsert(item){
+  if(!_supa)return;
+  try{
+    var row={id:item.id,name:item.name,category:item.category,client_name:item.clientName||null,
+             type:item.type,url:item.url||null,file_name:item.fileName||null,
+             file_path:item.filePath||null,file_type:item.fileType||null,
+             notes:item.notes||null,uploaded_by:item.uploadedBy||null,uploaded_at:item.uploadedAt||null};
+    var r=await _supa.from('vault_items').upsert(row,{onConflict:'id'});
+    if(r.error)console.warn('vault upsert error:',r.error.message);
+  }catch(e){console.warn('vault Supabase upsert failed:',e);}
+}
+
+async function _vaultSupaDelete(id,filePath){
+  if(!_supa)return;
+  try{
+    if(filePath){await _supa.storage.from('vault-files').remove([filePath]);}
+    var r=await _supa.from('vault_items').delete().eq('id',id);
+    if(r.error)console.warn('vault delete error:',r.error.message);
+  }catch(e){console.warn('vault Supabase delete failed:',e);}
 }
 
 function go(page){
@@ -7061,6 +7105,16 @@ async function loadFromSupabase(){
       try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,pms:TEAM_CONFIG.pms}));}catch(e){}
     }
     try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));}catch(e){}
+    // Load vault items from Supabase — merges with localStorage, preserving offline base64
+    var rv=await _supa.from('vault_items').select('id,name,category,client_name,type,url,file_name,file_path,file_type,notes,uploaded_by,uploaded_at').order('uploaded_at',{ascending:false});
+    if(!rv.error&&rv.data&&rv.data.length){
+      var localMap={};VAULT_ITEMS.forEach(function(v){localMap[v.id]=v;});
+      var supaIds=new Set(rv.data.map(function(v){return v.id;}));
+      var localOnly=VAULT_ITEMS.filter(function(v){return !supaIds.has(v.id);});
+      var fromSupa=rv.data.map(function(v){var local=localMap[v.id];return{id:v.id,name:v.name,category:v.category,clientName:v.client_name||null,type:v.type,url:v.url||'',fileName:v.file_name||'',filePath:v.file_path||null,fileType:v.file_type||'',fileData:(local&&local.fileData)||'',notes:v.notes||'',uploadedBy:v.uploaded_by||'',uploadedAt:v.uploaded_at||''};});
+      VAULT_ITEMS=fromSupa.concat(localOnly);
+      vaultSaveToStorage();
+    }
     _takeFullSnapshot(); // snapshot Supabase state — future saves only upsert changed rows
   }catch(e){console.warn('Supabase load failed, using localStorage backup:',e);}
 }

@@ -1318,8 +1318,53 @@ Stored in `localStorage` key `pyo_vault` as `VAULT_ITEMS` array:
 | `vaultFilter(cat, btn)` | Filters displayed cards by category |
 | `vaultOpenFile(id)` | Triggers download for uploaded file entries |
 
-### Supabase integration (future)
-Add a `vault_items` table to replace localStorage for multi-user sync. Columns: `id`, `name`, `category`, `type`, `url`, `file_name`, `file_path` (Supabase Storage path), `notes`, `uploaded_by`, `uploaded_at`. File uploads should go to Supabase Storage bucket instead of base64 in localStorage.
+### Supabase integration ✅ Coded (June 20, 2026)
+
+Vault items are now synced to Supabase so all users see the same shared vault in real time.
+
+**`vault_items` table** (run in Supabase SQL Editor):
+```sql
+CREATE TABLE IF NOT EXISTS vault_items (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  category TEXT NOT NULL,
+  client_name TEXT,
+  type TEXT NOT NULL,
+  url TEXT,
+  file_name TEXT,
+  file_path TEXT,
+  file_type TEXT,
+  notes TEXT,
+  uploaded_by TEXT,
+  uploaded_at TEXT
+);
+ALTER TABLE vault_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "vault_read" ON vault_items FOR SELECT USING (auth.role()='authenticated');
+CREATE POLICY "vault_insert" ON vault_items FOR INSERT WITH CHECK (auth.role()='authenticated');
+CREATE POLICY "vault_update" ON vault_items FOR UPDATE USING (auth.role()='authenticated');
+CREATE POLICY "vault_delete" ON vault_items FOR DELETE USING (auth.role()='authenticated');
+```
+
+**`vault-files` Storage bucket** (Supabase Dashboard → Storage → New bucket):
+- Name: `vault-files`
+- Public: No (private — signed URLs used for downloads)
+- Add policies: allow authenticated INSERT, SELECT, DELETE
+
+**Architecture:**
+- Link items: immediately upserted to `vault_items` on save
+- File items: base64 saved to localStorage first (instant), then uploaded to `vault-files` Storage, then upserted to `vault_items` with `file_path` set
+- On login: `loadFromSupabase()` fetches all `vault_items` and merges with localStorage (preserving local `fileData` for offline file access)
+- Delete: removes from localStorage + deletes from Supabase table + removes from Storage bucket
+
+**New/updated functions:**
+| Function | Purpose |
+|---|---|
+| `_vaultSupaUpsert(item)` | Async — upserts one vault item to `vault_items` table |
+| `_vaultSupaDelete(id, filePath)` | Async — deletes from `vault_items` table + removes file from `vault-files` Storage |
+| `vaultOpenFile(id)` | Updated — tries signed Storage URL first; falls back to local base64 |
+| `vaultSaveItem()` | Updated — calls `_vaultSupaUpsert` after localStorage save; file uploads go to Storage |
+| `vaultDelete(id)` | Updated — calls `_vaultSupaDelete` after localStorage delete |
+| `loadFromSupabase()` | Updated — fetches `vault_items` and merges with VAULT_ITEMS |
 
 ### Category filter — sidebar sub-navigation ✅ Coded (June 19, 2026)
 Filter pills removed from `page-vault`. Categories are now an indented sub-panel under **Implementation Vault** in the sidebar, matching the Clients dropdown pattern.
