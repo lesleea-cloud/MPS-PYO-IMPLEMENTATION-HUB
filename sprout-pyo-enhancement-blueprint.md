@@ -1829,3 +1829,243 @@ What `_syncTeamDropdowns()` does:
 | `renderMOMUI()` — default staff | `['Ana','Bea','Carl','Dana','Eli']` | Removed — uses `TEAM_CONFIG.implementers + pms` only |
 | `momExtract()` — sproutStaff param | `['Ana','Bea','Carl','Dana','Eli']` | `TEAM_CONFIG.implementers` |
 | MOM parse step | `['Ana','Bea','Carl','Dana','Eli']` | `TEAM_CONFIG.implementers` |
+
+---
+
+## 30. Supabase — Full Data Sync (All Remaining Data) ✅ Coded (June 20, 2026)
+
+All data that was previously stored only in localStorage is now synced to Supabase. Every table below has RLS enabled; all policies require `auth.role() = 'authenticated'`.
+
+### Tables added / confirmed
+
+| Table | Primary key | Purpose | localStorage key |
+|---|---|---|---|
+| `client_issues` | `id TEXT` | Issue Log entries | `pyo_issues` |
+| `audit_log` | `id BIGSERIAL` | Audit trail (append-only) | `pyo_audit` |
+| `pending_bank` | `id TEXT` | Pending Items Bank templates | `pyo_pending_bank` |
+| `client_pending` | `client_no INT` | Per-client pending checklists (JSONB) | `pyo_client_pending` |
+| `vault_items` | `id TEXT` | Implementation Vault entries | `pyo_vault` |
+
+### Generic Supabase helpers added
+```javascript
+async function _supaUpsert(table, row, conflict) { ... }   // upserts one row
+async function _supaInsert(table, row) { ... }             // inserts one row (audit_log)
+async function _supaDelete(table, col, val) { ... }        // deletes by column=value
+```
+
+### Per-table write wiring
+
+**client_issues** — helper `_ilSupaUpsert(issue)` called from `ilSave()`, `ilToggleStatus()`, `ilUpdateRes()`; `_supaDelete('client_issues','id',id)` called from `ilDelete()`.
+
+**audit_log** — `logAudit()` calls `_supaInsert('audit_log', {...})`; `clearAudit()` calls `_supa.from('audit_log').delete().gte('id',0)` (Supabase requires a filter for delete).
+
+**pending_bank** — `pibAddTemplate()` calls `_supaUpsert('pending_bank', row, 'id')`; `pibDeleteTemplate(id)` calls `_supaDelete('pending_bank','id',id)`.
+
+**client_pending** — helper `_cpSupaSave(clientNo)` upserts `{client_no, items:[...]}` to `client_pending`; called from `pibToggleItem()`, `pibDeleteItem()`, `pibAddCustom()`, `pibAddSelected()`, `dashPendingToggle()`.
+
+**vault_items** — `_vaultSupaUpsert(item)` and `_vaultSupaDelete(id, filePath)` (see Section 25).
+
+### loadFromSupabase() additions
+```javascript
+// vault_items — merge with local VAULT_ITEMS, preserving local fileData
+var rv = await _supa.from('vault_items').select('id,name,...').order('uploaded_at',{ascending:false});
+
+// client_issues
+var ris = await _supa.from('client_issues').select('*').order('date',{ascending:false});
+
+// audit_log
+var rau = await _supa.from('audit_log').select('ts,...').order('ts',{ascending:false}).limit(2000);
+
+// pending_bank
+var rpb = await _supa.from('pending_bank').select('*');
+
+// client_pending
+var rcp = await _supa.from('client_pending').select('*');
+```
+
+### Supabase SQL (run once)
+```sql
+-- client_issues
+CREATE TABLE IF NOT EXISTS client_issues (
+  id TEXT PRIMARY KEY, client_no INT, client_name TEXT,
+  date TEXT, description TEXT, priority TEXT, status TEXT,
+  resolution TEXT, created_by TEXT
+);
+ALTER TABLE client_issues ENABLE ROW LEVEL SECURITY;
+-- (add SELECT/INSERT/UPDATE/DELETE policies for authenticated)
+
+-- audit_log
+CREATE TABLE IF NOT EXISTS audit_log (
+  id BIGSERIAL PRIMARY KEY, ts TEXT, user_name TEXT,
+  action TEXT, detail TEXT
+);
+ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+
+-- pending_bank
+CREATE TABLE IF NOT EXISTS pending_bank (
+  id TEXT PRIMARY KEY, label TEXT, phase TEXT, category TEXT
+);
+ALTER TABLE pending_bank ENABLE ROW LEVEL SECURITY;
+
+-- client_pending  (one row per client; items stored as JSONB array)
+CREATE TABLE IF NOT EXISTS client_pending (
+  client_no INT PRIMARY KEY, items JSONB DEFAULT '[]'
+);
+ALTER TABLE client_pending ENABLE ROW LEVEL SECURITY;
+```
+
+---
+
+## 31. Issue Log — Manager and Admin Visibility ✅ Coded (June 20, 2026)
+
+### Problem
+The Issue Log was only visible to `implementer` and `god` roles. Managers and Admins had no way to see issues that implementers logged against their shared clients.
+
+### Fix
+
+**`ROLE_CONFIG.hideNav` updated:**
+
+| Role | Before | After |
+|---|---|---|
+| `manager` | `['impl','my-clients','settings','issues']` | `['impl','my-clients','settings']` |
+| `admin` | `['impl','my-clients','issues']` | `['impl','my-clients']` |
+
+**`startApp()` and `godSwitch()`** — `clIssuesBtn` (the Issue Log sidebar item) is always set to `display:flex` regardless of role; the `hideNav` loop still hides it for manager/admin if left in the list, so this removal is the correct fix.
+
+**`renderIssueLog()` — role-aware edit gating:**
+```javascript
+var canEdit = CURRENT_ROLE==='implementer' || CURRENT_ROLE==='admin' || CURRENT_ROLE==='god';
+```
+- `canEdit = true` → Add Issue form shown, status toggles and delete buttons active
+- `canEdit = false` (manager) → read-only view; no Add form, no delete buttons, no status toggle
+
+### Visibility matrix (updated)
+| Role | Issue Log tab | Can add | Can delete | Can toggle status |
+|---|---|---|---|---|
+| God | ✅ | ✅ | ✅ | ✅ |
+| Admin | ✅ | ✅ | ✅ | ✅ |
+| Manager | ✅ (read-only) | ✗ | ✗ | ✗ |
+| Implementer | ✅ | ✅ | own only | ✅ |
+
+---
+
+## 32. Client Subpanels — Four-Way Split ✅ Coded (June 20, 2026)
+
+The Clients sidebar section was expanded from two subpanels (PYO, Payroll Starter) to four.
+
+### Four subpanels
+
+| Subpanel | `CL_TYPE` value | Nav ID | Dot color | Filter logic |
+|---|---|---|---|---|
+| PYO | `'pyo'` | `nav-cl-pyo` | Green `#32CE13` | `service` is not Payroll Starter, Sprout Gov, or Statutory Disbursement |
+| Payroll Starter | `'ps'` | `nav-cl-ps` | Teal `#0891b2` | `service === 'Payroll Starter'` |
+| Sprout Gov | `'gov'` | `nav-cl-gov` | Purple `#8139EE` | `service === 'Sprout Gov'` OR `service === 'Statutory Disbursement'` |
+| Payroll Disbursement | `'pd'` | `nav-cl-pd` | Carrot `#FF7F00` | `CL_ADDONS[d.no].pd` is truthy |
+
+### Sidebar HTML additions (after `#nav-cl-ps`)
+```html
+<button class="nav-tool-item" id="nav-cl-gov" onclick="goClients('gov')">
+  <span style="...background:#8139EE;..."></span>Sprout Gov
+</button>
+<button class="nav-tool-item" id="nav-cl-pd" onclick="goClients('pd')">
+  <span style="...background:#FF7F00;..."></span>Payroll Disbursement
+</button>
+```
+
+### `renderClients()` filter logic
+```javascript
+if(CL_TYPE==='ps')  return d.service==='Payroll Starter';
+if(CL_TYPE==='gov') return d.service==='Sprout Gov' || d.service==='Statutory Disbursement';
+if(CL_TYPE==='pd')  return !!(CL_ADDONS[d.no] && CL_ADDONS[d.no].pd);
+// default (PYO): exclude PS, Sprout Gov, and Statutory Disbursement
+return d.service!=='Payroll Starter' && d.service!=='Sprout Gov' && d.service!=='Statutory Disbursement';
+```
+
+### Active state wiring
+- `go()` — clears active on all four buttons, then adds `.active` to the button matching `CL_TYPE`
+- `setClType(type)` — toggles `.active` on all four buttons when switching types
+
+### Gov Resource column trigger — Statutory Disbursement added
+The Gov Implementer column (Overview and By Resource tabs of Weekly Status) now also lights up for `Statutory Disbursement` service:
+```javascript
+// Before:
+var isGov = (d.service && d.service.toLowerCase().indexOf('gov') >= 0) || (a.sg || a.ba || a.std);
+
+// After:
+var isGov = (d.service && (/gov/i.test(d.service) || /statutory/i.test(d.service))) || (a.sg || a.ba || a.std);
+```
+This change was applied with `replace_all: true` because the same expression appears in both Overview tab and Resource tab rendering.
+
+---
+
+## 33. Team Configuration — Payroll Disbursement Implementer ✅ Coded (June 20, 2026)
+
+### What was added
+A fifth implementer category — **Payroll Disbursement Implementer** — was added to the Team Configuration panel in Settings, alongside the existing PYO, Gov, HRI/SI, and OTK categories.
+
+### TEAM_CONFIG default (updated)
+```javascript
+var TEAM_CONFIG = {
+  implPYO: ['Ana','Bea','Carl','Dana','Eli'],
+  implGov: [],
+  implHR:  [],
+  implOTK: [],
+  implPD:  [],                          // ← new
+  implementers: ['Ana','Bea','Carl','Dana','Eli'],
+  pms: ['Marcus','Sofia','Javier','Isabel','Diego']
+};
+```
+
+### Lookup maps (updated)
+```javascript
+var TC_MAP    = {pyo:'implPYO', gov:'implGov', hr:'implHR', otk:'implOTK', pd:'implPD', pm:'pms'};
+var TC_LIST_ID = {pyo:'st-pyo-list', gov:'st-gov-list', hr:'st-hr-list', otk:'st-otk-list', pd:'st-pd-list', pm:'st-pm-list'};
+```
+
+### `tcRenderTeam()` loop updated
+```javascript
+['pyo','gov','hr','otk','pd','pm']   // ← 'pd' added before 'pm'
+```
+
+### `stSaveTeam()` updated
+- Collects `.tc-pd-inp` inputs into `implPD`
+- `TEAM_CONFIG.implementers` rebuilt as `implPYO.concat(implGov).concat(implHR).concat(implOTK).concat(implPD)`
+- Supabase upsert includes `impl_pd: TEAM_CONFIG.implPD`
+- localStorage save includes `implPD`
+
+### `loadFromSupabase()` updated
+- Reads `r.impl_pd` (TEXT[] column) into `TEAM_CONFIG.implPD`
+- `TEAM_CONFIG.implementers` rebuilt to include `implPD` in the concat chain
+
+### Settings HTML addition
+A "Payroll Disbursement Implementer" panel with `id="st-pd-list"` was inserted between the OTK Resource and Project Managers panels. Uses the same `nav-tool-item` + `tcAddRow`/`tcRemoveRow` pattern as the other categories.
+
+### Supabase SQL required
+```sql
+ALTER TABLE team_config ADD COLUMN IF NOT EXISTS impl_pd TEXT[] DEFAULT '{}';
+```
+
+---
+
+## 34. Clients Table — Sequential Row Numbering ✅ Coded (June 20, 2026)
+
+### Problem
+The `#` column in all client tabs displayed the internal record ID (`d.no`) — a non-sequential number assigned when the client was added. With filtered views (e.g. PYO only, or page 2), gaps like `2, 3, 11, 12, 16...` appeared instead of `1, 2, 3, 4...`.
+
+### Fix
+All six tab render functions were updated to use the map index instead of `d.no` for the display number:
+
+```javascript
+// Before (all tabs):
+slice.map(function(d){ ... d.no ... })
+
+// After (all tabs):
+slice.map(function(d,i){ ... ((clPg-1)*PS+i+1) ... })
+```
+
+The formula `(clPg-1)*PS+i+1` produces correct sequential numbers across pages:
+- Page 1: 1, 2, 3 … 20
+- Page 2: 21, 22, 23 … 40
+
+### Tabs updated
+Overview, Resource Team, Implementation Phases, Add On Services, Milestone Dates, After Hand Over — all 6 branches inside `renderClients()`.

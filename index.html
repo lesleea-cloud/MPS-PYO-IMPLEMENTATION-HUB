@@ -3848,7 +3848,7 @@ function renderClients(){
     document.getElementById('cl-head').innerHTML='<tr style="background:var(--s0)"><th style="'+thStyle+'">#</th><th style="'+thStyle+'">Month</th><th style="'+thStyle+';min-width:180px;">Client Name</th><th style="'+thStyle+'">Status</th><th style="'+thStyle+';min-width:140px;">Service</th><th style="'+thStyle+'">Days</th><th style="'+thStyle+'">Progress</th><th style="'+thStyle+'"></th></tr>';
     var ovRO=(CURRENT_ROLE==='manager');
     var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
-    document.getElementById('cl-body').innerHTML=slice.map(function(d){
+    document.getElementById('cl-body').innerHTML=slice.map(function(d,i){
       var p=pct(d);
       var monOpts=CL_MONTHS.map(function(m){return '<option'+(d.month===m?' selected':'')+'>'+m+'</option>';}).join('');
       var svcOpts=CL_SERVICES.map(function(s){return '<option'+(d.service===s?' selected':'')+'>'+s+'</option>';}).join('');
@@ -3861,7 +3861,7 @@ function renderClients(){
         ?(ovRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.gov||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateGov('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'"'+(n===d.gov?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
-        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.month+'</span></td>':'<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>')+
         '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.remarks+'</span></td>':'<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>')+
@@ -3876,7 +3876,7 @@ function renderClients(){
       '</tr>';
     }).join('');
   } else if(CL_TAB==='resource'){
-    document.getElementById('cl-body-resource').innerHTML=slice.map(function(d){
+    document.getElementById('cl-body-resource').innerHTML=slice.map(function(d,i){
       var a=CL_ADDONS[d.no]||{};
       var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
       var isOtk=a.otk===1;
@@ -3893,7 +3893,7 @@ function renderClients(){
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
-        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         (rtRO?'<td class="ctd">'+rChip(d.resource)+'</td>':'<td class="ctd"><select class="cl-res-sel" onchange="clUpdateResource('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'"'+(n===d.resource?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
         govCell+
@@ -3924,7 +3924,7 @@ function renderClients(){
       var th=document.getElementById('ph-th-'+k);
       if(th) th.className='cth'+(k===activePhase?' col-active-hdr':'');
     });
-    document.getElementById('cl-body-phases').innerHTML=slice.map(function(d){
+    document.getElementById('cl-body-phases').innerHTML=slice.map(function(d,i){
       function phCell(key,val,dateVal){
         var isActive=key===activePhase;
         var keyIdx=phaseKeys.indexOf(key);
@@ -3935,7 +3935,7 @@ function renderClients(){
         return '<td class="'+cellCls+'" style="text-align:center;">'+box+'</td>';
       }
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
-        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         phCell('kom',d.kom,d.komDate||'')+
         phCell('sim',d.sim,d.simDate||'')+
@@ -3944,10 +3944,10 @@ function renderClients(){
       '</tr>';
     }).join('');
   } else if(CL_TAB==='addons'){
-    document.getElementById('cl-body-addons').innerHTML=slice.map(function(d){
+    document.getElementById('cl-body-addons').innerHTML=slice.map(function(d,i){
       var a=CL_ADDONS[d.no]||{sg:0,ba:0,sd:0,std:0,otk:0,pd:0};
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
-        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'sg',a.sg||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'ba',a.ba||0)+'</td>'+
@@ -3960,7 +3960,7 @@ function renderClients(){
   } else if(CL_TAB==='milestones'){
     var ML_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
     var mlCanEditDates=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
-    document.getElementById('cl-body-milestones').innerHTML=slice.map(function(d){
+    document.getElementById('cl-body-milestones').innerHTML=slice.map(function(d,i){
       var m=CL_MILESTONES[d.no]||{};
       function mDateCell(val,field,src){
         var id='ms-'+d.no+'-'+field;
@@ -3985,7 +3985,7 @@ function renderClients(){
         return '<td class="ctd"><select class="cl-mon-sel" onchange="mlUpdateMonth('+d.no+',\''+field+'\',this.value)" style="max-width:120px;">'+opts+'</select></td>';
       }
       return '<tr>'+
-        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         mDateCell(d.komDate,       'komDate',       'd')+
         mDateCell(d.handOver,      'handOver',      'd')+
@@ -3999,7 +3999,7 @@ function renderClients(){
     var ahCanEdit=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
     var svgChkAH='<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     function ahReadCb(val){return '<div class="ph-cell"><div class="cl-cb'+(val?' chk':'')+'" style="cursor:default;">'+(val?svgChkAH:'')+'</div></div>';}
-    document.getElementById('cl-body-afterho').innerHTML=slice.map(function(d){
+    document.getElementById('cl-body-afterho').innerHTML=slice.map(function(d,i){
       var a=CL_AFTERHO[d.no]||{};
       var ahRemark=d.remarks==='Live'?'Live':'Not yet started';
       var inpStyle='border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;';
@@ -4013,7 +4013,7 @@ function renderClients(){
           'onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'"/>';
       }
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
-        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+d.no+'</td>'+
+        '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd">'+ahInp('csm',a.csm)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+(ahCanEdit?clPhaseBox(d.no,'post',d.post,d.service,''):ahReadCb(d.post))+'</td>'+
