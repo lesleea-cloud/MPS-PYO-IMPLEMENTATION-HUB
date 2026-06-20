@@ -2069,3 +2069,68 @@ The formula `(clPg-1)*PS+i+1` produces correct sequential numbers across pages:
 
 ### Tabs updated
 Overview, Resource Team, Implementation Phases, Add On Services, Milestone Dates, After Hand Over — all 6 branches inside `renderClients()`.
+
+---
+
+## 35. Implementer Dashboard — New Assignments Notification Panel ✅ Coded (June 20, 2026)
+
+### What was added
+A **New Assignments** panel in the implementer dashboard that notifies an implementer when a client has been assigned to them but not yet acknowledged. Checking the box (or clicking "Acknowledge All") dismisses the notification.
+
+### Panel design
+- **Position:** Top of the left column, above Needs Attention — it's the first thing seen on login
+- **Color:** Blueberry blue (`#1679FA`) gradient header — distinct from orange (Needs Attention) and amber (Follow-up)
+- **Pulse animation:** `newassign-pulse` — blue glow, same rhythm as the amber follow-up panel
+- **Badge:** White pill in header showing count of unacknowledged clients
+- **Hidden** when all assignments are acknowledged (no empty-state shown)
+
+### UX flow
+1. Admin/implementer adds a new client and assigns it to an implementer
+2. On the implementer's next login, the blue panel appears at the top of their dashboard
+3. Each row shows: client name, service type, month, and a **New** badge
+4. Checking the checkbox next to a client dismisses that row immediately
+5. When only one client remains, "Acknowledge All" button is hidden (no need)
+6. When multiple unacknowledged clients exist, **Acknowledge All** button appears at the bottom
+7. Once all are acknowledged, the panel disappears
+
+### Detection logic
+- `IMPL_ACK[implName]` holds an array of acknowledged client numbers
+- Any client in `myD` (implementer's filtered clients) whose `d.no` is **not** in `IMPL_ACK[IMPL_USER]` is treated as a new assignment
+- On first deploy, all current clients appear as "new" — use **Acknowledge All** to clear them
+
+### Data structure
+```javascript
+// Global variable (localStorage key: pyo_impl_ack)
+var IMPL_ACK = {};  // { 'Ana': [1, 5, 12], 'Bea': [3, 7] }
+```
+
+### Supabase table: `impl_ack`
+```sql
+CREATE TABLE IF NOT EXISTS impl_ack (
+  impl_name TEXT PRIMARY KEY,
+  acked_nos INT[] DEFAULT '{}'
+);
+ALTER TABLE impl_ack ENABLE ROW LEVEL SECURITY;
+-- add SELECT/INSERT/UPDATE/DELETE policies for authenticated
+```
+
+### `loadFromSupabase()` addition
+```javascript
+var rack = await _supa.from('impl_ack').select('impl_name,acked_nos');
+if(!rack.error && rack.data) rack.data.forEach(r => { IMPL_ACK[r.impl_name] = r.acked_nos||[]; });
+```
+
+### `implSetMode()` changes
+- `drill` mode: `cpanel-newassign` hidden alongside Needs Attention and Follow-up
+- `default` mode: `renderNewAssignPanel(myD)` called to restore panel (only shows if unacknowledged items exist)
+
+### New JS functions
+| Function | Purpose |
+|---|---|
+| `renderNewAssignPanel(myD)` | Shows/hides panel, renders per-client acknowledgment rows |
+| `ackProject(no)` | Acknowledges one client, saves to localStorage + Supabase, re-renders panel |
+| `ackAll()` | Acknowledges all unacknowledged clients at once |
+| `_ackSupaSave()` | Upserts `{impl_name, acked_nos}` to `impl_ack` table |
+
+### `pyo_impl_ack` added to `HUB_BACKUP_KEYS`
+Ensures the acknowledgment state is included in the hub data export/backup.
