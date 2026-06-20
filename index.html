@@ -1557,17 +1557,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <select id="vf-client" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select client (optional) —</option></select>
         </div>
         <div style="margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;">Type</div>
-          <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="link" checked onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Link (Google Drive / URL)</label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--s7);cursor:pointer;"><input type="radio" name="vf-type" value="file" onchange="vaultTypeToggle()" style="accent-color:var(--g);"> Upload File</label>
-          </div>
-          <div id="vf-link-row">
-            <input id="vf-url" type="url" placeholder="Paste Google Drive link or any URL..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-          </div>
-          <div id="vf-file-row" style="display:none;">
-            <input id="vf-file" type="file" style="font-size:12px;font-family:var(--font);color:var(--s7);">
-          </div>
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Google Drive / URL <span style="color:var(--r)">*</span></div>
+          <input id="vf-url" type="url" placeholder="Paste Google Drive link or any URL..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
         </div>
         <div style="margin-bottom:14px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Notes <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
@@ -2072,58 +2063,24 @@ function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
   ['vf-name','vf-url','vf-notes','vf-client'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('vf-cat').value='';
-  var fi=document.getElementById('vf-file');if(fi)fi.value='';
-  var radios=document.querySelectorAll('input[name="vf-type"]');
-  radios.forEach(function(r){r.checked=r.value==='link';});
-  vaultTypeToggle();
   var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
-}
-function vaultTypeToggle(){
-  var type=document.querySelector('input[name="vf-type"]:checked').value;
-  document.getElementById('vf-link-row').style.display=type==='link'?'block':'none';
-  document.getElementById('vf-file-row').style.display=type==='file'?'block':'none';
 }
 function vaultSaveItem(){
   var name=(document.getElementById('vf-name').value||'').trim();
   var cat=document.getElementById('vf-cat').value;
   var clientName=(document.getElementById('vf-client').value||'').trim();
-  var type=document.querySelector('input[name="vf-type"]:checked').value;
+  var url=(document.getElementById('vf-url').value||'').trim();
   var notes=(document.getElementById('vf-notes').value||'').trim();
   var err=document.getElementById('vf-error');
   if(!name||!cat){err.textContent='Name and category are required.';err.style.display='inline';return;}
-  if(type==='link'){
-    var url=(document.getElementById('vf-url').value||'').trim();
-    if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
-    var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
-    VAULT_ITEMS.unshift(item);
-    vaultSaveToStorage();
-    vaultHideForm();
-    renderVault();
-    _vaultSupaUpsert(item);
-    showImportToast('success','Link saved to vault.');
-  } else {
-    var file=document.getElementById('vf-file').files[0];
-    if(!file){err.textContent='Please select a file.';err.style.display='inline';return;}
-    var reader=new FileReader();
-    reader.onload=async function(e){
-      var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'file',fileName:file.name,fileData:e.target.result,fileType:file.type,filePath:null,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
-      VAULT_ITEMS.unshift(item);
-      vaultSaveToStorage();
-      vaultHideForm();
-      renderVault();
-      if(_supa){
-        try{
-          var safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
-          var filePath='vault/'+item.id+'/'+safeName;
-          var up=await _supa.storage.from('vault-files').upload(filePath,file,{contentType:file.type,upsert:true});
-          if(!up.error){item.filePath=filePath;vaultSaveToStorage();}
-        }catch(e){}
-        await _vaultSupaUpsert(item);
-      }
-      showImportToast('success','File saved to vault.');
-    };
-    reader.readAsDataURL(file);
-  }
+  if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
+  var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:_vaultToday()};
+  VAULT_ITEMS.unshift(item);
+  vaultSaveToStorage();
+  vaultHideForm();
+  renderVault();
+  _vaultSupaUpsert(item);
+  showImportToast('success','Link saved to vault.');
 }
 function _vaultToday(){
   var d=new Date();

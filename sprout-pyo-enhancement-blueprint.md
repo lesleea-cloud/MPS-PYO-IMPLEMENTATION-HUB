@@ -2179,3 +2179,19 @@ vfClient.innerHTML = '<option value="">— Select client (optional) —</option>
 Manager read-only is enforced via:
 - `canAdd = admin \|\| implementer \|\| god` — Add File button hidden for manager
 - `canDel = admin \|\| god \|\| (implementer && own)` — Delete button not rendered for manager
+
+---
+
+## 37. Implementation Vault — Links Only (Upload File Removed) ✅ Coded (June 20, 2026)
+
+### What changed
+The "Upload File" option was removed from the vault Add form. The vault now only supports Google Drive / URL links.
+
+### Rationale
+Proposals and documents are stored in individual client folders in Google Drive. File uploads to Supabase Storage would be redundant and accumulate storage costs. Pasting a Drive link is faster and costs nothing.
+
+### Changes
+- **HTML form:** TYPE radio buttons (`Link` / `Upload File`) removed entirely; `vf-file-row` and `vf-file` input removed; URL input always visible, relabelled "Google Drive / URL *"
+- **`vaultSaveItem()`:** Removed file upload branch; always saves as `type:'link'`
+- **`vaultHideForm()`:** Removed `vf-file` clear, radio reset, and `vaultTypeToggle()` call
+- **`vaultTypeToggle()`:** Function removed entirely
