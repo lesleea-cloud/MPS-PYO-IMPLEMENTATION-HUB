@@ -2246,3 +2246,47 @@ The NAME field is back in the vault form (optional, no asterisk) as the first fi
 
 ### Helper function
 `_vaultEntryRow(v)` — inline helper defined inside `renderVault()` to build the HTML for one entry row (avoids repeating the row template for both grouped and ungrouped entries).
+
+---
+
+## 40. Implementation Vault — Client-First Tile Dashboard ✅ Coded (June 20, 2026)
+
+### Design (reference: screenshot 14)
+Vault categories (Proposals, Decks, etc.) now open in a **client-first tile view** instead of a flat list. Each client that has files appears as a clickable tile card. Clicking a tile drills into that client's files; a back button returns to the tile view.
+
+### Tile view layout
+- Section label changes to: `● N — CLIENT-FIRST DASHBOARD` (N = number of client tiles)
+- Subtitle hint: "Client tiles, click to drill in"
+- 2-column grid of tiles, one per client
+- Each tile shows: colored initials avatar | client name | category label | file count
+- A "General" tile appears at the end for entries with no client assigned
+
+### Drill view layout
+- Back button: `← All Clients`
+- Shows client name + item count in the back bar
+- Lists all files for that client using the same entry-row format (category icon, name, notes, badge, uploader/date, Open + Delete)
+
+### Avatar color system
+- `_TILE_COLORS` — array of 8 pastel color pairs (bg + text), matching Tailwind color palette
+- `_tileColor(name)` — hashes client name to consistently pick one of the 8 colors
+- `_tileInitials(name)` — takes first letter of first and last word, uppercase (e.g. "Harmony Workforce" → "HW")
+
+### New global state
+- `VAULT_DRILL_CLIENT` — null = tile view; string = drill into that client; `'__general__'` = drill into General (no-client entries)
+- Reset to null on every category switch (in `goVault()` and `vaultFilter()`)
+
+### New CSS classes
+- `.vault-tile-grid` — 2-column grid container
+- `.vault-tile` — clickable client tile card with hover effect
+- `.vault-tile-avatar` — colored initials circle (36px, rounded)
+- `.vault-tile-name` — truncating client name label
+- `.vault-tile-cat` — category sub-label in green
+- `.vault-tile-count` — large number + "file/files" label, right-aligned
+- `.vault-drill-bar` — back button row in drill view
+- `.vault-drill-back` — styled back button
+
+### New JS functions
+- `vaultDrillIn(cn)` — sets `VAULT_DRILL_CLIENT` and re-renders
+- `vaultDrillBack()` — clears `VAULT_DRILL_CLIENT` and re-renders
+- `_tileColor(name)` — deterministic color picker from `_TILE_COLORS`
+- `_tileInitials(name)` — 2-letter initials from client name

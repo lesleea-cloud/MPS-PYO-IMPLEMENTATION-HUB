@@ -848,6 +848,17 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .vault-entry-name{font-size:12px;font-weight:600;color:var(--s8);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .vault-entry-meta{font-size:10px;color:var(--s4);white-space:nowrap;}
 .vault-entry-acts{display:flex;gap:6px;flex-shrink:0;}
+.vault-tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.vault-tile{display:flex;align-items:center;gap:12px;background:#fff;border-radius:var(--r12);border:1px solid var(--s2);box-shadow:var(--sh);padding:12px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.vault-tile:hover{box-shadow:var(--shm);border-color:var(--g2);}
+.vault-tile-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;letter-spacing:.02em;flex-shrink:0;}
+.vault-tile-name{font-size:13px;font-weight:700;color:var(--s9);line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vault-tile-cat{font-size:11px;font-weight:600;color:var(--g4);margin-top:2px;}
+.vault-tile-count{margin-left:auto;text-align:right;font-size:14px;font-weight:800;color:var(--s8);flex-shrink:0;}
+.vault-tile-count-lbl{font-size:10px;color:var(--s4);font-weight:400;white-space:nowrap;}
+.vault-drill-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.vault-drill-back{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .1s;}
+.vault-drill-back:hover{background:var(--s0);}
 .vault-mom-body-full{font-size:11px;color:var(--s5);line-height:1.5;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow-y:auto;}
 .vault-mom-expand{background:none;border:none;color:var(--g4);font-size:10px;font-weight:700;cursor:pointer;padding:0;font-family:var(--font);text-decoration:underline;}
 .vault-mom-expand:hover{color:var(--g5);}
@@ -2006,6 +2017,7 @@ var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){return J
 // ══════════════ IMPLEMENTATION VAULT ══════════════
 var VAULT_ITEMS=(function(){try{var s=localStorage.getItem('pyo_vault');return s?JSON.parse(s):[];}catch(e){return [];}})();
 var VAULT_FILTER='Proposals';
+var VAULT_DRILL_CLIENT=null;
 var MOM_ITEMS=[];
 async function fetchMOMs(){
   try{
@@ -2053,6 +2065,15 @@ function vaultCatIcon(cat){
 
 function vaultSaveToStorage(){try{localStorage.setItem('pyo_vault',JSON.stringify(VAULT_ITEMS));}catch(e){}}
 
+var _TILE_COLORS=[
+  {bg:'#dcfce7',c:'#166534'},{bg:'#dbeafe',c:'#1e40af'},{bg:'#f3e8ff',c:'#6b21a8'},
+  {bg:'#fef9c3',c:'#713f12'},{bg:'#ffedd5',c:'#9a3412'},{bg:'#fce7f3',c:'#9d174d'},
+  {bg:'#e0e7ff',c:'#3730a3'},{bg:'#d1fae5',c:'#065f46'}
+];
+function _tileColor(name){var h=0;for(var i=0;i<name.length;i++){h=(h*31+name.charCodeAt(i))%8;}return _TILE_COLORS[h];}
+function _tileInitials(name){var p=name.trim().split(/\s+/);return p.length>=2?(p[0][0]+p[p.length-1][0]).toUpperCase():name.substring(0,2).toUpperCase();}
+function vaultDrillIn(cn){VAULT_DRILL_CLIENT=cn;renderVault();}
+function vaultDrillBack(){VAULT_DRILL_CLIENT=null;renderVault();}
 function vaultShowForm(){
   if(CURRENT_ROLE==='manager')return;
   document.getElementById('vault-form').style.display='block';
@@ -2119,6 +2140,7 @@ function toggleVaultSection(){
 }
 function goVault(cat){
   VAULT_FILTER=cat||'Proposals';
+  VAULT_DRILL_CLIENT=null;
   vaultHideForm();
   go('vault');
   if(cat==='MOMs')fetchMOMs().then(renderVault);
@@ -2134,6 +2156,7 @@ function vaultSyncNav(){
 }
 function vaultFilter(cat){
   VAULT_FILTER=cat||'all';
+  VAULT_DRILL_CLIENT=null;
   vaultSyncNav();
   if(cat==='MOMs'){fetchMOMs().then(renderVault);}
   else{renderVault();}
@@ -2201,9 +2224,10 @@ function renderVault(){
 
   /* ── Regular vault items ── */
   var items=VAULT_FILTER==='all'?VAULT_ITEMS:VAULT_ITEMS.filter(function(v){return v.category===VAULT_FILTER;});
-  if(countEl)countEl.textContent=items.length+' file'+(items.length!==1?'s':'');
   if(!items.length){
-    grid.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><div class="vault-empty-title">No files yet</div><div class="vault-empty-sub">'+(canAdd?'Click "Add File" to upload your first entry.':'No entries in this category.')+'</div></div>';
+    if(countEl)countEl.textContent='';
+    if(catLbl)catLbl.textContent=VAULT_FILTER;
+    grid.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg><div class="vault-empty-title">No files yet</div><div class="vault-empty-sub">'+(canAdd?'Click "+ Add File" to upload your first entry.':'No entries in this category.')+'</div></div>';
     return;
   }
   // Group by clientName
@@ -2212,6 +2236,10 @@ function renderVault(){
     if(v.clientName){if(!vaultGrouped[v.clientName])vaultGrouped[v.clientName]=[];vaultGrouped[v.clientName].push(v);}
     else{vaultUngrp.push(v);}
   });
+  // Reset drill if client no longer exists in current filter
+  if(VAULT_DRILL_CLIENT&&VAULT_DRILL_CLIENT!=='__general__'&&!vaultGrouped[VAULT_DRILL_CLIENT])VAULT_DRILL_CLIENT=null;
+  if(VAULT_DRILL_CLIENT==='__general__'&&!vaultUngrp.length)VAULT_DRILL_CLIENT=null;
+
   function _vaultEntryRow(v){
     var cfg=VAULT_CAT[v.category]||VAULT_CAT['Other'];
     var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&v.uploadedBy===CURRENT_NAME);
@@ -2231,23 +2259,55 @@ function renderVault(){
     r+='</div></div>';
     return r;
   }
-  var h='';
-  Object.keys(vaultGrouped).sort().forEach(function(cname){
-    var entries=vaultGrouped[cname];
-    h+='<div class="vault-cgroup">';
-    h+='<div class="vault-cgroup-hdr"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+cname+'<span class="vault-cgroup-count">'+entries.length+' item'+(entries.length!==1?'s':'')+'</span></div>';
-    h+='<div>';
-    entries.forEach(function(v){h+=_vaultEntryRow(v);});
+
+  if(VAULT_DRILL_CLIENT){
+    /* ── DRILL VIEW: one client's files ── */
+    var drillItems=VAULT_DRILL_CLIENT==='__general__'?vaultUngrp:vaultGrouped[VAULT_DRILL_CLIENT]||[];
+    var drillLabel=VAULT_DRILL_CLIENT==='__general__'?'General':VAULT_DRILL_CLIENT;
+    if(catLbl)catLbl.textContent=drillLabel;
+    if(countEl)countEl.textContent=drillItems.length+' item'+(drillItems.length!==1?'s':'');
+    var h='<div class="vault-drill-bar">';
+    h+='<button class="vault-drill-back" onclick="vaultDrillBack()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>All Clients</button>';
+    h+='<span style="font-size:11px;color:var(--s4);">'+drillLabel+' · '+drillItems.length+' item'+(drillItems.length!==1?'s':'')+'</span>';
+    h+='</div>';
+    h+='<div class="vault-cgroup"><div>';
+    drillItems.forEach(function(v){h+=_vaultEntryRow(v);});
     h+='</div></div>';
-  });
-  if(vaultUngrp.length){
-    h+='<div class="vault-cgroup">';
-    h+='<div class="vault-cgroup-hdr" style="color:var(--s5);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>General<span class="vault-cgroup-count">'+vaultUngrp.length+' item'+(vaultUngrp.length!==1?'s':'')+'</span></div>';
-    h+='<div>';
-    vaultUngrp.forEach(function(v){h+=_vaultEntryRow(v);});
-    h+='</div></div>';
+    grid.innerHTML=h;
+  } else {
+    /* ── TILE VIEW: one tile per client ── */
+    var clientKeys=Object.keys(vaultGrouped).sort();
+    var totalClients=clientKeys.length+(vaultUngrp.length?1:0);
+    if(catLbl)catLbl.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--g);margin-right:6px;vertical-align:middle;"></span>'+totalClients+' — CLIENT-FIRST DASHBOARD';
+    if(countEl)countEl.textContent='';
+    var h='<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">';
+    h+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>';
+    h+='<span style="font-size:11px;color:var(--s4);">Client tiles, click to drill in</span></div>';
+    h+='<div class="vault-tile-grid">';
+    clientKeys.forEach(function(cname){
+      var cnt=vaultGrouped[cname].length;
+      var col=_tileColor(cname);
+      var init=_tileInitials(cname);
+      var safe=cname.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      h+='<div class="vault-tile" onclick="vaultDrillIn(\''+safe+'\')">';
+      h+='<div class="vault-tile-avatar" style="background:'+col.bg+';color:'+col.c+'">'+init+'</div>';
+      h+='<div style="flex:1;min-width:0;"><div class="vault-tile-name">'+cname+'</div>';
+      h+='<div class="vault-tile-cat">'+(VAULT_FILTER==='all'?'All Files':VAULT_FILTER)+'</div></div>';
+      h+='<div class="vault-tile-count">'+cnt+'<div class="vault-tile-count-lbl">'+(cnt!==1?'files':'file')+'</div></div>';
+      h+='</div>';
+    });
+    if(vaultUngrp.length){
+      var uc=vaultUngrp.length;
+      h+='<div class="vault-tile" onclick="vaultDrillIn(\'__general__\')">';
+      h+='<div class="vault-tile-avatar" style="background:#f1f5f9;color:#64748b">GN</div>';
+      h+='<div style="flex:1;min-width:0;"><div class="vault-tile-name">General</div>';
+      h+='<div class="vault-tile-cat">'+(VAULT_FILTER==='all'?'All Files':VAULT_FILTER)+'</div></div>';
+      h+='<div class="vault-tile-count">'+uc+'<div class="vault-tile-count-lbl">'+(uc!==1?'files':'file')+'</div></div>';
+      h+='</div>';
+    }
+    h+='</div>';
+    grid.innerHTML=h;
   }
-  grid.innerHTML=h;
 }
 function vaultOpenFile(id){
   var item=VAULT_ITEMS.find(function(v){return v.id===id;});
