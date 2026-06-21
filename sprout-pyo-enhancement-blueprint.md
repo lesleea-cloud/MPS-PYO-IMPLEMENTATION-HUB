@@ -2475,3 +2475,72 @@ Replaced the plain "Manage in Pending Items Bank →" link with a two-part foote
 
 ### No data model changes
 Uses the existing CLIENT_PENDING[clientNo] array. "No updates yet" is always shown (updates per item not yet tracked). "Add update" opens the Pending Items Bank tool.
+
+---
+
+## 46. MOM Vault — Manual Entry ✅ Coded (June 21, 2026)
+
+### What changed
+The MOMs section of the Implementation Vault now supports manually adding past MOMs (previously only showed email-synced MOMs from Gmail via Supabase).
+
+### Add MOM button
+The "Add File" button is now visible in the MOMs view for admin/implementer/god roles (previously hidden). When clicked, the vault form opens with "MOMs" pre-selected and MOM-specific fields shown.
+
+### MOM-specific form fields (shown when category = MOMs)
+- **Meeting Type** (required) — dropdown: KOM (Kick-off Meeting), Simulation, Parallel Run, Handover / Go-live, General Meeting
+- **Meeting Date** (required) — date input (YYYY-MM-DD format)
+- **URL** — becomes optional (label changes to show "(optional)", asterisk hidden)
+- Client is still optional
+- Notes is still optional
+
+### Auto-generated name
+`{momType} MOM — {clientName} — {meetingDate}` e.g., `KOM MOM — AlterCore — 6/21/2026`
+
+### Data model
+Manual MOMs stored in VAULT_ITEMS (localStorage `pyo_vault`) with extra fields:
+```
+{id, name, category:'MOMs', clientName, type:'link', url (nullable), notes, uploadedBy, uploadedAt, momType, momDate}
+```
+
+### Rendering (combined view)
+MOMs section now renders both sources:
+1. **Manual Entries** subsection (from VAULT_ITEMS where category='MOMs') — green document icon, shows momType badge + "Manual entry" italic label, meeting date, uploader, notes, "Open Document" link (if URL provided), delete button
+2. **From Gmail Sync** subsection (from MOM_ITEMS from Supabase) — existing blue email card style, unchanged
+
+Subsection headers only appear when both sources have items. Count in header includes both sources.
+
+### New JS
+- `vaultCatChange(cat)` — shows/hides vf-mom-extra and vf-deck-extra panels, toggles URL required/optional markers
+- Updated `vaultSaveItem()` — validates MOM-specific fields, generates auto-name, stores momType/momDate
+- Updated `vaultHideForm()` — clears vf-mom-type, vf-mom-date, vf-deck-type; calls vaultCatChange('')
+- Updated `vaultShowForm()` — calls vaultCatChange after pre-setting category from VAULT_FILTER
+
+### Form HTML additions
+- `onchange="vaultCatChange(this.value)"` on vf-cat select
+- `#vf-mom-extra` div (hidden by default) containing vf-mom-type select + vf-mom-date input
+- `#vf-deck-extra` div (hidden by default) containing vf-deck-type select
+- `#vf-url-req` span (asterisk, hidden when MOM selected)
+- `#vf-url-opt` span ("(optional)", shown when MOM selected)
+
+---
+
+## 47. Decks Vault — Deck Type Dropdown ✅ Coded (June 21, 2026)
+
+### What changed
+When adding an item to the Decks category in the vault, a new required "Deck Type" dropdown appears.
+
+### Deck type options
+- Kick-Off Meeting Deck
+- Payroll Discussion Deck
+- Parallel Run Deck
+- Fitgap Deck
+- Fitgap Results Deck
+
+### Auto-generated name
+`{deckType} — {clientName} — {date}` e.g., `KOM Deck — AlterCore — 6/21/2026`
+
+### Badge display
+In the vault entry row, the category badge shows the specific deckType value instead of the generic "Decks" label, so users can quickly identify which deck type an entry is.
+
+### Storage
+Extra field `deckType` saved on the VAULT_ITEMS entry alongside the standard fields.
