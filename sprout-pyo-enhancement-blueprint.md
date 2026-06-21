@@ -2544,3 +2544,49 @@ In the vault entry row, the category badge shows the specific deckType value ins
 
 ### Storage
 Extra field `deckType` saved on the VAULT_ITEMS entry alongside the standard fields.
+
+---
+
+## 48. Follow Up Panel — "Add Update" Resolution Logging ✅ Coded (June 21, 2026)
+
+### What changed
+The "↩ Add update" link in the Follow Up with Client panel now opens a dedicated overlay form to enter a resolution or update note for that specific pending item. Previously it just opened the Pending Items Bank.
+
+### User flow
+1. Click "↩ Add update" on a specific item in the Follow Up panel
+2. A centered overlay appears showing the item label and client name
+3. User types a resolution/update note (required)
+4. Optional: "Mark this item as Resolved" checkbox (checked by default)
+5. Save — note is saved to the item, panel re-renders
+
+### Data changes
+Three new optional fields added to CLIENT_PENDING items:
+- `resolution` (string) — the update/resolution text
+- `resolvedBy` (string) — IMPL_USER name who added the note
+- `resolvedAt` (string) — date in M/D/YYYY format
+
+### Follow Up panel sub-text
+- When resolution exists: shows the first 70 chars of the resolution text
+- When no resolution: shows "No updates yet • {phase} phase" (unchanged)
+
+### Pending Items Bank — ✓ Completed section
+Resolved items now show the resolution note below the strikethrough label:
+- Green left-bordered note block with italic resolution text
+- Metadata line: "resolvedBy · resolvedAt"
+
+### New HTML
+`#pend-upd-overlay` — fixed-position overlay div (z-index 10000) with the form. Initially `display:none`, shown as `display:flex` when active.
+
+### New JS
+- `PEND_UPD = {clientNo, idx}` — state for the open overlay
+- `pendAddUpdate(clientNo, idx)` — opens overlay, loads item data
+- `pendCloseUpdate()` — hides overlay
+- `pendSaveUpdate()` — validates, saves note + done flag, re-renders Follow Up panel, shows toast
+
+### CSS added
+- `.pib-res-note` — green left-bordered note block inside resolved items
+- `.pib-res-meta` — small metadata line (who/when) under resolution note
+- `.pib-check-item.done` opacity raised from 0.45 to 0.6 for better readability of resolution text
+
+### No Supabase schema changes needed
+`_cpSupaSave(clientNo)` serializes the full CLIENT_PENDING[clientNo] array as JSON, so the new fields (resolution, resolvedBy, resolvedAt) are included automatically.

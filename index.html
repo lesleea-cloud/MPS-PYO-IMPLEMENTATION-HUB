@@ -134,9 +134,11 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .pib-del{margin-left:auto;color:var(--s3);font-size:13px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;border:none;background:transparent;}
 .pib-del:hover{background:#fee2e2;color:#dc2626;}
 .pib-check-item{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:8px;border:1px solid var(--s1);margin-bottom:4px;background:#fff;}
-.pib-check-item.done{opacity:.45;}
+.pib-check-item.done{opacity:.6;}
 .pib-check-item.done .pib-check-label{text-decoration:line-through;color:var(--s4);}
-.pib-check-label{font-size:12px;color:var(--s7);flex:1;line-height:1.45;}
+.pib-check-label{font-size:12px;color:var(--s7);line-height:1.45;}
+.pib-res-note{font-size:11px;color:var(--s6);margin-top:4px;line-height:1.5;padding:5px 8px;background:var(--s0);border-radius:6px;border-left:3px solid var(--g);font-style:italic;}
+.pib-res-meta{font-size:10px;color:var(--s3);margin-top:2px;}
 .pib-check-cb{width:14px;height:14px;accent-color:var(--g);margin-top:2px;flex-shrink:0;cursor:pointer;}
 .pib-phase-hdr{font-size:10px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;padding:10px 0 5px;display:flex;align-items:center;gap:6px;}
 .pib-picker-item{display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:12px;color:var(--s7);}
@@ -1010,7 +1012,25 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
     <div id="pmod-body"></div>
   </div>
 </div>
- 
+<!-- ══ PENDING UPDATE OVERLAY ══ -->
+<div id="pend-upd-overlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:10000;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:14px;padding:1.375rem 1.5rem;width:420px;max-width:calc(100vw - 2rem);box-shadow:0 16px 48px rgba(0,0,0,.22);">
+    <div style="font-size:10px;font-weight:800;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Add Update</div>
+    <div id="pend-upd-item" style="font-size:13px;font-weight:700;color:var(--s8);margin-bottom:2px;"></div>
+    <div id="pend-upd-client" style="font-size:11px;color:var(--g4);font-weight:600;margin-bottom:14px;"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;">Resolution / Update Note <span style="color:var(--r)">*</span></div>
+    <textarea id="pend-upd-text" placeholder="Describe the update or resolution…" style="width:100%;height:80px;resize:none;border:1.5px solid var(--s2);border-radius:8px;padding:9px 11px;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;line-height:1.55;box-sizing:border-box;transition:border-color .15s;" onfocus="this.style.borderColor='var(--g)'" onblur="this.style.borderColor='var(--s2)'"></textarea>
+    <label style="display:flex;align-items:center;gap:7px;margin:10px 0 16px;font-size:12px;color:var(--s7);cursor:pointer;user-select:none;">
+      <input type="checkbox" id="pend-upd-resolve" style="accent-color:var(--g);width:14px;height:14px;cursor:pointer;">
+      <span>Mark this item as <strong>Resolved</strong></span>
+    </label>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="pendCloseUpdate()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">Cancel</button>
+      <button onclick="pendSaveUpdate()" style="padding:8px 20px;border-radius:8px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Update</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ ADMINISTRATION TOOL MODAL ══ -->
 <div class="modal-ov" id="tool-modal" style="align-items:flex-start;padding:1.5rem 1rem;">
   <div class="modal-box" id="tool-modal-box" style="max-width:640px;margin:auto;">
@@ -4636,8 +4656,8 @@ function renderPendingPanel(myD){
         +'<div class="pend-item-av">'+implInitial+'</div>'
         +'<div class="pend-item-content">'
         +'<div class="pend-item-title">'+escHtml(item.label)+'</div>'
-        +'<div class="pend-item-sub">No updates yet • '+phaseLbl+' phase</div>'
-        +'<span class="pend-item-addupd" onclick="openTool(\'pending-bank\')">↩ Add update</span>'
+        +'<div class="pend-item-sub">'+(item.resolution?escHtml(item.resolution.substring(0,70))+(item.resolution.length>70?'…':''):'No updates yet • '+phaseLbl+' phase')+'</div>'
+        +'<span class="pend-item-addupd" onclick="pendAddUpdate('+clientNo+','+realIdx+')">↩ Add update</span>'
         +'</div>'
         +'<div class="pend-item-right">'
         +'<span class="pend-item-date">'+dateStr+'</span>'
@@ -4715,6 +4735,45 @@ function dashPendingToggle(clientNo,idx,done){
 
 function openPendingBank(){
   openTool('pending-bank');
+}
+var PEND_UPD={clientNo:0,idx:-1};
+function pendAddUpdate(clientNo,idx){
+  var item=(CLIENT_PENDING[clientNo]||[])[idx];
+  if(!item)return;
+  var cl=D.find(function(d){return d.no===clientNo;});
+  PEND_UPD={clientNo:clientNo,idx:idx};
+  var titleEl=document.getElementById('pend-upd-item');
+  var clientEl=document.getElementById('pend-upd-client');
+  var txt=document.getElementById('pend-upd-text');
+  var cb=document.getElementById('pend-upd-resolve');
+  if(titleEl)titleEl.textContent=item.label;
+  if(clientEl)clientEl.textContent=cl?cl.client:'';
+  if(txt){txt.value=item.resolution||'';setTimeout(function(){txt.focus();},60);}
+  if(cb)cb.checked=true;
+  var ov=document.getElementById('pend-upd-overlay');
+  if(ov){ov.style.display='flex';}
+}
+function pendCloseUpdate(){
+  var ov=document.getElementById('pend-upd-overlay');
+  if(ov)ov.style.display='none';
+}
+function pendSaveUpdate(){
+  var note=(document.getElementById('pend-upd-text').value||'').trim();
+  var resolve=document.getElementById('pend-upd-resolve').checked;
+  var err=document.getElementById('pend-upd-text');
+  if(!note){if(err){err.style.borderColor='var(--r)';setTimeout(function(){err.style.borderColor='var(--s2)';},1500);}return;}
+  var cn=PEND_UPD.clientNo,idx=PEND_UPD.idx;
+  if(!CLIENT_PENDING[cn]||CLIENT_PENDING[cn][idx]===undefined)return;
+  var item=CLIENT_PENDING[cn][idx];
+  item.resolution=note;
+  item.resolvedBy=IMPL_USER||CURRENT_NAME||'';
+  item.resolvedAt=_vaultToday();
+  if(resolve)item.done=true;
+  pibSavePending();_cpSupaSave(cn);
+  pendCloseUpdate();
+  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  renderPendingPanel(myD);
+  showImportToast('success','Update saved'+(resolve?' — marked as resolved':'')+'.');
 }
 
 function implRenderAttention(myD){
@@ -5526,7 +5585,12 @@ function renderPendingBankUI(view){
             (byPhase[ph]||[]).filter(function(e){return e.item.done;}).forEach(function(e){
               html+='<div class="pib-check-item done">'
                 +'<input type="checkbox" class="pib-check-cb" checked onchange="pibToggleItem('+PIB_CLIENT+','+e.idx+',this.checked)"/>'
-                +'<span class="pib-check-label">'+e.item.label+'</span>'
+                +'<div style="flex:1;min-width:0;">'
+                +'<span class="pib-check-label">'+escHtml(e.item.label)+'</span>'
+                +(e.item.resolution?'<div class="pib-res-note">'+escHtml(e.item.resolution)+'</div>'
+                  +(e.item.resolvedBy?'<div class="pib-res-meta">'+escHtml(e.item.resolvedBy)+(e.item.resolvedAt?' · '+e.item.resolvedAt:'')+'</div>':'')
+                :'')
+                +'</div>'
                 +'<button class="pib-del" onclick="pibDeleteItem('+PIB_CLIENT+','+e.idx+')">✕</button>'
                 +'</div>';
             });
