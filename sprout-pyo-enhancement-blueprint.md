@@ -2590,3 +2590,90 @@ Resolved items now show the resolution note below the strikethrough label:
 
 ### No Supabase schema changes needed
 `_cpSupaSave(clientNo)` serializes the full CLIENT_PENDING[clientNo] array as JSON, so the new fields (resolution, resolvedBy, resolvedAt) are included automatically.
+
+---
+
+## 49. Settings — Generic Integrations Panel (PM Tool) 🟡 Coded, needs manual setup (July 6, 2026)
+
+### What changed
+Added a generic "Integrations" card to Settings (admin only), modeled after a reference screenshot: tool name + description, a status badge (Not configured / ✓ Configured), an input to paste an API key, a masked-key display once saved, and a Remove Key button. Built as a reusable pattern — "PM Tool" is the first entry (`intg-pm_tool-*` DOM ids), more tools can be added the same way later.
+
+### Why this needed a real backend
+Unlike the GitHub Auto-Commit panel (token stored in `localStorage`, calls GitHub's API directly from the browser), this integration's data flow is the PM Tool **pushing** data into Sprout PYO Hub. A browser page can't receive an inbound webhook, and the key must never be readable from the client ("stored securely on the server, never shown in full"). That requires an actual server component — this app previously had none (pure static `index.html` + Supabase browser SDK).
+
+### New backend: Vercel serverless functions (`/api/integrations/`)
+| File | Method | Purpose |
+|---|---|---|
+| `api/_lib/supabaseAdmin.js` | — | Shared helper — calls Supabase's REST API directly with the `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS). Not a route (underscore-prefixed folder). |
+| `api/integrations/save.js` | POST | Upserts `{id, toolName, apiKey, configuredBy}` into `integrations`. Returns only `{status, last4}` — never the raw key. |
+| `api/integrations/status.js` | GET `?id=` | Returns `{status, last4, configuredBy, configuredAt}` for display. |
+| `api/integrations/remove.js` | POST | Deletes the row for `{id}`. |
+| `api/integrations/webhook.js` | POST `?id=` | Receiving endpoint. Validates `Authorization: Bearer <key>` (or `x-api-key`) against the stored key, then logs the raw JSON payload into `integration_events`. **Field mapping into Clients/Implementation Projects is NOT implemented yet — this only logs.** |
+
+Uses global `fetch` (Node 18+ runtime on Vercel) against Supabase PostgREST — no new npm dependency, no build step added.
+
+### New Supabase tables — `PM_Tool_Integrations_Table.sql`
+| Table | Purpose |
+|---|---|
+| `integrations` | `id, tool_name, api_key, key_last4, status, configured_by, configured_at, updated_at`. RLS enabled with **no** anon/authenticated policies — only the service-role key (server-side only) can read/write. |
+| `integration_events` | Append-only log of pushed payloads (`integration_id, payload jsonb, received_at`). Same RLS lockout. |
+
+### ⚠️ Manual setup required before this works
+1. Run `PM_Tool_Integrations_Table.sql` in Supabase → SQL Editor.
+2. In Vercel → Project Settings → Environment Variables, add `SUPABASE_SERVICE_ROLE_KEY` (from Supabase → Project Settings → API → `service_role` key — **not** the anon key already baked into `index.html`). Redeploy after adding it.
+3. Give the PM Tool the webhook URL shown in the UI (`{origin}/api/integrations/webhook?id=pm_tool`) and whatever key you paste into the "PM Tool" card, so it can authenticate its pushes.
+
+### Frontend changes (`index.html`)
+- New panel `#st-panel-integrations` in Settings (admin-only, same gating as GitHub panel), added right after `st-panel-github`.
+- `renderSettings()` now calls `intgLoadStatus('pm_tool')` when admin.
+- New JS: `intgWebhookUrl()`, `intgSetUI()`, `intgLoadStatus()`, `intgConnect()`, `intgRemove()`, `intgCopyWebhook()`.
+
+### Not done yet (next steps)
+- No UI to view logged `integration_events` payloads — they land in Supabase only.
+- No mapping of pushed PM Tool data into `D[]` / Clients — webhook only logs.
+- Only one integration ("PM Tool") wired up; framework supports adding more by repeating the card markup + calling `intgLoadStatus('<new-id>')`.
+
+---
+
+## 50. Settings — External API Access (issue keys for other tools to pull stats) 🟡 Coded, needs manual setup (July 6, 2026)
+
+### What changed
+Added the reverse of Section 49: instead of an external tool pushing data in, this lets **other tools pull live project stats out** of Sprout PYO Hub. New panel in Settings (admin only), modeled after a reference screenshot: an "Active Key(s)" count badge, the endpoint contract shown inline, a metrics checklist, a list of issued keys with a Revoke button each, and a "Generate New Key" form.
+
+### Metrics exposed
+Adapted from the reference (which used Customer Onboarding/Success + MRR — not applicable here) to fields that actually exist on `clients` (`service`, `remarks`):
+| Metric | Definition |
+|---|---|
+| PYO — Active Projects | `service` contains "PYO" AND `remarks` not in (Live, Churned) |
+| PYO — Live Projects | `service` contains "PYO" AND `remarks` = Live |
+| Payroll Starter — Active Projects | `service` = "Payroll Starter" AND not Live/Churned |
+| Payroll Starter — Live Projects | `service` = "Payroll Starter" AND `remarks` = Live |
+| All Clients — Active Projects | any service, not Live/Churned |
+| All Clients — Live Projects | any service, `remarks` = Live |
+
+**Note (matches the reference behavior deliberately):** the endpoint always returns all six metrics regardless of which checkboxes are ticked. The checkboxes are a consent record for the admin ("what I told this consumer they could use"), not a server-side filter. If real per-key filtering is wanted later, `api/stats/summary.js` would need to read the key's stored `metrics` JSON and omit unchecked fields from the response.
+
+### New backend
+| File | Method | Purpose |
+|---|---|---|
+| `api/keys/generate.js` | POST `{label, metrics}` | Generates `sk-sprout-<48 hex chars>`, stores only its SHA-256 hash + 20-char prefix + label + metrics record. Returns the raw key **once** — it is never stored or returned again. |
+| `api/keys/list.js` | GET | Returns active keys' `{id, label, prefix, createdAt, lastUsedAt}` — never the hash or raw key. |
+| `api/keys/revoke.js` | POST `{id}` | Sets `status='revoked'` (soft delete, keeps history). |
+| `api/stats/summary.js` | GET, header `X-Api-Key` | Public consumer-facing endpoint. Hashes the provided key, looks up an active match, computes the six metrics from `clients`, stamps `last_used_at`, returns JSON. |
+
+### New Supabase table — `External_API_Keys_Table.sql`
+`external_api_keys(id, label, key_hash UNIQUE, key_prefix, metrics jsonb, status, created_at, last_used_at)`. RLS enabled, no anon/authenticated policies — service-role only (same lockdown pattern as `integrations` in Section 49).
+
+### ⚠️ Manual setup required
+1. Run `External_API_Keys_Table.sql` in Supabase → SQL Editor.
+2. Same `SUPABASE_SERVICE_ROLE_KEY` env var from Section 49 covers this too — no additional env var needed if that's already set.
+
+### Frontend changes (`index.html`)
+- New panel `#st-panel-extapi` in Settings, admin-only, placed after `st-panel-integrations`.
+- `renderSettings()` now hides the one-time key-reveal box and calls `extapiLoadKeys()` when admin.
+- New JS: `extapiMetricIds()`, `extapiSelectedMetrics()`, `extapiLoadKeys()`, `extapiRenderKeys()`, `extapiGenerate()`, `extapiCopyRevealed()`, `extapiRevoke()`.
+
+### Not done yet (next steps)
+- No usage/rate-limit dashboard beyond `last_used_at`.
+- No expiry dates on keys (revoke is manual only).
+- No actual response filtering by the metrics checkboxes (see note above).

@@ -2051,6 +2051,82 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <span style="font-size:11px;color:var(--s4);">Token is stored in your browser only — never shared with other users.</span>
         </div>
       </div>
+
+      <!-- Integrations (Admin) -->
+      <div class="panel" id="st-panel-integrations" style="display:none;">
+        <div class="panel-title"><span class="pt-dot" style="--c:#1679FA"></span>Integrations</div>
+        <div style="font-size:11px;color:var(--s5);margin-bottom:1rem;margin-top:-.5rem;">Connect external tools. API keys are stored securely on the server and never shown in full after saving.</div>
+
+        <div id="intg-pm_tool" style="border:1px solid var(--s2);border-radius:10px;padding:.85rem 1rem;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:.6rem;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--s8);">PM Tool</div>
+              <div style="font-size:11px;color:var(--s5);margin-top:2px;">Project management sync · Pushes data into Implementation Projects</div>
+            </div>
+            <span id="intg-pm_tool-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;background:var(--s1);color:var(--s5);border:1px solid var(--s2);">Not configured</span>
+          </div>
+
+          <div id="intg-pm_tool-connect-row" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <input id="intg-pm_tool-key-input" type="password" placeholder="Paste API key from PM Tool" style="flex:1;min-width:220px;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--mono);color:var(--s8);background:#fff;box-sizing:border-box;">
+            <button onclick="intgConnect('pm_tool')" style="padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Connect</button>
+          </div>
+
+          <div id="intg-pm_tool-configured-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:12px;color:var(--s6);background:var(--s0);border:1px solid var(--s2);border-radius:6px;padding:5px 9px;" id="intg-pm_tool-masked">••••••••</span>
+            <button onclick="intgRemove('pm_tool')" style="padding:7px 16px;background:#fff;color:var(--r);border:1px solid var(--r1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);">Remove Key</button>
+          </div>
+
+          <div id="intg-pm_tool-webhook-row" style="display:none;margin-top:.65rem;padding-top:.65rem;border-top:1px solid var(--s1);">
+            <div style="font-size:11px;font-weight:600;color:var(--s5);margin-bottom:4px;">Webhook URL — configure PM Tool to push data here</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <code id="intg-pm_tool-webhook-url" style="flex:1;min-width:220px;font-size:11px;color:var(--s6);background:var(--s0);border:1px solid var(--s2);border-radius:6px;padding:6px 9px;word-break:break-all;"></code>
+              <button onclick="intgCopyWebhook('pm_tool')" style="padding:6px 12px;background:#fff;color:var(--s6);border:1px solid var(--s2);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">Copy</button>
+            </div>
+            <div style="font-size:10.5px;color:var(--s4);margin-top:4px;">Send the key as header <code style="font-family:var(--mono);">Authorization: Bearer &lt;key&gt;</code>. Incoming payloads are logged only — field mapping into Clients is not wired up yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- External API Access (Admin) -->
+      <div class="panel" id="st-panel-extapi" style="display:none;">
+        <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;">
+          <span><span class="pt-dot" style="--c:#32CE13"></span>External API Access</span>
+          <span id="extapi-count-badge" style="font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--g0);color:var(--g4);border:1px solid var(--g1);white-space:nowrap;">0 Active Keys</span>
+        </div>
+        <div style="font-size:11px;color:var(--s5);margin-bottom:.75rem;margin-top:-.5rem;">Let external dashboards and tools pull live project stats from Sprout PYO Hub.</div>
+
+        <div style="font-family:var(--mono);font-size:11px;color:var(--s6);background:var(--s0);border:1px solid var(--s2);border-radius:7px;padding:8px 11px;margin-bottom:1rem;">
+          Stats endpoint: <b>GET /api/stats/summary</b> · Header: <b>X-Api-Key: &lt;your-key&gt;</b>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:6px;">Available Metrics (check what you want the external tool to use)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 20px;margin-bottom:4px;font-size:12px;color:var(--s7);">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="extapi-metric-pyoActive" checked style="accent-color:var(--g);width:13px;height:13px;cursor:pointer;"> PYO — Active Projects</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="extapi-metric-pyoLive" checked style="accent-color:var(--g);width:13px;height:13px;cursor:pointer;"> PYO — Live Projects</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="extapi-metric-psActive" style="accent-color:var(--g);width:13px;height:13px;cursor:pointer;"> Payroll Starter — Active Projects</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="extapi-metric-psLive" style="accent-color:var(--g);width:13px;height:13px;cursor:pointer;"> Payroll Starter — Live Projects</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="extapi-metric-allActive" style="accent-color:var(--g);width:13px;height:13px;cursor:pointer;"> All Clients — Active Projects</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="extapi-metric-allLive" style="accent-color:var(--g);width:13px;height:13px;cursor:pointer;"> All Clients — Live Projects</label>
+        </div>
+        <div style="font-size:10.5px;color:var(--s4);margin-bottom:1rem;">The endpoint always returns all six metrics. Check the ones you've agreed to share so you have a record.</div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:6px;">Active Keys</div>
+        <div id="extapi-keys-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:1rem;"></div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--s7);margin-bottom:6px;">Generate New Key</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="extapi-new-label" type="text" placeholder="e.g. Boss Dashboard" style="flex:1;min-width:220px;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;box-sizing:border-box;">
+          <button onclick="extapiGenerate()" style="padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Generate Key</button>
+        </div>
+
+        <div id="extapi-reveal" style="display:none;margin-top:.75rem;padding:.75rem 1rem;background:var(--g0);border:1px solid var(--g1);border-radius:8px;">
+          <div style="font-size:11px;font-weight:700;color:var(--g4);margin-bottom:4px;">Copy this key now — it won't be shown again.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <code id="extapi-reveal-key" style="flex:1;min-width:220px;font-size:11px;color:var(--s8);background:#fff;border:1px solid var(--g1);border-radius:6px;padding:6px 9px;word-break:break-all;"></code>
+            <button onclick="extapiCopyRevealed()" style="padding:6px 12px;background:#fff;color:var(--g4);border:1px solid var(--g1);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">Copy</button>
+          </div>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -7187,6 +7263,8 @@ function renderSettings(){
   document.getElementById('st-panel-team').style.display=isAdmin?'':'none';
   document.getElementById('st-panel-backup').style.display=isAdmin?'':'none';
   document.getElementById('st-panel-github').style.display=isAdmin?'':'none';
+  document.getElementById('st-panel-integrations').style.display=isAdmin?'':'none';
+  document.getElementById('st-panel-extapi').style.display=isAdmin?'':'none';
   document.getElementById('st-panel-timeline').style.display=(isAdmin||isImpl)?'':'none';
 
   if(isAdmin||isImpl){
@@ -7211,6 +7289,9 @@ function renderSettings(){
       el=document.getElementById('gh-path');if(el)el.value=ghCfg.path||'';
       el=document.getElementById('gh-branch');if(el)el.value=ghCfg.branch||'';
     }
+    intgLoadStatus('pm_tool');
+    document.getElementById('extapi-reveal').style.display='none';
+    extapiLoadKeys();
   }
 }
 
@@ -7580,6 +7661,152 @@ function clearGitHubConfig(){
   localStorage.removeItem('pyo_gh_config');
   ['gh-token','gh-owner','gh-repo','gh-path','gh-branch'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   showImportToast('success','GitHub config cleared.');
+}
+
+// ══════════════════════════════════════════════════════
+// INTEGRATIONS — generic external-tool connections
+// Keys are stored server-side (Supabase, service-role only) via /api/integrations/*.
+// The browser only ever sees a masked last-4 + status, never the raw key.
+// ══════════════════════════════════════════════════════
+function intgWebhookUrl(id){
+  return location.origin+'/api/integrations/webhook?id='+encodeURIComponent(id);
+}
+
+function intgSetUI(id,state){
+  var badge=document.getElementById('intg-'+id+'-badge');
+  var connectRow=document.getElementById('intg-'+id+'-connect-row');
+  var configuredRow=document.getElementById('intg-'+id+'-configured-row');
+  var webhookRow=document.getElementById('intg-'+id+'-webhook-row');
+  if(!badge)return;
+  if(state.status==='configured'){
+    badge.textContent='✓ Configured';
+    badge.style.background='var(--g0)';badge.style.color='var(--g4)';badge.style.borderColor='var(--g1)';
+    connectRow.style.display='none';
+    configuredRow.style.display='flex';
+    webhookRow.style.display='block';
+    document.getElementById('intg-'+id+'-masked').textContent='••••••••'+(state.last4||'????');
+    document.getElementById('intg-'+id+'-webhook-url').textContent=intgWebhookUrl(id);
+  }else{
+    badge.textContent='Not configured';
+    badge.style.background='var(--s1)';badge.style.color='var(--s5)';badge.style.borderColor='var(--s2)';
+    connectRow.style.display='flex';
+    configuredRow.style.display='none';
+    webhookRow.style.display='none';
+    var input=document.getElementById('intg-'+id+'-key-input');if(input)input.value='';
+  }
+}
+
+function intgLoadStatus(id){
+  fetch('/api/integrations/status?id='+encodeURIComponent(id))
+    .then(function(r){return r.ok?r.json():{status:'not_configured'};})
+    .then(function(state){intgSetUI(id,state);})
+    .catch(function(){intgSetUI(id,{status:'not_configured'});});
+}
+
+function intgConnect(id){
+  var input=document.getElementById('intg-'+id+'-key-input');
+  var apiKey=(input.value||'').trim();
+  if(!apiKey){showImportToast('error','Paste an API key first.');return;}
+  fetch('/api/integrations/save',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id,toolName:'PM Tool',apiKey:apiKey,configuredBy:CURRENT_NAME||CURRENT_ROLE})
+  })
+    .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
+    .then(function(state){intgSetUI(id,state);showImportToast('success','PM Tool connected.');})
+    .catch(function(e){showImportToast('error','Could not save key: '+e.message);});
+}
+
+function intgRemove(id){
+  if(!confirm('Remove this integration? Any tool pushing data with this key will stop working.'))return;
+  fetch('/api/integrations/remove',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id})
+  })
+    .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
+    .then(function(state){intgSetUI(id,state);showImportToast('success','Integration removed.');})
+    .catch(function(e){showImportToast('error','Could not remove key: '+e.message);});
+}
+
+function intgCopyWebhook(id){
+  var url=intgWebhookUrl(id);
+  navigator.clipboard.writeText(url).then(function(){showImportToast('success','Webhook URL copied.');})
+    .catch(function(){showImportToast('error','Copy failed — select and copy manually.');});
+}
+
+// ══════════════════════════════════════════════════════
+// EXTERNAL API ACCESS — reverse direction: other tools pull stats FROM us
+// Keys are shown in full exactly once (at generation). Only a hash + short
+// prefix are ever stored or sent back to the browser afterward.
+// ══════════════════════════════════════════════════════
+function extapiMetricIds(){
+  return ['pyoActive','pyoLive','psActive','psLive','allActive','allLive'];
+}
+
+function extapiSelectedMetrics(){
+  var m={};
+  extapiMetricIds().forEach(function(id){var el=document.getElementById('extapi-metric-'+id);m[id]=!!(el&&el.checked);});
+  return m;
+}
+
+function extapiLoadKeys(){
+  fetch('/api/keys/list')
+    .then(function(r){return r.ok?r.json():{keys:[]};})
+    .then(function(data){extapiRenderKeys(data.keys||[]);})
+    .catch(function(){extapiRenderKeys([]);});
+}
+
+function extapiRenderKeys(keys){
+  var list=document.getElementById('extapi-keys-list');
+  var badge=document.getElementById('extapi-count-badge');
+  if(!list||!badge)return;
+  badge.textContent=keys.length+' Active Key'+(keys.length!==1?'s':'');
+  if(!keys.length){list.innerHTML='<div style="font-size:11.5px;color:var(--s4);">No keys yet.</div>';return;}
+  list.innerHTML=keys.map(function(k){
+    var created=k.createdAt?new Date(k.createdAt).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--s0);border:1px solid var(--s2);border-radius:8px;padding:7px 11px;flex-wrap:wrap;">'+
+      '<div><span style="font-size:12px;font-weight:700;color:var(--s8);">'+escHtml(k.label)+'</span>'+
+      ' <span style="font-family:var(--mono);font-size:11px;color:var(--s5);margin-left:6px;">'+escHtml(k.prefix)+'…</span></div>'+
+      '<div style="display:flex;align-items:center;gap:10px;">'+
+      '<span style="font-size:10.5px;color:var(--s4);">'+created+'</span>'+
+      '<button onclick="extapiRevoke(\''+k.id+'\')" style="padding:5px 12px;background:#fff;color:var(--r);border:1px solid var(--r1);border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">Revoke</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function extapiGenerate(){
+  var input=document.getElementById('extapi-new-label');
+  var label=(input.value||'').trim();
+  if(!label){showImportToast('error','Give the key a label first.');return;}
+  fetch('/api/keys/generate',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({label:label,metrics:extapiSelectedMetrics()})
+  })
+    .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
+    .then(function(data){
+      input.value='';
+      document.getElementById('extapi-reveal-key').textContent=data.key;
+      document.getElementById('extapi-reveal').style.display='block';
+      extapiLoadKeys();
+      showImportToast('success','Key generated. Copy it now — it will not be shown again.');
+    })
+    .catch(function(e){showImportToast('error','Could not generate key: '+e.message);});
+}
+
+function extapiCopyRevealed(){
+  var text=document.getElementById('extapi-reveal-key').textContent;
+  navigator.clipboard.writeText(text).then(function(){showImportToast('success','Key copied.');})
+    .catch(function(){showImportToast('error','Copy failed — select and copy manually.');});
+}
+
+function extapiRevoke(id){
+  if(!confirm('Revoke this key? Any tool using it will immediately lose access.'))return;
+  fetch('/api/keys/revoke',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id})
+  })
+    .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
+    .then(function(){extapiLoadKeys();showImportToast('success','Key revoked.');})
+    .catch(function(e){showImportToast('error','Could not revoke key: '+e.message);});
 }
 
 function commitToGitHub(cfg,html,message,onSuccess,onError){
