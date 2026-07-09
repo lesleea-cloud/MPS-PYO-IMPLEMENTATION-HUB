@@ -1109,7 +1109,6 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sg" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Sprout Gov</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-ba" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Benefits Admin</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sd" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Salary Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-std" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Statutory Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-otk" onchange="acmCheckOtk()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Outsourced Timekeeping</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pd" onchange="acmCheckPd()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll Disbursement</label>
@@ -1590,7 +1589,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth" title="Sprout Gov">S. Gov</th><th class="cth" title="Benefits Administration">Benefits</th><th class="cth" title="Salary Disbursement">Salary</th><th class="cth" title="Statutory Disbursement">Statutory</th><th class="cth" title="Outsourced Timekeeping">Timekeep.</th><th class="cth" title="Payroll Disbursement">Pay. Disb.</th>
+                <th class="cth" title="Sprout Gov">S. Gov</th><th class="cth" title="Benefits Administration">Benefits</th><th class="cth" title="Statutory Disbursement">Statutory</th><th class="cth" title="Outsourced Timekeeping">Timekeep.</th><th class="cth" title="Payroll Disbursement">Pay. Disb.</th>
               </tr></thead>
               <tbody id="cl-body-addons"></tbody>
             </table>
@@ -2211,7 +2210,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 // ══════════════ DATA ══════════════
 var D=[];
 var D_DEFAULT=/*D_DATA*/[{"no":1,"month":"January","client":"Brandfox Digital","resource":"Leslee","pm":"Lexy","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"01/14/2026","handOver":"01/29/2026","liveRun":"02/15/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":2,"month":"January","client":"Appen Services Philippines","resource":"Leslee","pm":"Aldwin","remarks":"Live","service":"PYO + HR + Sprout Gov","days":150,"komDate":"01/14/2026","handOver":"04/13/2026","liveRun":"04/25/2026","kom":1,"sim":1,"par":1,"live":0,"post":0},{"no":3,"month":"January","client":"DIS TECH PHILIPPINES, LLC","resource":"Denise","pm":"Lexy","remarks":"Live","service":"PYO + HR + Sprout Gov","days":60,"komDate":"01/19/2026","handOver":"03/19/2026","liveRun":"04/10/2026","kom":1,"sim":1,"par":1,"live":1,"post":1},{"no":4,"month":"January","client":"Evermere Food Corporation","resource":"Armie","pm":"Angge","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"01/28/2026","handOver":"02/26/2026","liveRun":"03/15/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":5,"month":"January","client":"Powers Technical Services OPC","resource":"Pau","pm":"Lexy","remarks":"Ongoing","service":"Sprout Gov","days":30,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":6,"month":"January","client":"Wilmar Sugar Philippines Inc.","resource":"Armie","pm":"Angge","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"01/23/2026","handOver":"02/06/2026","liveRun":"02/15/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":7,"month":"January","client":"Glowify Aesthetic Clinic","resource":"Denise","pm":"Lexy","remarks":"Churned","service":"Payroll Starter","days":15,"komDate":"01/28/2026","handOver":"02/12/2026","liveRun":"04/15/2026","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":8,"month":"January","client":"Kuh Meal","resource":"Armie","pm":"See","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"02/19/2026","handOver":"03/06/2026","liveRun":"03/15/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":9,"month":"January","client":"Q&A Consulting OPC/ Arden Consult","resource":"Pau / Alva","pm":"Lexy","remarks":"Live","service":"Sprout Gov","days":30,"komDate":"","handOver":"03/01/2026","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":10,"month":"January","client":"Exter Philippines Corporation","resource":"Armie","pm":"Angge","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"02/05/2026","handOver":"02/20/2026","liveRun":"03/28/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":11,"month":"January","client":"Alliance Select Foods International Inc.","resource":"Denise","pm":"See","remarks":"Live","service":"PYO","days":60,"komDate":"02/11/2026","handOver":"03/26/2026","liveRun":"04/15/2026","kom":1,"sim":1,"par":1,"live":1,"post":0},{"no":12,"month":"January","client":"Dexterton Corporation","resource":"Leslee","pm":"Angge","remarks":"Live","service":"PYO","days":60,"komDate":"02/05/2026","handOver":"04/01/2026","liveRun":"04/10/2026","kom":1,"sim":1,"par":1,"live":1,"post":0},{"no":13,"month":"February","client":"Netrix Worldwide Philippines Inc.","resource":"Mhae","pm":"Lexy","remarks":"Not yet started","service":"Statutory Disbursement","days":30,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":14,"month":"February","client":"Global Services VSTSF Inc.","resource":"Armie","pm":"Aldwin","remarks":"Churned","service":"Payroll Starter","days":15,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":15,"month":"February","client":"In-Store Media Philippines Inc.,","resource":"Armie","pm":"See","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"02/20/2026","handOver":"03/06/2026","liveRun":"03/15/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":16,"month":"February","client":"Christian Generosity Foundation Philippines Inc.","resource":"Denise","pm":"Angge","remarks":"Live","service":"PYO","days":30,"komDate":"03/25/2026","handOver":"04/27/2026","liveRun":"05/15/2026","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":17,"month":"February","client":"Harmony Workforce and Resourcing Solutions Inc","resource":"Leslee","pm":"See","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"02/24/2026","handOver":"03/11/2026","liveRun":"04/18/2026","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":18,"month":"February","client":"Wabi Zabi Sushi Bar","resource":"Armie","pm":"Aldwin","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"02/24/2026","handOver":"03/09/2026","liveRun":"03/20/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":19,"month":"February","client":"Repro Optima Center for Reproductive Health","resource":"Leslee","pm":"See","remarks":"Live","service":"PYO + HR","days":30,"komDate":"02/26/2026","handOver":"03/27/2026","liveRun":"","kom":1,"sim":1,"par":1,"live":1,"post":0},{"no":20,"month":"February","client":"Bespoke Outsource Services","resource":"Denise","pm":"Angge","remarks":"Live","service":"PYO + HR + Sprout Gov","days":30,"komDate":"03/02/2026","handOver":"03/27/2026","liveRun":"04/15/2026","kom":1,"sim":1,"par":1,"live":1,"post":0},{"no":21,"month":"February","client":"Alternergy Holdings","resource":"Pau / Marix","pm":"","remarks":"Not yet started","service":"Sprout Gov","days":0,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":22,"month":"February","client":"CIS Bayad Center","resource":"Leslee","pm":"Angge","remarks":"Ongoing","service":"PYO + HR + Sprout Gov","days":60,"komDate":"03/19/2026","handOver":"","liveRun":"","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":23,"month":"March","client":"RACH NET-SEC Inc. (Public Sector Network)","resource":"Leslee","pm":"Lexy","remarks":"Ongoing","service":"PYO + HR + Sprout Gov","days":30,"komDate":"03/26/2026","handOver":"","liveRun":"","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":24,"month":"March","client":"Netlink Voice","resource":"Pau","pm":"Angge","remarks":"Not yet started","service":"Sprout Gov","days":0,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":25,"month":"March","client":"FiberHome Philippines. Inc (Phase 2)","resource":"Leslee","pm":"Jac","remarks":"Ongoing","service":"PYO + HR","days":0,"komDate":"","handOver":"","liveRun":"","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":26,"month":"March","client":"Abueli Consultancy Services Corporation","resource":"Denise","pm":"Lexy","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"03/19/2026","handOver":"04/08/2026","liveRun":"05/15/2026","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":27,"month":"March","client":"Upson Global Inc.","resource":"Armie","pm":"See","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"03/16/2026","handOver":"03/30/2026","liveRun":"04/25/2026","kom":1,"sim":1,"par":0,"live":1,"post":0},{"no":28,"month":"March","client":"Qualify Health","resource":"Denise","pm":"See","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"03/25/2026","handOver":"04/17/2026","liveRun":"05/15/2026","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":29,"month":"March","client":"MBVA 24-7, Inc","resource":"Armie","pm":"Angge","remarks":"Churned","service":"PYO + HR + Sprout Gov","days":60,"komDate":"03/19/2026","handOver":"","liveRun":"","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":30,"month":"March","client":"Alternative Home Health + Care, Inc","resource":"Armie","pm":"Lexy","remarks":"Live","service":"Payroll Starter","days":15,"komDate":"04/10/2026","handOver":"04/24/2026","liveRun":"05/20/2026","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":31,"month":"March","client":"Didadit Supply OPC","resource":"Leslee","pm":"Lexy","remarks":"Ongoing","service":"Payroll Starter","days":15,"komDate":"04/15/2026","handOver":"","liveRun":"","kom":1,"sim":0,"par":0,"live":0,"post":0},{"no":32,"month":"April","client":"Burnt Bean Restaurant","resource":"Armie","pm":"See","remarks":"Live","service":"PYO + HR + Sprout Gov","days":30,"komDate":"04/17/2026","handOver":"06/05/2026","liveRun":"06/15/2026","kom":1,"sim":1,"par":1,"live":0,"post":0},{"no":33,"month":"April","client":"6clicks Global Capability Centre Inc.","resource":"Denise","pm":"Lexy","remarks":"Live","service":"PYO + HR + Sprout Gov","days":30,"komDate":"04/22/2026","handOver":"05/25/2026","liveRun":"06/15/2026","kom":1,"sim":1,"par":1,"live":0,"post":0},{"no":34,"month":"April","client":"Netbank","resource":"Denise","pm":"Angge","remarks":"Ongoing","service":"PYO + Sprout Gov","days":60,"komDate":"05/06/2026","handOver":"","liveRun":"07/15/2026","kom":1,"sim":1,"par":0,"live":0,"post":0},{"no":35,"month":"April","client":"Panasonic Projector & Display Asia Pacific Pte. Ltd (Philippine Office)","resource":"Leslee","pm":"See","remarks":"Live","service":"PYO + HR + Sprout Gov","days":30,"komDate":"05/07/2026","handOver":"06/05/2026","liveRun":"07/15/2026","kom":1,"sim":1,"par":1,"live":1,"post":0},{"no":36,"month":"April","client":"AlterCore Management Services, Inc. (AMSI)","resource":"Leslee","pm":"Angge","remarks":"Not yet started","service":"PYO + HR + Sprout Gov","days":60,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0},{"no":37,"month":"May","client":"Primera Una Gas Management Trading, Inc","resource":"Denise","pm":"See","remarks":"Churned","service":"Payroll Starter","days":15,"komDate":"","handOver":"","liveRun":"","kom":0,"sim":0,"par":0,"live":0,"post":0}]/*END_D_DATA*/;
-var ADDONS_DEFAULT=/*ADDONS_DATA*/{"1":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"2":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"3":{"sg":1,"ba":0,"sd":1,"std":1,"otk":0},"4":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"5":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"6":{"sg":1,"ba":0,"sd":1,"std":0,"otk":0},"8":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"9":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"10":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"14":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"15":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"17":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"20":{"sg":1,"ba":0,"sd":1,"std":1,"otk":0},"21":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"22":{"sg":1,"ba":1,"sd":0,"std":0,"otk":0},"23":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"24":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"26":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"27":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"28":{"sg":0,"ba":0,"sd":1,"std":0,"otk":0},"29":{"sg":0,"ba":1,"sd":1,"std":0,"otk":0},"32":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"33":{"sg":1,"ba":0,"sd":0,"std":0,"otk":0},"34":{"sg":0,"ba":1,"sd":1,"std":0,"otk":0},"35":{"sg":0,"ba":0,"sd":1,"std":0,"otk":0},"36":{"sg":0,"ba":0,"sd":1,"std":0,"otk":0}}/*END_ADDONS_DATA*/;
+var ADDONS_DEFAULT=/*ADDONS_DATA*/{"1":{"sg":1,"ba":0,"std":0,"otk":0},"2":{"sg":1,"ba":0,"std":0,"otk":0},"3":{"sg":1,"ba":0,"std":1,"otk":0},"4":{"sg":1,"ba":0,"std":0,"otk":0},"5":{"sg":1,"ba":0,"std":0,"otk":0},"6":{"sg":1,"ba":0,"std":0,"otk":0},"8":{"sg":1,"ba":0,"std":0,"otk":0},"9":{"sg":1,"ba":0,"std":0,"otk":0},"10":{"sg":1,"ba":0,"std":0,"otk":0},"14":{"sg":1,"ba":0,"std":0,"otk":0},"15":{"sg":1,"ba":0,"std":0,"otk":0},"17":{"sg":1,"ba":0,"std":0,"otk":0},"20":{"sg":1,"ba":0,"std":1,"otk":0},"21":{"sg":1,"ba":0,"std":0,"otk":0},"22":{"sg":1,"ba":1,"std":0,"otk":0},"23":{"sg":1,"ba":0,"std":0,"otk":0},"24":{"sg":1,"ba":0,"std":0,"otk":0},"26":{"sg":1,"ba":0,"std":0,"otk":0},"27":{"sg":1,"ba":0,"std":0,"otk":0},"28":{"sg":0,"ba":0,"std":0,"otk":0},"29":{"sg":0,"ba":1,"std":0,"otk":0},"32":{"sg":1,"ba":0,"std":0,"otk":0},"33":{"sg":1,"ba":0,"std":0,"otk":0},"34":{"sg":0,"ba":1,"std":0,"otk":0},"35":{"sg":0,"ba":0,"std":0,"otk":0},"36":{"sg":0,"ba":0,"std":0,"otk":0}}/*END_ADDONS_DATA*/;
 var MILESTONES_DEFAULT=/*MILESTONES_DATA*/{"1":{"billingMonth":"February","monthCompleted":"","churnDate":""},"2":{"billingMonth":"April","monthCompleted":"","churnDate":""},"3":{"billingMonth":"April","monthCompleted":"","churnDate":""},"4":{"billingMonth":"March","monthCompleted":"","churnDate":""},"6":{"billingMonth":"February","monthCompleted":"","churnDate":""},"8":{"billingMonth":"March","monthCompleted":"","churnDate":""},"10":{"billingMonth":"March","monthCompleted":"","churnDate":""},"11":{"billingMonth":"April","monthCompleted":"","churnDate":""},"12":{"billingMonth":"April","monthCompleted":"","churnDate":""},"15":{"billingMonth":"March","monthCompleted":"","churnDate":""},"16":{"billingMonth":"May","monthCompleted":"","churnDate":""},"17":{"billingMonth":"April","monthCompleted":"","churnDate":""},"18":{"billingMonth":"March","monthCompleted":"","churnDate":""},"20":{"billingMonth":"April","monthCompleted":"","churnDate":""},"26":{"billingMonth":"May","monthCompleted":"","churnDate":""},"27":{"billingMonth":"April","monthCompleted":"","churnDate":""},"28":{"billingMonth":"May","monthCompleted":"","churnDate":""},"30":{"billingMonth":"May","monthCompleted":"","churnDate":""},"32":{"billingMonth":"June","monthCompleted":"","churnDate":""},"33":{"billingMonth":"June","monthCompleted":"","churnDate":""},"34":{"billingMonth":"July","monthCompleted":"","churnDate":""},"35":{"billingMonth":"July","monthCompleted":"","churnDate":""}}/*END_MILESTONES_DATA*/;
 var AFTERHO_DEFAULT=/*AFTERHO_DATA*/{"1":{"csm":"Myka Batara","processor":""},"2":{"csm":"Lucky Penalosa","processor":""},"3":{"csm":"Jerry San Pedro","processor":"Rez"},"4":{"csm":"Myka Batara","processor":""},"6":{"csm":"Myka Batara","processor":""},"8":{"csm":"Myka Batara","processor":""},"10":{"csm":"Myka Batara","processor":""},"11":{"csm":"Krystel Maano","processor":"Frances"},"15":{"csm":"Myka Batara","processor":""},"18":{"csm":"Myka Batara","processor":""},"20":{"csm":"Jerome Portera","processor":"Jacob"},"33":{"csm":"Jerry San Pedro","processor":""},"35":{"csm":"Jerry San Pedro","processor":""}}/*END_AFTERHO_DATA*/;
 var DATA_VERSION=/*DATA_VER*/1/*END_DATA_VER*/;
@@ -2955,7 +2954,7 @@ function renderWeekly(){
       {lbl:'BenAd Under Implem',fn:function(d){return !!addon(d,'ba')&&isActive(d);}},
     ]},
     {lbl:'Disbursement',rows:[
-      {lbl:'Disbursement under Implem',fn:function(d){var a=CL_ADDONS[d.no]||{};return !!(a.sd||a.std)&&isActive(d);}},
+      {lbl:'Disbursement under Implem',fn:function(d){var a=CL_ADDONS[d.no]||{};return !!a.std&&isActive(d);}},
     ]},
     {lbl:'OTK',rows:[
       {lbl:'OTK Under Implem',fn:function(d){return !!addon(d,'otk')&&isActive(d);}},
@@ -3393,11 +3392,11 @@ function tabTriggerDownload(fname){
     XLSX.utils.book_append_sheet(wb, ovSheet, 'Overview');
 
     // Sheet 2: Add-on Services
-    var aoHeaders = ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Salary Disbursement','Statutory Disbursement','Outsourced Timekeeping','Payroll Disbursement'];
+    var aoHeaders = ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Statutory Disbursement','Outsourced Timekeeping','Payroll Disbursement'];
     var aoRows = [aoHeaders];
     exportData.forEach(function(d){
       var a = CL_ADDONS[d.no]||{};
-      aoRows.push([d.no, d.client, d.resource, a.sg||0, a.ba||0, a.sd||0, a.std||0, a.otk||0, a.pd||0]);
+      aoRows.push([d.no, d.client, d.resource, a.sg||0, a.ba||0, a.std||0, a.otk||0, a.pd||0]);
     });
     var aoSheet = XLSX.utils.aoa_to_sheet(aoRows);
     setColWidths(aoSheet, [5, 38, 12, 14, 26, 24, 26, 26, 24]);
@@ -3439,7 +3438,7 @@ var CL_SERVICES=['Payroll Disbursement','Payroll Starter','PYO','PYO + HR','PYO 
 var MON_SELECTED=[];  // multi-select state for month filter
 var SVC_SELECTED=[];  // multi-select state for service filter
 // Extended data for add-on services and after handover (keyed by client no)
-var CL_ADDONS={};   // {no:{sg,ba,sd,std,otk,pd}} 0=empty,1=yes,-1=no
+var CL_ADDONS={};   // {no:{sg,ba,std,otk,pd}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
 var CL_ISSUES=(function(){try{var s=localStorage.getItem('pyo_issues');return s?JSON.parse(s):[];}catch(e){return [];}})();
@@ -3556,7 +3555,7 @@ D.forEach(function(d){ d.remarks = deriveRemarks(d); });
 
 function clCbox(no,field,val){
   var phLbl={kom:'KOM',sim:'SIM',checklist:'Project Checklist',par:'PAR',live:'Live Run',post:'Post Live'};
-  var adLbl={sg:'Sprout Gov',ba:'Benefits Admin',sd:'Salary Disbursement',std:'Statutory Disbursement',otk:'OTK'};
+  var adLbl={sg:'Sprout Gov',ba:'Benefits Admin',std:'Statutory Disbursement',otk:'OTK'};
   if(field==='kom'||field==='sim'||field==='checklist'||field==='par'||field==='live'||field==='post'){
     var d=D.find(function(x){return x.no===no;});
     if(d){
@@ -3568,7 +3567,7 @@ function clCbox(no,field,val){
       logAudit(no,'Phases',field,phLbl[field]||field,oldV?'Done':'Pending',d[field]?'Done':'Pending');
     }
   } else {
-    if(!CL_ADDONS[no])CL_ADDONS[no]={sg:0,ba:0,sd:0,std:0,otk:0};
+    if(!CL_ADDONS[no])CL_ADDONS[no]={sg:0,ba:0,std:0,otk:0};
     var cur=CL_ADDONS[no][field]||0;
     var nxt=cur===0?1:cur===1?-1:0;
     var adVal=function(v){return v===1?'Yes':v===-1?'No':'—';};
@@ -3685,7 +3684,7 @@ function openAddClientModal(){
   document.getElementById('acm-pd-row').style.display='none';
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
-  ['acm-sg','acm-ba','acm-sd','acm-std','acm-otk','acm-pd'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
+  ['acm-sg','acm-ba','acm-std','acm-otk','acm-pd'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   var err=document.getElementById('acm-error');if(err){err.style.display='none';err.textContent='';}
   // For implementer logins, lock the implementer field to their own name
   if(implEl&&CURRENT_ROLE==='implementer'&&IMPL_USER){
@@ -3750,12 +3749,11 @@ function submitAddClient(){
   var addons={
     sg: document.getElementById('acm-sg').checked?1:0,
     ba: document.getElementById('acm-ba').checked?1:0,
-    sd: document.getElementById('acm-sd').checked?1:0,
     std:document.getElementById('acm-std').checked?1:0,
     otk:document.getElementById('acm-otk').checked?1:0,
     pd: document.getElementById('acm-pd').checked?1:0
   };
-  if(addons.sg||addons.ba||addons.sd||addons.std||addons.otk||addons.pd)CL_ADDONS[newNo]=addons;
+  if(addons.sg||addons.ba||addons.std||addons.otk||addons.pd)CL_ADDONS[newNo]=addons;
   autoSave();
   _supaFlush();
   closeAddClientModal();
@@ -4101,8 +4099,8 @@ function handleSourceImport(e){
           kom:srcBool(r[9]),sim:srcBool(r[10]),checklist:0,par:srcBool(r[11]),
           live:srcBool(r[12]),post:srcBool(r[13])
         });
-        var sg=srcBool(r[14]),ba=srcBool(r[15]),sd=srcBool(r[16]),std=srcBool(r[17]),otk=srcBool(r[18]);
-        if(sg||ba||sd||std||otk)newAddons[no]={sg:sg,ba:ba,sd:sd,std:std,otk:otk};
+        var sg=srcBool(r[14]),ba=srcBool(r[15]),std=srcBool(r[17]),otk=srcBool(r[18]);
+        if(sg||ba||std||otk)newAddons[no]={sg:sg,ba:ba,std:std,otk:otk};
         var csm=String(r[20]||'').trim(),proc=String(r[27]||'').trim();
         if(csm||proc)newAH[no]={csm:csm,processor:proc};
         var churn=parseImportDate(r[22]),bilMon=srcMonthName(r[23]),monComp=srcMonthName(r[24]);
@@ -4198,7 +4196,6 @@ function handleImport(e){
           CL_ADDONS[no]={
             sg: parseInt(row['Sprout Gov'])||0,
             ba: parseInt(row['Benefits Administration'])||0,
-            sd: parseInt(row['Salary Disbursement'])||0,
             std:parseInt(row['Statutory Disbursement'])||0,
             otk:parseInt(row['Outsourced Timekeeping'])||0,
             pd: parseInt(row['Payroll Disbursement'])||0
@@ -4311,12 +4308,12 @@ function renderClients(){
   baseData=baseData.filter(function(d){
     if(CL_TYPE==='ps')      return d.service==='Payroll Starter';
     if(CL_TYPE==='gov')     return d.service==='Sprout Gov'||d.service==='Statutory Disbursement';
-    if(CL_TYPE==='pd')      return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].pd);
+    if(CL_TYPE==='pd')      return d.service==='Payroll Disbursement';
     if(CL_TYPE==='special') return d.service==='Special Projects';
-    if(CL_TYPE==='addons')  return !!(CL_ADDONS[d.no]&&(CL_ADDONS[d.no].ba||CL_ADDONS[d.no].sd||CL_ADDONS[d.no].std));
+    if(CL_TYPE==='addons')  return !!(CL_ADDONS[d.no]&&(CL_ADDONS[d.no].ba||CL_ADDONS[d.no].std));
     if(CL_TYPE==='otk')     return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].otk);
-    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement, Special Projects
-    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement'&&d.service!=='Special Projects';
+    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement, standalone Payroll Disbursement, Special Projects
+    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement'&&d.service!=='Payroll Disbursement'&&d.service!=='Special Projects';
   });
   // Update toggle count label
   var pyoCnt=D.filter(function(d){return d.service!=='Payroll Starter';}).length;
@@ -4374,7 +4371,7 @@ function renderClients(){
   document.getElementById('ctc-overview').textContent=rows.length;
   document.getElementById('ctc-resource').textContent=rows.length;
   document.getElementById('ctc-phases').textContent=rows.filter(function(d){return d.kom||d.sim||d.par||d.live||d.post;}).length;
-  document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.sd||a.std||a.otk||a.pd;}).length;
+  document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.std||a.otk||a.pd;}).length;
   document.getElementById('ctc-milestones').textContent=rows.filter(function(d){return d.komDate||d.handOver||d.liveRun;}).length;
   document.getElementById('ctc-afterho').textContent=rows.filter(function(d){var a=CL_AFTERHO[d.no]||{};return a.csm||d.remarks==='Live';}).length;
 
@@ -4487,13 +4484,12 @@ function renderClients(){
     }).join('');
   } else if(CL_TAB==='addons'){
     document.getElementById('cl-body-addons').innerHTML=slice.map(function(d,i){
-      var a=CL_ADDONS[d.no]||{sg:0,ba:0,sd:0,std:0,otk:0,pd:0};
+      var a=CL_ADDONS[d.no]||{sg:0,ba:0,std:0,otk:0,pd:0};
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'sg',a.sg||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'ba',a.ba||0)+'</td>'+
-        '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'sd',a.sd||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'std',a.std||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'otk',a.otk||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'pd',a.pd||0)+'</td>'+
@@ -4512,7 +4508,8 @@ function renderClients(){
         var id='ms-'+d.no+'-'+field;
         var disp=mlFromISO(val);
         var display=disp?('<span style="font-family:var(--mono);font-size:11px;color:var(--s7);">'+disp+'</span>'):'<span style="color:var(--s3)">—</span>';
-        if(!mlCanEditDates)return '<td class="ctd">'+display+'</td>';
+        var canEditThisDate=mlCanEditDates||(field==='churnDate'&&CURRENT_ROLE==='admin');
+        if(!canEditThisDate)return '<td class="ctd">'+display+'</td>';
         return '<td class="ctd">'+
           '<span id="lbl-'+id+'" onclick="mlStartEdit(\''+id+'\')" title="Click to edit" style="cursor:pointer;padding:2px 5px;border-radius:4px;display:inline-block;" '+
           'onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'">'+display+'</span>'+
@@ -5445,7 +5442,7 @@ function selProject(no){
   /* Add-ons */
   var addonFields=[
     {k:'Sprout Gov',fk:'sg'},{k:'Benefits Administration',fk:'ba'},
-    {k:'Salary Disbursement',fk:'sd'},{k:'Statutory Disbursement',fk:'std'},
+    {k:'Statutory Disbursement',fk:'std'},
     {k:'Outsourced Timekeeping',fk:'otk'}
   ];
   var addonHTML=addonFields.map(function(f){
@@ -7545,11 +7542,11 @@ function stDownloadTemplate(){
   ovSheet['!cols']=[{wch:5},{wch:12},{wch:38},{wch:12},{wch:18},{wch:12},{wch:18},{wch:28},{wch:8},{wch:8},{wch:14},{wch:14},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb,ovSheet,'Overview');
   var aoSheet=XLSX.utils.aoa_to_sheet([
-    ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Salary Disbursement','Statutory Disbursement','Outsourced Timekeeping'],
-    [1,'Example Client Co.','Ana',0,0,0,0,0],
-    [2,'Another Corp Inc.','Bea',1,0,1,0,0]
+    ['#','Client Name','Resource','Sprout Gov','Benefits Administration','Statutory Disbursement','Outsourced Timekeeping'],
+    [1,'Example Client Co.','Ana',0,0,0,0],
+    [2,'Another Corp Inc.','Bea',1,0,0,0]
   ]);
-  aoSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:14},{wch:26},{wch:24},{wch:26},{wch:26}];
+  aoSheet['!cols']=[{wch:5},{wch:38},{wch:12},{wch:14},{wch:26},{wch:26},{wch:26}];
   XLSX.utils.book_append_sheet(wb,aoSheet,'Add-on Services');
   var mlSheet=XLSX.utils.aoa_to_sheet([
     ['#','Client Name','Resource','KOM Date','Simulation Date','Parallel Run Date','Hand Over Date','Live Run Date','Churn Date','Billing Month','Month Completed'],
@@ -7602,7 +7599,7 @@ function stHandleFile(e){
         newD.push({no:no,month:row['Month']||'January',client:row['Client Name']||row['Client']||'',resource:row['Resource']||'',pm:row['Project Manager']||row['PM']||'',hri:row['HR-I']||'',remarks:row['Status']||'Not yet started',service:row['Service']||'',days:parseInt(row['Days'])||0,komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:'',liveRun:'',kom:parseInt(row['KOM'])||0,sim:parseInt(row['Simulation'])||0,checklist:parseInt(row['Project Checklist'])||0,par:parseInt(row['Parallel Run'])||0,live:parseInt(row['Live Run'])||0,post:parseInt(row['Post Live'])||0});
       });
       var aoSheet=wb.Sheets['Add-on Services'];
-      if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,sd:parseInt(row['Salary Disbursement'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0,pd:parseInt(row['Payroll Disbursement'])||0};});
+      if(aoSheet)XLSX.utils.sheet_to_json(aoSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;newAddons[no]={sg:parseInt(row['Sprout Gov'])||0,ba:parseInt(row['Benefits Administration'])||0,std:parseInt(row['Statutory Disbursement'])||0,otk:parseInt(row['Outsourced Timekeeping'])||0,pd:parseInt(row['Payroll Disbursement'])||0};});
       var mlSheet=wb.Sheets['Milestone Dates'];
       if(mlSheet)XLSX.utils.sheet_to_json(mlSheet,{defval:''}).forEach(function(row){var no=parseInt(row['#']||row['no']);if(!no)return;var d=newD.find(function(x){return x.no===no;});if(d){if(row['KOM Date'])d.komDate=parseImportDate(row['KOM Date']);if(row['Simulation Date'])d.simDate=parseImportDate(row['Simulation Date']);if(row['Parallel Run Date'])d.parDate=parseImportDate(row['Parallel Run Date']);if(row['Hand Over Date'])d.handOver=parseImportDate(row['Hand Over Date']);if(row['Live Run Date'])d.liveRun=parseImportDate(row['Live Run Date']);}if(row['Churn Date']||row['Billing Month']||row['Month Completed']){if(!newMilestones[no])newMilestones[no]={};if(row['Churn Date'])newMilestones[no].churnDate=parseImportDate(row['Churn Date']);if(row['Billing Month'])newMilestones[no].billingMonth=row['Billing Month'];if(row['Month Completed'])newMilestones[no].monthCompleted=row['Month Completed'];}});
       var newAfterho={};
@@ -8168,7 +8165,7 @@ async function loadFromSupabase(){
         liveRun:r.live_run||'',otkImpl:r.otk_impl||'',pdImpl:r.pd_impl||'',kom:r.kom||0,sim:r.sim||0,checklist:r.checklist||0,par:r.par||0,live:r.live||0,post:r.post||0});
     });
     var ra=await _supa.from('client_addons').select('*');
-    if(ra.data){CL_ADDONS={};ra.data.forEach(function(a){CL_ADDONS[a.client_no]={sg:a.sprout_gov?1:0,ba:a.benefits_admin?1:0,sd:a.salary_disbursement?1:0,std:a.statutory_disbursement?1:0,otk:a.outsourced_timekeeping?1:0,pd:a.payroll_disbursement?1:0};});}
+    if(ra.data){CL_ADDONS={};ra.data.forEach(function(a){CL_ADDONS[a.client_no]={sg:a.sprout_gov?1:0,ba:a.benefits_admin?1:0,std:a.statutory_disbursement?1:0,otk:a.outsourced_timekeeping?1:0,pd:a.payroll_disbursement?1:0};});}
     var rm=await _supa.from('client_milestones').select('*');
     if(rm.data){CL_MILESTONES={};rm.data.forEach(function(m){CL_MILESTONES[m.client_no]={churnDate:m.churn_date||'',billingMonth:m.billing_month||'',monthCompleted:m.month_completed||''};});}
     var rh=await _supa.from('client_afterho').select('*');
@@ -8243,7 +8240,7 @@ async function _supaFlush(){
     }
     var changedAddons=Object.keys(CL_ADDONS).filter(function(k){return JSON.stringify(CL_ADDONS[k])!==_snap.addons[k];});
     if(changedAddons.length){
-      var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,salary_disbursement:!!a.sd,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk,payroll_disbursement:!!a.pd};});
+      var ar=changedAddons.map(function(k){var a=CL_ADDONS[k];return{client_no:parseInt(k),sprout_gov:!!a.sg,benefits_admin:!!a.ba,statutory_disbursement:!!a.std,outsourced_timekeeping:!!a.otk,payroll_disbursement:!!a.pd};});
       var r2=await _supa.from('client_addons').upsert(ar,{onConflict:'client_no'});
       if(r2.error){console.warn('addons save error:',r2.error.message);}
       else{changedAddons.forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});}
@@ -8372,7 +8369,11 @@ function _syncTeamDropdowns(){
   Object.keys(RC).forEach(function(k){delete RC[k];});
   TEAM_CONFIG.implementers.forEach(function(n,i){if(n)RC[n]=colors[i%colors.length];});
   var crSel=document.getElementById('cr');
-  if(crSel)crSel.innerHTML='<option value="">All resources</option>'+TEAM_CONFIG.implementers.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  if(crSel){
+    var crList=[].concat(TEAM_CONFIG.implPYO||[],TEAM_CONFIG.implGov||[],TEAM_CONFIG.implOTK||[],TEAM_CONFIG.implPD||[]).filter(Boolean);
+    crList=crList.filter(function(n,i){return crList.indexOf(n)===i;});
+    crSel.innerHTML='<option value="">All resources</option>'+crList.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
+  }
   var implSel=document.getElementById('login-impl-name');
   if(implSel)implSel.innerHTML='<option value="">Select implementer…</option>'+TEAM_CONFIG.implementers.filter(Boolean).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
   var aImpl=document.getElementById('acm-impl');

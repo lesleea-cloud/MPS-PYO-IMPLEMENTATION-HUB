@@ -2677,3 +2677,202 @@ Adapted from the reference (which used Customer Onboarding/Success + MRR — not
 - No usage/rate-limit dashboard beyond `last_used_at`.
 - No expiry dates on keys (revoke is manual only).
 - No actual response filtering by the metrics checkboxes (see note above).
+
+---
+
+## 51. Fix — Console 404s on Settings page (July 9, 2026)
+
+### What was broken
+DevTools console on the Settings screen showed five 404s: `/api/integrations/status`, `/api/integrations/save` (x2), `/api/keys/list`, and a login-screen logo image (`Screenshot 2026-06-06 005616.jpg`).
+
+### Root cause
+1. **Sections 49/50 were coded but never deployed.** The `api/` serverless function files (`api/integrations/*.js`, `api/keys/*.js`, `api/stats/summary.js`, `api/_lib/supabaseAdmin.js`) existed only in the working preview folder, not in `Sprout-PYO-Hub/` — the actual folder deployed to Vercel. Since the routes didn't exist server-side, every call 404'd.
+2. **Broken login logo.** The login screen (`.ll-logo-mark`) referenced `<img src="Screenshot 2026-06-06 005616.jpg">` — a local screenshot filename that was never part of the deployed bundle. The main app header uses an inline SVG mark instead; the login screen never got the same treatment.
+
+### Fix applied
+- Replaced the login-screen `<img>` with the same inline SVG logo mark used in the main header (`#app-header .logo-mark`), removing the dependency on a missing image file.
+- Copied the `api/` folder and the current `index.html` into `Sprout-PYO-Hub/` (the deployed directory) so the serverless routes actually exist in the next deploy.
+
+### ⚠️ Manual steps still required (cannot be done from this session)
+1. Redeploy `Sprout-PYO-Hub/` to Vercel (no `.vercel` link or git remote was found locally — redeploy the way it's normally pushed, e.g. Vercel CLI or dashboard upload).
+2. Confirm `SUPABASE_SERVICE_ROLE_KEY` is set in Vercel → Project Settings → Environment Variables (Section 49, step 2). Without it, the routes will exist but return 500s instead of 404s.
+3. Confirm `PM_Tool_Integrations_Table.sql` and `External_API_Keys_Table.sql` have been run in Supabase → SQL Editor (Sections 49–50). If not run yet, `save`/`list` calls will fail against missing tables.
+
+**Resolved (July 9, 2026):** User pushed `index.html` and the `api/` folder to GitHub, Vercel auto-deployed, `SUPABASE_SERVICE_ROLE_KEY` was already set, and the Supabase tables already existed. All 404s cleared — verified live (Integrations panel shows "✓ Configured", External API Access panel loads with 0 active keys instead of erroring).
+
+---
+
+## 52. Supabase schema audit — closed two real gaps (July 9, 2026)
+
+### What was checked
+Compared every `_supa.from(...)` / `restFetch(...)` table+column reference in the live deployed code against the actual Supabase schema (`information_schema.columns` + `storage.buckets`). Found two real gaps (everything else — `clients` incl. `otk_impl`, `client_afterho` incl. `turned_over`, `audit_log`, `client_issues`, `client_milestones`, `client_pending`, `impl_ack`, `impl_moms`, `pending_bank`, `integrations`, `integration_events`, `external_api_keys` — already matched):
+
+1. **`vault_items` table didn't exist at all.** The Implementation Vault feature (documented as "synced to Supabase so all users see the same shared vault in real time") was silently falling back to localStorage-only per browser — never actually shared. No error surfaced because `loadFromSupabase()` catches the query error and just skips.
+2. **`team_config` was missing `impl_pyo` / `impl_gov` / `impl_hr` / `impl_otk`.** Only `impl_pd` (added in an earlier section) existed; the other four category arrays never persisted, so those implementer lists always fell back to localStorage/hardcoded defaults on load.
+3. **Storage bucket misnamed.** A bucket existed for vault file uploads but was named `Vault Files` (space, capitals) instead of the exact string `vault-files` the code calls (`_supa.storage.from('vault-files')`) — an exact-match lookup, so it was effectively invisible to the app.
+
+### Fix applied
+- Ran `CREATE TABLE vault_items (...)` + `ENABLE ROW LEVEL SECURITY` + 4 policies (read/insert/update/delete for `authenticated`). Saved as `Vault_And_TeamConfig_Gap_Fix.sql`.
+- Ran `ALTER TABLE team_config ADD COLUMN IF NOT EXISTS impl_pyo/impl_gov/impl_hr/impl_otk TEXT[] DEFAULT '{}'`.
+- Created a correctly-named `vault-files` bucket (private, matches the `createSignedUrl` access pattern already used in code); old `Vault Files` bucket left unused.
+- Populated the new `team_config` columns with zero manual guesswork: opened Settings → Team Configuration (admin) and clicked the existing **"Save Team Configuration"** button, which calls `stSaveTeam()` — already wired to upsert `impl_pyo/impl_gov/impl_hr/impl_otk/impl_pd/pms` straight from the on-screen form (sourced from localStorage, the actual live roster). Verified via SQL that all five arrays now contain real names.
+
+### Note — blueprint documentation had drifted from code
+While auditing, found the *original* `audit_log` schema documented in Section 30 (`id, ts, user_name, action, detail`) no longer matches what the current code reads/writes (`ts, client_no, client_name, tab, field, label, val_from, val_to, changed_by`) — the table itself was already correctly migrated at some point, just never re-documented. Also found a leftover `user_roles` table (just an `id uuid` column) that nothing in the current code references anymore — harmless artifact from the pre-Section-36 Google-OAuth-based auth, safe to ignore or drop.
+
+---
+
+## 53. Implementation Vault — search box for client tiles (July 9, 2026)
+
+### What changed
+Added a search input above the client-tile grid in the Implementation Vault (all categories, e.g. Proposals). Filters tiles by client name (case-insensitive substring match) as you type. Hidden in MOMs view and in the single-client drill-in view — only shown on the "all clients" tile grid where it's useful.
+
+### Implementation notes
+- New global `VAULT_SEARCH` (alongside existing `VAULT_FILTER`/`VAULT_DRILL_CLIENT`).
+- The `<input id="vault-search-input">` is **static HTML** (in the page template, not inside `renderVault()`'s generated `innerHTML`) so retyping doesn't get wiped/lose focus on every keystroke — only its wrapper's `display` is toggled by `renderVault()`.
+- `vaultSearch(val)` sets `VAULT_SEARCH` and calls `renderVault()`.
+- `renderVault()` filters `clientKeys` (and the "General" ungrouped tile, matched against the literal word "general") by `VAULT_SEARCH`; the "N — CLIENT-FIRST DASHBOARD" count reflects the filtered result. Shows a "No clients match" empty state when the filter yields zero tiles.
+
+---
+
+## 54. PD Implementer — pick an implementer when Payroll Disbursement is ticked (July 9, 2026)
+
+### What changed
+Added a "PD Implementer" picker, mirroring the existing OTK Implementer pattern exactly:
+- **Add new client modal**: ticking "Payroll Disbursement" now reveals a "PD Implementer" dropdown (sourced from `TEAM_CONFIG.implPD`), same as ticking "Outsourced Timekeeping" reveals "OTK Implementer". New `acmCheckPd()` toggles `#acm-pd-row`; value captured in `submitAddClient()` as `pdImpl`.
+- **Resource Team tab** (My Clients → a client → Resource Team): new "PD Implementer" column, shown only when the client's `client_addons.pd===1`, editable inline via a `<select>` calling `clUpdatePdImpl(no,val)` — same shape as the OTK column's `clUpdateOtkImpl`.
+
+### Data model
+- New field `pdImpl` on each client record (`D[]`), parallel to `otkImpl`.
+- New Supabase column `clients.pd_impl` (TEXT). Migration saved as `PD_Implementer_Column.sql`: `ALTER TABLE clients ADD COLUMN IF NOT EXISTS pd_impl TEXT DEFAULT '';` — **must be run in Supabase SQL Editor before this feature will persist/load correctly.**
+- Wired into `loadFromSupabase()` (`pdImpl:r.pd_impl||''`) and `_supaFlush()` (`pd_impl:d.pdImpl||''`), same spot as the otk_impl read/write.
+
+---
+
+## 55. Milestone Dates — column sort + date-range filter (July 9, 2026)
+
+### What changed
+On My Clients → a client type → **Milestone Dates** tab:
+- **Sortable headers**: clicking "KOM Date", "Hand Over Date", "Live Run Date", or "Churn Date" sorts the table by that column (ascending, click again for descending). An arrow indicator (▲/▼) shows next to the active sort column. Blank dates always sort to the bottom regardless of direction.
+- **Date-range filter**: a filter bar above the table lets you pick one of the four date columns plus a From/To date range; only clients whose date falls in range are shown. "Clear" resets it. Filtering also updates the "N clients" count and all tab badge counts (same behavior as the existing status/service/month filters).
+
+### Implementation notes
+- New globals `ML_SORT_COL`/`ML_SORT_DIR` (module-level, alongside `CL_TAB`).
+- New `mlDateISO(d,field)` normalizes any of the three date sources — `d.komDate`, `d.handOver`, `d.liveRun` (on the client record) or `CL_MILESTONES[d.no].churnDate` (separate table) — into a comparable ISO string via the existing `mlToISO()` helper, since dates are stored internally as `MM/DD/YYYY`.
+- Filter/sort applied in `renderClients()` right after `fdFull(baseData)`, gated on `CL_TAB==='milestones'` — reads the (static, non-regenerated) `#ml-filt-col`/`#ml-filt-from`/`#ml-filt-to` inputs so they never lose focus on re-render, same pattern as the Vault search box in Section 53.
+- `mlSort(col)`, `mlFilterChange()`, `mlFilterClear()` — new functions; `mlFilterChange()`/`mlSort()` both just mutate state and call `renderClients()`.
+
+---
+
+## 56. Clients sidebar — three new indented nav items (July 9, 2026)
+
+### What changed
+Added three more indented items to the "Clients" sidebar section, alongside the existing PYO / Payroll Starter / Sprout Gov / Payroll Disbursement:
+- **Special Projects** — new item, colored dot `#DB2777`. Filters `d.service==='Special Projects'`.
+- **Stand Alone Add-on Services** — colored dot `#65A30D`. Filters clients with Benefits Admin, Salary Disbursement, or Statutory Disbursement ticked (`client_addons.ba||sd||std`) — deliberately excludes Sprout Gov and Payroll Disbursement since those already have their own dedicated nav items.
+- **OTK** — colored dot `#0EA5E9`. Filters `client_addons.otk===1`, exact mirror of how the existing "Payroll Disbursement" item filters on `client_addons.pd`.
+
+### Implementation notes
+- **New service option**: "Special Projects" added to `CL_SERVICES`, the Add Client modal's Availed Service `<select>`, and the service multi-select filter checkboxes — same three places every other service value (e.g. "Sprout Gov") already appears.
+- **Filtering**: three new `CL_TYPE` branches (`'special'`, `'addons'`, `'otk'`) added to the client-type filter in `renderClients()`. The PYO catch-all fallback now also excludes `service==='Special Projects'` (mirrors how it already excludes Payroll Starter/Sprout Gov/Statutory Disbursement) so Special Projects clients only show under their own tab, not double-counted under PYO.
+- **Nav highlighting**: wired into the actual live mechanism — `go(page)`'s clear/set-active block (not the `setClType()` function, which only backs the separate PYO/Payroll Starter toggle pills elsewhere and isn't what the sidebar buttons call). Also added defensively to `setClType()` for consistency even though it's not currently reachable from these three buttons.
+- Known pre-existing quirk left as-is (matches existing Sprout Gov/Payroll Disbursement behavior): the Clients page title/subtitle only distinguish "PYO" vs "Payroll Starter" — it still reads "PYO Clients — 2026" when viewing Special Projects/Add-on Services/OTK, same as it already did for Sprout Gov/Payroll Disbursement.
+
+---
+
+## 57. PM Tool Data — staging viewer for incoming webhook payloads (July 9, 2026)
+
+### What changed
+Added a new top-level sidebar item, **PM Tool Data** (Resources group, below Implementation Vault, admin/god only — matches the Integrations settings panel's own gating). It's the missing piece flagged in Section 49's "Not done yet" list: a place to actually *see* what the PM Tool has pushed via its webhook, staged here before anyone manually maps it into the real client fields — there's still no automatic field-mapping, this is purely a viewer.
+
+### New backend
+| File | Method | Purpose |
+|---|---|---|
+| `api/integrations/events.js` | GET, optional `?id=` | Reads `integration_events` (newest first, capped at 200) via the service-role `restFetch` helper — necessary because that table has no anon/authenticated RLS policies (service-role only, per Section 49), so the browser's Supabase client can't read it directly. |
+
+### Frontend
+- New nav item `#nav-pmtool` (Resources group), new page `#page-pmtool` with a Refresh button and a table (Received / Integration / Payload).
+- New JS: `goPmTool()` (navigates + fetches), `fetchPmToolEvents()`, `refreshPmToolEvents()`, `renderPmTool()`, `pmtoolTogglePayload()`. Each row shows a truncated JSON preview with a "View full payload" toggle for the full pretty-printed JSON (same expand/collapse idea as the MOM "Read more" pattern in the Vault).
+- Visibility wired into both `startApp()` and `godSwitch()` (admin/god only), and `'pmtool'` added to `go(page)`'s page list.
+
+### Not done yet (same caveat as Section 49)
+Still no mapping of the staged payloads into `D[]`/Clients — this page only lets you *see* what's arrived. Turning a payload into actual client-record updates is a separate, not-yet-built feature.
+
+---
+
+## 58. PM Tool Data moved into a new "Integration" bucket, below System (July 9, 2026)
+
+### What changed
+Relocated "PM Tool Data" from a plain nav item under Resources into its own collapsible sidebar section, **Integration** — positioned at the very bottom of the sidebar, below the System group / Settings. Gives room to add more integration-related items later without needing another reshuffle.
+
+### Implementation notes
+- New collapsible `#nav-integration-section` (same `nav-admin-section`/`nav-admin-hdr`/`nav-admin-body` markup pattern as "Implementation Vault"), with `#nav-pmtool` now a `nav-tool-item` button inside `#nav-integration-body` instead of a standalone `.nav-item`.
+- New `toggleIntegrationSection()`, mirroring `toggleVaultSection()`.
+- Visibility moved from the individual button to the whole section: `startApp()` and `godSwitch()` now toggle `#nav-integration-section` (admin/god only) instead of `#nav-pmtool` directly — same section-level gating pattern `nav-admin-section` (Administration) already uses.
+- `goPmTool()` and everything else from Section 57 unchanged.
+
+---
+
+## 59. Add-on Services — Salary Disbursement Removed ✅ Coded (July 9, 2026)
+
+### What changed
+Removed **Salary Disbursement** as an add-on service everywhere it appeared in the app. Sprout no longer offers this as a distinct add-on; **Statutory Disbursement** and **Payroll Disbursement** remain unaffected and untouched.
+
+### Removed from
+- **Settings → Add new client modal** — "Salary Disbursement" checkbox (`#acm-sd`) deleted from the Add-on Services grid.
+- **My Clients → Add-on Services tab** — "Salary" column removed from the table header and each row's `clAddonBox` cell.
+- **Selected Project panel (Implementer Dashboard)** — "Salary Disbursement" row removed from the add-ons detail list.
+- **Excel export** ("Add-on Services" sheet, both the real export and the template generator) — column dropped from headers and row data.
+- **Excel import** (legacy migration importer and the standard Add-on Services sheet importer) — no longer reads a Salary Disbursement column.
+- **Project Status by Module panel** — the "Disbursement under Implem" metric now counts Statutory Disbursement only (was `sd||std`, now just `std`).
+- **`addons` client-type filter** and the **Add-on Services tab count badge** — no longer factor in `sd`.
+- **Supabase sync** (`client_addons` table read/write) — stopped reading/writing the `salary_disbursement` column.
+- **`CL_ADDONS` in-memory shape** — `{sg,ba,std,otk,pd}` (dropped `sd`); default seed data (`ADDONS_DEFAULT`) had its `sd` keys stripped.
+
+### ⚠️ Manual cleanup optional
+The `salary_disbursement` column still exists in the Supabase `client_addons` table (dropping it isn't required — the app simply stops reading/writing it). To fully clean up the schema, run in Supabase → SQL Editor:
+```sql
+ALTER TABLE client_addons DROP COLUMN IF EXISTS salary_disbursement;
+```
+Safe to skip — existing values are just ignored by the app now.
+
+---
+
+## 60. PYO Clients — "All resources" filter scoped to 4 implementer categories ✅ Coded (July 9, 2026)
+
+### What changed
+The **All resources** dropdown filter (Clients → toolbar, `#cr`) was pulling from `TEAM_CONFIG.implementers`, a flat concat of **all 5** team categories (`implPYO + implGov + implHR + implOTK + implPD`). This meant HR Implementer names leaked into a filter that's meant for implementation resourcing, and — since some staff sit in more than one category — the same name could appear twice in the list.
+
+Scoped the dropdown to the 4 categories that actually represent implementation resourcing: **PYO/Payroll Starter Implementer, Sprout Gov Implementer, OTK Resource, Payroll Disbursement Implementer**. HR Implementer is excluded. The list is also deduplicated so a person in two of those four categories only shows once.
+
+### Where
+`_syncTeamDropdowns()` — the `crSel` (`#cr`) branch now builds its own list (`implPYO+implGov+implOTK+implPD`, deduped) instead of reusing `TEAM_CONFIG.implementers`. Every other consumer of `TEAM_CONFIG.implementers` (avatar colors in `RC`, the login screen's implementer picker, MOM staff pickers) is untouched — HR staff still show up correctly everywhere else, this was scoped to the one filter dropdown.
+
+---
+
+## 61. Clients sidebar — "Payroll Disbursement" nav scoped to standalone service, not the add-on flag ✅ Coded (July 9, 2026)
+
+### What changed
+The **Payroll Disbursement** nav item under Clients (`renderClients()`'s `CL_TYPE==='pd'` branch) was listing any client that had the Payroll Disbursement **add-on** ticked, even if their actual availed service was something else entirely (e.g. a `PYO +HR +Gov` client with the PD add-on checked showed up here, which reads confusingly — this list should be about the service, not the add-on).
+
+"Payroll Disbursement" is also a standalone value in `CL_SERVICES` (same pattern as "Sprout Gov" and "Statutory Disbursement" already being both a standalone service *and* an add-on flag). Changed the filter to match the standalone-service pattern used by the "Sprout Gov" nav item:
+```js
+if(CL_TYPE==='pd') return d.service==='Payroll Disbursement';   // was: !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].pd)
+```
+Also added `d.service!=='Payroll Disbursement'` to the generic "PYO" bucket's exclusion list (the `pyo` fallback branch), so a standalone Payroll Disbursement client doesn't double-count under both "PYO" and "Payroll Disbursement" in the sidebar.
+
+### Not affected
+The `pd` **add-on** flag itself (`CL_ADDONS[d.no].pd`) is untouched — it still drives the "Pay. Disb." column in Add-on Services, the Payroll Disbursement Implementer picker per client, and the "Disbursement under Implem" style reporting elsewhere. Only the Clients-sidebar list changed to key off the service field instead.
+
+---
+
+## 62. Milestone Dates — Churn Date editable by admin ✅ Coded (July 9, 2026)
+
+### What changed
+In My Clients → Milestone Dates, the **Churn Date** column was only editable by `implementer`/`god` roles (`mlCanEditDates`) — same gate as KOM/Hand Over/Live Run dates. But `admin` (and everyone except `manager`) can already mark a client's status as "Churned" in the Overview tab (`ovRO` only blocks `manager`), so there was no way for an admin to actually record *when* a client churned after setting that status.
+
+Added a targeted exception for this one field, following the same pattern already used for Billing Month (`CURRENT_ROLE==='admin'&&field==='billingMonth'`):
+```js
+var canEditThisDate=mlCanEditDates||(field==='churnDate'&&CURRENT_ROLE==='admin');
+```
+KOM Date, Hand Over Date, and Live Run Date are untouched — still implementer/god only, since those are populated from the Implementation Phases workflow, not something admins should hand-edit.
