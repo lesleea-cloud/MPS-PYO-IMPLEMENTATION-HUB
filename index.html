@@ -1086,7 +1086,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <select id="acm-service" onchange="acmCheckGov()" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select service —</option>
             <option>Payroll Disbursement</option><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
-            <option>PYO + HR + Sprout Gov</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option>
+            <option>PYO + HR + Sprout Gov</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option><option>Special Projects</option>
           </select>
         </div>
         <div>
@@ -1217,6 +1217,18 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF7F00;flex-shrink:0;"></span>
           Payroll Disbursement
         </button>
+        <button class="nav-tool-item" id="nav-cl-special" onclick="goClients('special')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#DB2777;flex-shrink:0;"></span>
+          Special Projects
+        </button>
+        <button class="nav-tool-item" id="nav-cl-addons" onclick="goClients('addons')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#65A30D;flex-shrink:0;"></span>
+          Stand Alone Add-on Services
+        </button>
+        <button class="nav-tool-item" id="nav-cl-otk" onclick="goClients('otk')">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#0EA5E9;flex-shrink:0;"></span>
+          OTK
+        </button>
         <button class="nav-tool-item" id="nav-cl-audit" style="display:none;" onclick="goAudit()">
           <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
           Audit Trail
@@ -1265,6 +1277,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           Other
         </button>
       </div>
+    </div>
+    <div class="nav-item" id="nav-pmtool" style="display:none;" onclick="goPmTool()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+      PM Tool Data
     </div>
     <div class="nav-divider"></div>
     <div class="nav-group">System</div>
@@ -1490,6 +1506,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
             <label class="svc-ms-opt"><input type="checkbox" value="PYO + Sprout Gov" onchange="updateSvcMs()"> PYO + Sprout Gov</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Sprout Gov" onchange="updateSvcMs()"> Sprout Gov</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Statutory Disbursement" onchange="updateSvcMs()"> Statutory Disbursement</label>
+            <label class="svc-ms-opt"><input type="checkbox" value="Special Projects" onchange="updateSvcMs()"> Special Projects</label>
           </div>
         </div>
         <select id="cph" onchange="renderClients()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-family:var(--font);outline:none;"><option value="">All phases</option><option value="kom">KOM done</option><option value="sim">Simulation done</option><option value="par">Parallel Run done</option><option value="live">Live Run done</option></select>
@@ -1711,6 +1728,23 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       </div>
       <div class="panel" style="padding:0;">
         <div id="page-issues-body"></div>
+      </div>
+    </div>
+
+    <!-- ══ PM TOOL DATA PAGE ══ -->
+    <div class="page" id="page-pmtool" style="display:none;">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">PM Tool Data</div>
+          <div class="sec-sub">Raw data pushed here by the connected PM Tool, staged before it's mapped into the matching Implementation Hub fields.</div>
+        </div>
+        <button id="pmtool-refresh-btn" onclick="refreshPmToolEvents()" style="padding:7px 16px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+      <div class="panel" style="padding:0;overflow-x:auto;">
+        <div id="pmtool-body"></div>
       </div>
     </div>
 
@@ -2224,6 +2258,68 @@ async function refreshMOMs(){
   renderVault();
   if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
 }
+
+// ══════════════════════════════════════════════════════
+// PM TOOL DATA — staged raw payloads from api/integrations/webhook.js,
+// read via a serverless endpoint since integration_events has no
+// anon/authenticated Supabase policies (service-role only).
+// ══════════════════════════════════════════════════════
+var PMTOOL_EVENTS=[];
+function goPmTool(){
+  go('pmtool');
+  fetchPmToolEvents().then(renderPmTool);
+}
+async function fetchPmToolEvents(){
+  try{
+    var r=await fetch('/api/integrations/events');
+    var data=r.ok?await r.json():{events:[]};
+    PMTOOL_EVENTS=data.events||[];
+  }catch(e){PMTOOL_EVENTS=[];}
+}
+async function refreshPmToolEvents(){
+  var btn=document.getElementById('pmtool-refresh-btn');
+  if(btn){btn.style.opacity='.5';btn.style.pointerEvents='none';}
+  await fetchPmToolEvents();
+  renderPmTool();
+  if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
+}
+function pmtoolTogglePayload(rid){
+  var prev=document.getElementById('pmtool-prev-'+rid);
+  var full=document.getElementById('pmtool-full-'+rid);
+  var btn=document.getElementById('pmtool-btn-'+rid);
+  if(!prev||!full||!btn)return;
+  var showingFull=full.style.display!=='none';
+  full.style.display=showingFull?'none':'block';
+  prev.style.display=showingFull?'block':'none';
+  btn.textContent=showingFull?'View full payload':'Hide';
+}
+function renderPmTool(){
+  var body=document.getElementById('pmtool-body');
+  if(!body)return;
+  if(!PMTOOL_EVENTS.length){
+    body.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg><div class="vault-empty-title">No PM Tool data yet</div><div class="vault-empty-sub">Once the PM Tool pushes data to the webhook URL (Settings → Integrations), incoming entries will show up here.</div></div>';
+    return;
+  }
+  var h='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>'+
+    '<th class="cth">Received</th><th class="cth">Integration</th><th class="cth" style="min-width:260px;">Payload</th>'+
+  '</tr></thead><tbody>';
+  PMTOOL_EVENTS.forEach(function(e){
+    var raw=JSON.stringify(e.payload,null,2)||'';
+    var preview=raw.length>140?raw.slice(0,140)+'…':raw;
+    var rid=String(e.id);
+    h+='<tr>'+
+      '<td class="ctd" style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--s6);">'+escHtml(e.received_at||'')+'</td>'+
+      '<td class="ctd">'+escHtml(e.integration_id||'—')+'</td>'+
+      '<td class="ctd">'+
+        '<div id="pmtool-prev-'+rid+'" style="font-family:var(--mono);font-size:11px;color:var(--s6);white-space:pre-wrap;word-break:break-all;">'+escHtml(preview)+'</div>'+
+        '<pre id="pmtool-full-'+rid+'" style="display:none;font-family:var(--mono);font-size:11px;color:var(--s7);white-space:pre-wrap;word-break:break-all;background:var(--s0);padding:8px;border-radius:6px;margin:4px 0;">'+escHtml(raw)+'</pre>'+
+        (raw.length>140?'<button id="pmtool-btn-'+rid+'" onclick="pmtoolTogglePayload(\''+rid+'\')" style="margin-top:4px;padding:2px 8px;border:1px solid var(--s2);border-radius:6px;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);">View full payload</button>':'')+
+      '</td>'+
+    '</tr>';
+  });
+  h+='</tbody></table>';
+  body.innerHTML=h;
+}
 function vaultExpandMOM(id){
   var preview=document.getElementById('mombody-'+id);
   var full=document.getElementById('momfull-'+id);
@@ -2654,7 +2750,7 @@ function _cpSupaSave(clientNo){
 }
 
 function go(page){
-  ['dashboard','weekly','monthly','clients','impl','settings','issues','vault','audit'].forEach(function(p){
+  ['dashboard','weekly','monthly','clients','impl','settings','issues','vault','audit','pmtool'].forEach(function(p){
     var pg=document.getElementById('page-'+p);
     var ni=document.getElementById('nav-'+p);
     if(pg)pg.classList.remove('active');
@@ -2669,12 +2765,18 @@ function go(page){
   var clPsBtn=document.getElementById('nav-cl-ps');
   var clGovBtn=document.getElementById('nav-cl-gov');
   var clPdBtn=document.getElementById('nav-cl-pd');
+  var clSpecialBtn=document.getElementById('nav-cl-special');
+  var clAddonsBtn=document.getElementById('nav-cl-addons');
+  var clOtkBtn=document.getElementById('nav-cl-otk');
   var clIssBtn=document.getElementById('nav-cl-issues');
   var clAuditBtn=document.getElementById('nav-cl-audit');
   if(clPyoBtn)clPyoBtn.classList.remove('active');
   if(clPsBtn)clPsBtn.classList.remove('active');
   if(clGovBtn)clGovBtn.classList.remove('active');
   if(clPdBtn)clPdBtn.classList.remove('active');
+  if(clSpecialBtn)clSpecialBtn.classList.remove('active');
+  if(clAddonsBtn)clAddonsBtn.classList.remove('active');
+  if(clOtkBtn)clOtkBtn.classList.remove('active');
   if(clIssBtn)clIssBtn.classList.remove('active');
   if(clAuditBtn)clAuditBtn.classList.remove('active');
   var pg=document.getElementById('page-'+page);
@@ -2689,6 +2791,9 @@ function go(page){
     if(CL_TYPE==='ps'){if(clPsBtn)clPsBtn.classList.add('active');}
     else if(CL_TYPE==='gov'){if(clGovBtn)clGovBtn.classList.add('active');}
     else if(CL_TYPE==='pd'){if(clPdBtn)clPdBtn.classList.add('active');}
+    else if(CL_TYPE==='special'){if(clSpecialBtn)clSpecialBtn.classList.add('active');}
+    else if(CL_TYPE==='addons'){if(clAddonsBtn)clAddonsBtn.classList.add('active');}
+    else if(CL_TYPE==='otk'){if(clOtkBtn)clOtkBtn.classList.add('active');}
     else{if(clPyoBtn)clPyoBtn.classList.add('active');}
     var clBody=document.getElementById('nav-clients-body');
     var clHdr=document.getElementById('nav-clients-hdr');
@@ -3311,7 +3416,7 @@ var CL_TAB='overview';
 var ML_SORT_COL=null,ML_SORT_DIR='asc';
 var CL_TYPE='pyo'; // 'pyo' or 'ps' (payroll starter)
 var CL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var CL_SERVICES=['Payroll Disbursement','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement'];
+var CL_SERVICES=['Payroll Disbursement','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement','Special Projects'];
 var MON_SELECTED=[];  // multi-select state for month filter
 var SVC_SELECTED=[];  // multi-select state for service filter
 // Extended data for add-on services and after handover (keyed by client no)
@@ -4168,10 +4273,16 @@ function setClType(type){
   var clPsBtn=document.getElementById('nav-cl-ps');
   var clGovBtn=document.getElementById('nav-cl-gov');
   var clPdBtn=document.getElementById('nav-cl-pd');
+  var clSpecialBtn=document.getElementById('nav-cl-special');
+  var clAddonsBtn=document.getElementById('nav-cl-addons');
+  var clOtkBtn=document.getElementById('nav-cl-otk');
   if(clPyoBtn)clPyoBtn.classList.toggle('active',type==='pyo');
   if(clPsBtn)clPsBtn.classList.toggle('active',type==='ps');
   if(clGovBtn)clGovBtn.classList.toggle('active',type==='gov');
   if(clPdBtn)clPdBtn.classList.toggle('active',type==='pd');
+  if(clSpecialBtn)clSpecialBtn.classList.toggle('active',type==='special');
+  if(clAddonsBtn)clAddonsBtn.classList.toggle('active',type==='addons');
+  if(clOtkBtn)clOtkBtn.classList.toggle('active',type==='otk');
   renderClients();
 }
 
@@ -4179,11 +4290,14 @@ function renderClients(){
   var baseData=(CURRENT_ROLE==='implementer')?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
   // Client type filter
   baseData=baseData.filter(function(d){
-    if(CL_TYPE==='ps')  return d.service==='Payroll Starter';
-    if(CL_TYPE==='gov') return d.service==='Sprout Gov'||d.service==='Statutory Disbursement';
-    if(CL_TYPE==='pd')  return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].pd);
-    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement
-    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement';
+    if(CL_TYPE==='ps')      return d.service==='Payroll Starter';
+    if(CL_TYPE==='gov')     return d.service==='Sprout Gov'||d.service==='Statutory Disbursement';
+    if(CL_TYPE==='pd')      return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].pd);
+    if(CL_TYPE==='special') return d.service==='Special Projects';
+    if(CL_TYPE==='addons')  return !!(CL_ADDONS[d.no]&&(CL_ADDONS[d.no].ba||CL_ADDONS[d.no].sd||CL_ADDONS[d.no].std));
+    if(CL_TYPE==='otk')     return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].otk);
+    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement, Special Projects
+    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement'&&d.service!=='Special Projects';
   });
   // Update toggle count label
   var pyoCnt=D.filter(function(d){return d.service!=='Payroll Starter';}).length;
@@ -8273,6 +8387,8 @@ function startApp(){
   if(clIssuesBtn)clIssuesBtn.style.display='flex';
   var clAuditNavBtn=document.getElementById('nav-cl-audit');
   if(clAuditNavBtn)clAuditNavBtn.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
+  var pmtoolNavBtn=document.getElementById('nav-pmtool');
+  if(pmtoolNavBtn)pmtoolNavBtn.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
   if(godSwitchEl)godSwitchEl.className='god-switch'+(_IS_GOD?' visible':'');
   _syncTeamDropdowns();
@@ -8312,6 +8428,8 @@ function godSwitch(role){
   if(adminNavSec)adminNavSec.style.display=(role==='implementer'||role==='god')?'flex':'none';
   var clIssuesBtn=document.getElementById('nav-cl-issues');
   if(clIssuesBtn)clIssuesBtn.style.display='flex';
+  var pmtoolNavBtn=document.getElementById('nav-pmtool');
+  if(pmtoolNavBtn)pmtoolNavBtn.style.display=(role==='admin'||role==='god')?'flex':'none';
   document.querySelectorAll('.god-sw-btn').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-role')===role);});
   go(cfg.defaultPage);
 }
