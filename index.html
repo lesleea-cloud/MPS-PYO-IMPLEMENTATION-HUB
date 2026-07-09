@@ -1668,6 +1668,13 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <span id="vault-cat-label" style="font-size:13px;font-weight:600;color:var(--s7);"></span>
         <span id="vault-count" style="font-size:11px;color:var(--s4);font-family:var(--mono);"></span>
       </div>
+      <!-- Client search -->
+      <div id="vault-search-wrap" style="display:none;margin:10px 0 12px;">
+        <div style="position:relative;max-width:320px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--s4);pointer-events:none;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="vault-search-input" type="text" placeholder="Search clients…" oninput="vaultSearch(this.value)" style="width:100%;padding:7px 10px 7px 30px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);outline:none;box-sizing:border-box;">
+        </div>
+      </div>
       <!-- Cards grid -->
       <div id="vault-grid"></div>
     </div>
@@ -2180,6 +2187,7 @@ var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){return J
 var VAULT_ITEMS=(function(){try{var s=localStorage.getItem('pyo_vault');return s?JSON.parse(s):[];}catch(e){return [];}})();
 var VAULT_FILTER='Proposals';
 var VAULT_DRILL_CLIENT=null;
+var VAULT_SEARCH='';
 var MOM_ITEMS=[];
 async function fetchMOMs(){
   try{
@@ -2360,6 +2368,10 @@ function vaultFilter(cat){
   if(cat==='MOMs'){fetchMOMs().then(renderVault);}
   else{renderVault();}
 }
+function vaultSearch(val){
+  VAULT_SEARCH=(val||'').trim().toLowerCase();
+  renderVault();
+}
 function renderVault(){
   vaultSyncNav();
   if(CURRENT_ROLE==='manager')vaultHideForm();
@@ -2369,6 +2381,8 @@ function renderVault(){
   var isMOMs=VAULT_FILTER==='MOMs';
   if(addBtn)addBtn.style.display=canAdd?'flex':'none';
   if(refreshBtn)refreshBtn.style.display=isMOMs?'flex':'none';
+  var searchWrap=document.getElementById('vault-search-wrap');
+  if(searchWrap)searchWrap.style.display=(!isMOMs&&!VAULT_DRILL_CLIENT)?'block':'none';
 
   var catLbl=document.getElementById('vault-cat-label');
   if(catLbl)catLbl.textContent=VAULT_FILTER;
@@ -2513,12 +2527,21 @@ function renderVault(){
   } else {
     /* ── TILE VIEW: one tile per client ── */
     var clientKeys=Object.keys(vaultGrouped).sort();
-    var totalClients=clientKeys.length+(vaultUngrp.length?1:0);
+    var showGeneral=!!vaultUngrp.length;
+    if(VAULT_SEARCH){
+      clientKeys=clientKeys.filter(function(cn){return cn.toLowerCase().indexOf(VAULT_SEARCH)!==-1;});
+      showGeneral=showGeneral&&'general'.indexOf(VAULT_SEARCH)!==-1;
+    }
+    var totalClients=clientKeys.length+(showGeneral?1:0);
     if(catLbl)catLbl.innerHTML='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--g);margin-right:6px;vertical-align:middle;"></span>'+totalClients+' — CLIENT-FIRST DASHBOARD';
     if(countEl)countEl.textContent='';
     var h='<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">';
     h+='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>';
     h+='<span style="font-size:11px;color:var(--s4);">Client tiles, click to drill in</span></div>';
+    if(!totalClients){
+      grid.innerHTML=h+'<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><div class="vault-empty-title">No clients match "'+escHtml(VAULT_SEARCH)+'"</div><div class="vault-empty-sub">Try a different search term.</div></div>';
+      return;
+    }
     h+='<div class="vault-tile-grid">';
     clientKeys.forEach(function(cname){
       var cnt=vaultGrouped[cname].length;
@@ -2532,7 +2555,7 @@ function renderVault(){
       h+='<div class="vault-tile-count">'+cnt+'<div class="vault-tile-count-lbl">'+(cnt!==1?'files':'file')+'</div></div>';
       h+='</div>';
     });
-    if(vaultUngrp.length){
+    if(showGeneral){
       var uc=vaultUngrp.length;
       h+='<div class="vault-tile" onclick="vaultDrillIn(\'__general__\')">';
       h+='<div class="vault-tile-avatar" style="background:#f1f5f9;color:#64748b">GN</div>';
