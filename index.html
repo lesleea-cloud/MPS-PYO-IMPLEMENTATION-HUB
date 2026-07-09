@@ -1568,10 +1568,27 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           </div>
           <!-- MILESTONE DATES TAB -->
           <div id="ctab-body-milestones" style="display:none;">
+            <div style="display:flex;align-items:center;gap:8px;padding:.6rem 0 .8rem;flex-wrap:wrap;">
+              <span style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;">Filter by date</span>
+              <select id="ml-filt-col" onchange="mlFilterChange()" style="padding:5px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+                <option value="komDate">KOM Date</option>
+                <option value="handOver">Hand Over Date</option>
+                <option value="liveRun">Live Run Date</option>
+                <option value="churnDate">Churn Date</option>
+              </select>
+              <input id="ml-filt-from" type="date" onchange="mlFilterChange()" style="padding:5px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s8);background:#fff;outline:none;">
+              <span style="font-size:11px;color:var(--s4);">to</span>
+              <input id="ml-filt-to" type="date" onchange="mlFilterChange()" style="padding:5px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s8);background:#fff;outline:none;">
+              <button onclick="mlFilterClear()" style="padding:5px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">Clear</button>
+            </div>
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
               <thead><tr style="background:var(--s0)">
                 <th class="cth">#</th><th class="cth" style="min-width:200px;">Client Name</th>
-                <th class="cth">KOM Date</th><th class="cth">Hand Over Date</th><th class="cth">Live Run Date</th><th class="cth">Churn Date</th><th class="cth">Month Completed</th><th class="cth">Billing Month</th>
+                <th class="cth" style="cursor:pointer;" onclick="mlSort('komDate')">KOM Date<span id="ml-sort-komDate"></span></th>
+                <th class="cth" style="cursor:pointer;" onclick="mlSort('handOver')">Hand Over Date<span id="ml-sort-handOver"></span></th>
+                <th class="cth" style="cursor:pointer;" onclick="mlSort('liveRun')">Live Run Date<span id="ml-sort-liveRun"></span></th>
+                <th class="cth" style="cursor:pointer;" onclick="mlSort('churnDate')">Churn Date<span id="ml-sort-churnDate"></span></th>
+                <th class="cth">Month Completed</th><th class="cth">Billing Month</th>
               </tr></thead>
               <tbody id="cl-body-milestones"></tbody>
             </table>
@@ -3291,6 +3308,7 @@ function tabTriggerDownload(fname){
 
 // ══ CLIENT TABS STATE ══
 var CL_TAB='overview';
+var ML_SORT_COL=null,ML_SORT_DIR='asc';
 var CL_TYPE='pyo'; // 'pyo' or 'ps' (payroll starter)
 var CL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 var CL_SERVICES=['Payroll Disbursement','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement'];
@@ -3740,6 +3758,22 @@ function mlEndEdit(id,no,field,src){
   if(val&&flash){flash.style.opacity='1';setTimeout(function(){flash.style.opacity='0';},1500);}
 }
 
+function mlDateISO(d,field){
+  var raw=field==='churnDate'?((CL_MILESTONES[d.no]||{}).churnDate||''):(d[field]||'');
+  return mlToISO(raw);
+}
+function mlSort(col){
+  if(ML_SORT_COL===col){ML_SORT_DIR=ML_SORT_DIR==='asc'?'desc':'asc';}
+  else{ML_SORT_COL=col;ML_SORT_DIR='asc';}
+  renderClients();
+}
+function mlFilterChange(){clPg=1;renderClients();}
+function mlFilterClear(){
+  var f=document.getElementById('ml-filt-from'),t=document.getElementById('ml-filt-to');
+  if(f)f.value='';
+  if(t)t.value='';
+  clPg=1;renderClients();
+}
 function mlUpdateMonth(no,field,val){
   if(!CL_MILESTONES[no])CL_MILESTONES[no]={};
   var mlLbl={billingMonth:'Billing Month',monthCompleted:'Month Completed',churnDate:'Churn Date'};
@@ -4176,6 +4210,31 @@ function renderClients(){
   }
 
   var rows=fdFull(baseData);
+  if(CL_TAB==='milestones'){
+    var mlFiltCol=document.getElementById('ml-filt-col'),mlFrom=document.getElementById('ml-filt-from'),mlTo=document.getElementById('ml-filt-to');
+    if(mlFiltCol&&mlFrom&&mlTo&&(mlFrom.value||mlTo.value)){
+      var fCol=mlFiltCol.value,fFrom=mlFrom.value,fTo=mlTo.value;
+      rows=rows.filter(function(d){
+        var iso=mlDateISO(d,fCol);
+        if(!iso)return false;
+        if(fFrom&&iso<fFrom)return false;
+        if(fTo&&iso>fTo)return false;
+        return true;
+      });
+    }
+    if(ML_SORT_COL){
+      var sc=ML_SORT_COL,sd=ML_SORT_DIR;
+      rows=rows.slice().sort(function(a,b){
+        var av=mlDateISO(a,sc),bv=mlDateISO(b,sc);
+        if(!av&&!bv)return 0;
+        if(!av)return 1;
+        if(!bv)return -1;
+        if(av<bv)return sd==='asc'?-1:1;
+        if(av>bv)return sd==='asc'?1:-1;
+        return 0;
+      });
+    }
+  }
   document.getElementById('cl-count').textContent=rows.length+' client'+(rows.length!==1?'s':'');
 
   // Tab counts
@@ -4310,6 +4369,10 @@ function renderClients(){
   } else if(CL_TAB==='milestones'){
     var ML_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
     var mlCanEditDates=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
+    ['komDate','handOver','liveRun','churnDate'].forEach(function(c){
+      var ind=document.getElementById('ml-sort-'+c);
+      if(ind)ind.textContent=ML_SORT_COL===c?(ML_SORT_DIR==='asc'?' ▲':' ▼'):'';
+    });
     document.getElementById('cl-body-milestones').innerHTML=slice.map(function(d,i){
       var m=CL_MILESTONES[d.no]||{};
       function mDateCell(val,field,src){
