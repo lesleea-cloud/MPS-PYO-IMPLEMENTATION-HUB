@@ -2876,3 +2876,18 @@ Added a targeted exception for this one field, following the same pattern alread
 var canEditThisDate=mlCanEditDates||(field==='churnDate'&&CURRENT_ROLE==='admin');
 ```
 KOM Date, Hand Over Date, and Live Run Date are untouched — still implementer/god only, since those are populated from the Implementation Phases workflow, not something admins should hand-edit.
+
+---
+
+## 63. Weekly Status — "Week of..." label now reflects the current week ✅ Coded (July 9, 2026)
+
+### What changed
+The Weekly Status page header (`#weekly-sub`) was hardcoded static HTML — "Week of March 23 – March 30, 2026" — and never updated, so it always showed that same placeholder regardless of the actual date.
+
+The Implementer Dashboard already had the correct pattern for this (`renderImpl()`'s "Week label" block, `#impl-status-week`): compute the Monday–Friday of the current week from `new Date()` and format as `Mon D – Mon D, YYYY`. Reused the same logic in `renderWeekly()` so `#weekly-sub` now recalculates every time the Weekly Status page renders (page nav and both its sub-tabs, since `wkTab()`/`wkToggleSection()` both call `renderWeekly()`):
+```js
+var _now=new Date(),_day=_now.getDay(),_diffMon=_day===0?-6:1-_day;
+var _mon=new Date(_now);_mon.setDate(_now.getDate()+_diffMon);
+var _fri=new Date(_mon);_fri.setDate(_mon.getDate()+4);
+// → "Week of Jul 6 – Jul 10, 2026" on today's date, instead of the old fixed March string
+```

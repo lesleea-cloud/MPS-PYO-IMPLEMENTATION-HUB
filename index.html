@@ -2907,6 +2907,14 @@ function wkToggleSection(lbl){WK_COLLAPSED[lbl]=!WK_COLLAPSED[lbl];renderWeekly(
 
 function renderWeekly(){
   document.getElementById('weekly-greeting').textContent='Hi '+CURRENT_NAME+'!';
+  /* Week label — Monday–Friday of the current week */
+  var _MS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var _now=new Date(),_day=_now.getDay(),_diffMon=_day===0?-6:1-_day;
+  var _mon=new Date(_now);_mon.setDate(_now.getDate()+_diffMon);
+  var _fri=new Date(_mon);_fri.setDate(_mon.getDate()+4);
+  var _wf=function(d){return _MS[d.getMonth()]+' '+d.getDate();};
+  var wkSubEl=document.getElementById('weekly-sub');
+  if(wkSubEl)wkSubEl.textContent='Week of '+_wf(_mon)+' – '+_wf(_fri)+', '+_fri.getFullYear();
   var sk=['Live','Ongoing','Not yet started','Churned'];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var isImpl=CURRENT_ROLE==='implementer';
