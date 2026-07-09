@@ -1112,7 +1112,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-sd" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Salary Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-std" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Statutory Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-otk" onchange="acmCheckOtk()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Outsourced Timekeeping</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pd" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll Disbursement</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pd" onchange="acmCheckPd()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll Disbursement</label>
         </div>
       </div>
       <div id="acm-gov-row" style="display:none;">
@@ -1122,6 +1122,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
       <div id="acm-otk-row" style="display:none;">
         <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">OTK Implementer</div>
         <select id="acm-otk-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
+      </div>
+      <div id="acm-pd-row" style="display:none;">
+        <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">PD Implementer</div>
+        <select id="acm-pd-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
       </div>
       <div id="acm-error" style="display:none;padding:8px 12px;background:var(--r0);border:1px solid var(--r1);border-radius:8px;font-size:12px;color:var(--r);"></div>
     </div>
@@ -1536,6 +1540,7 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
                 <th class="cth">Gov Resource</th>
                 <th class="cth">HR-I</th>
                 <th class="cth">OTK Implementer</th>
+                <th class="cth">PD Implementer</th>
                 <th class="cth">Project Manager</th>
               </tr></thead>
               <tbody id="cl-body-resource"></tbody>
@@ -3454,6 +3459,7 @@ function svcEditEnd(no){
 }
 function clUpdateResource(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.resource;d.resource=val;logAudit(no,'Resource Team','resource','Resource',old,val);}autoSave();renderClients();}
 function clUpdateOtkImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.otkImpl||'';d.otkImpl=val;logAudit(no,'Resource Team','otkImpl','OTK Implementer',old,val);}autoSave();}
+function clUpdatePdImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pdImpl||'';d.pdImpl=val;logAudit(no,'Resource Team','pdImpl','PD Implementer',old,val);}autoSave();}
 function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.days;d.days=parseInt(val)||0;logAudit(no,'Overview','days','Days',old,d.days);}autoSave();renderClients();}
 function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.remarks;d.remarks=val;logAudit(no,'Overview','status','Status',old,val);}autoSave();_supaFlush();renderClients();}
 function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pm;d.pm=val;logAudit(no,'Overview','pm','Project Manager',old,val);}autoSave();}
@@ -3526,12 +3532,15 @@ function openAddClientModal(){
   if(govEl){govEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var otkImplEl=document.getElementById('acm-otk-impl');
   if(otkImplEl){otkImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
+  var pdImplEl=document.getElementById('acm-pd-impl');
+  if(pdImplEl){pdImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implPD||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var implEl=document.getElementById('acm-impl');
   if(implEl){implEl.innerHTML='<option value="">— Select implementer —</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   // Reset form values
-  ['acm-month','acm-pm','acm-hri','acm-service','acm-impl','acm-gov','acm-otk-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['acm-month','acm-pm','acm-hri','acm-service','acm-impl','acm-gov','acm-otk-impl','acm-pd-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('acm-gov-row').style.display='none';
   document.getElementById('acm-otk-row').style.display='none';
+  document.getElementById('acm-pd-row').style.display='none';
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
   ['acm-sg','acm-ba','acm-sd','acm-std','acm-otk','acm-pd'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
@@ -3562,6 +3571,10 @@ function acmCheckOtk(){
   var show=document.getElementById('acm-otk').checked;
   document.getElementById('acm-otk-row').style.display=show?'':'none';
 }
+function acmCheckPd(){
+  var show=document.getElementById('acm-pd').checked;
+  document.getElementById('acm-pd-row').style.display=show?'':'none';
+}
 
 function submitAddClient(){
   var month  =document.getElementById('acm-month').value.trim();
@@ -3572,6 +3585,7 @@ function submitAddClient(){
   var hri    =(document.getElementById('acm-hri').value||'').trim();
   var gov    =(document.getElementById('acm-gov').value||'').trim();
   var otkImpl=(document.getElementById('acm-otk-impl').value||'').trim();
+  var pdImpl =(document.getElementById('acm-pd-impl').value||'').trim();
   var err=document.getElementById('acm-error');
   var missing=[];
   if(!month)  missing.push('Month');
@@ -3588,7 +3602,7 @@ function submitAddClient(){
   var maxNo=D.reduce(function(m,d){return Math.max(m,d.no);},0);
   var newNo=maxNo+1;
   var days=parseInt(document.getElementById('acm-days').value)||0;
-  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,gov:gov,otkImpl:otkImpl,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,checklist:0,par:0,live:0,post:0});
+  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,gov:gov,otkImpl:otkImpl,pdImpl:pdImpl,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,checklist:0,par:0,live:0,post:0});
   logAudit(newNo,'Overview','client','Client Added','—',name+' ('+service+', '+month+', Implementer: '+impl+')');
   // Save add-on services
   var addons={
@@ -4211,6 +4225,7 @@ function renderClients(){
       var a=CL_ADDONS[d.no]||{};
       var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
       var isOtk=a.otk===1;
+      var isPd=a.pd===1;
       var hasHR=d.service&&d.service.indexOf('HR')>=0;
       var rtRO=(CURRENT_ROLE==='manager');
       var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
@@ -4219,6 +4234,9 @@ function renderClients(){
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       var otkCell=isOtk
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.otkImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateOtkImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.otkImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
+        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
+      var pdCell=isPd
+        ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pdImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdatePdImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPD||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.pdImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       var hriCell=hasHR
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
@@ -4230,6 +4248,7 @@ function renderClients(){
         govCell+
         hriCell+
         otkCell+
+        pdCell+
         (rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><select class="cl-pm-sel" onchange="clUpdatePm('+d.no+',this.value)"><option value="">—</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'"'+(n===d.pm?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
       '</tr>';
     }).join('');
@@ -7950,7 +7969,7 @@ async function loadFromSupabase(){
         pm:r.pm||'',hri:r.hri||'',gov:r.gov||'',remarks:r.remarks||'Not yet started',
         service:r.service||'',days:r.days||0,komDate:r.kom_date||'',
         simDate:r.sim_date||'',checklistDate:r.checklist_date||'',parDate:r.par_date||'',handOver:r.hand_over||'',
-        liveRun:r.live_run||'',otkImpl:r.otk_impl||'',kom:r.kom||0,sim:r.sim||0,checklist:r.checklist||0,par:r.par||0,live:r.live||0,post:r.post||0});
+        liveRun:r.live_run||'',otkImpl:r.otk_impl||'',pdImpl:r.pd_impl||'',kom:r.kom||0,sim:r.sim||0,checklist:r.checklist||0,par:r.par||0,live:r.live||0,post:r.post||0});
     });
     var ra=await _supa.from('client_addons').select('*');
     if(ra.data){CL_ADDONS={};ra.data.forEach(function(a){CL_ADDONS[a.client_no]={sg:a.sprout_gov?1:0,ba:a.benefits_admin?1:0,sd:a.salary_disbursement?1:0,std:a.statutory_disbursement?1:0,otk:a.outsourced_timekeeping?1:0,pd:a.payroll_disbursement?1:0};});}
@@ -8021,7 +8040,7 @@ async function _supaFlush(){
   try{
     var changedClients=D.filter(function(d){return JSON.stringify(d)!==_snap.clients[d.no];});
     if(changedClients.length){
-      var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',checklist_date:d.checklistDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,checklist:d.checklist||0,par:d.par,live:d.live,post:d.post};});
+      var rows=changedClients.map(function(d){return{no:d.no,month:d.month,client:d.client,resource:d.resource,pm:d.pm||'',hri:d.hri||'',gov:d.gov||'',otk_impl:d.otkImpl||'',pd_impl:d.pdImpl||'',remarks:d.remarks,service:d.service,days:d.days,kom_date:d.komDate||'',sim_date:d.simDate||'',checklist_date:d.checklistDate||'',par_date:d.parDate||'',hand_over:d.handOver||'',live_run:d.liveRun||'',kom:d.kom,sim:d.sim,checklist:d.checklist||0,par:d.par,live:d.live,post:d.post};});
       var r1=await _supa.from('clients').upsert(rows,{onConflict:'no'});
       if(r1.error){console.warn('clients save error:',r1.error.message);}
       else{changedClients.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});}
