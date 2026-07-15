@@ -3050,3 +3050,21 @@ function clNameCell(d,wide){
 `manager` still sees the read-only `cl-link` span (consistent with `ovRO`/`rtRO` elsewhere in this table). Blank input on blur is ignored (keeps the old name) rather than allowed to clear the field. Since `godSwitch()` sets `CURRENT_ROLE` to the literal string `'admin'`/`'implementer'` when a god account previews those roles (§15), the same check covers god without a separate branch.
 
 Note: renaming here only updates `D[].client`, the source of truth for the Clients table. It does not cascade into places that snapshot the name at creation time (Issue Log entries, Vault items grouped by `clientName`) — same pre-existing behavior as other identifying fields in this app (e.g. `resource` renames don't cascade either).
+
+---
+
+## 70. Masterfile Creator — mapping fixes verified against a real client file ✅ Coded (July 15, 2026)
+
+### What changed
+User provided three real reference files for a live client (Panasonic Projector & Display Asia Pacific) to validate the existing Masterfile Creator (`index.html` §~6075, `mfGenerate()`/`mfGet()`/`mfNorm*()`): the Sprout HR source Masterfile (`Employee Information` sheet, 114 columns), the blank PayrollPie `ADD` output template (48 columns), and a manually-built sample output for the same 6 employees. Diffed the tool's mapping logic column-by-column against these.
+
+Confirmed already correct (no change): Employment Status hardcoded to `Active` for ADD imports, Status Date falling back to Hire Date, proper Excel-serial→`MM/DD/YYYY` date conversion (the manual sample output actually had a bug here — raw serials pasted instead of formatted dates — the tool's own `mfFmtDate()` was already right), Pay Group defaulting logic, and the 313 default for Work Days Per Year.
+
+Found and fixed 7 output fields that were hardcoded blank even though the source file has an exact-name-matching column sitting unused: `ROHQ`, `Consultant Percent Tax`, three `Previous Employer` amounts (Non-Tax 13th Month, Non-Tax Salaries, Tax Withheld), and three government contribution fields (SSS/PhilHealth/HDMF Contribution + Additional HDMF Contribution) — all now read from source via `mfGet()` instead of being discarded. Also fixed `Basic Salary*` (a required field) to default to `0` instead of `''` when the source value is blank, since an empty required field would likely fail PayrollPie's import validation.
+
+Also fixed a dead mapping key — the code had `mapped['Previous Employer Taxable Salaries']=''` which never matched the real output column (`Previous Employer Taxable Compensation`, with a literal trailing newline in the template header), so it silently fell through to blank anyway. Renamed to the correct key (harmless no-op today since the field is intentionally left blank — see below — but keeps the key legible if that ever changes).
+
+### Confirmed as-is (user's call, not changed)
+- **Pay Group for `manager` Employee Type** — source has 3 Employee Types (rank and file / manager / officer) but PayrollPie's Pay Group has only 2 (Rank and File / Officer). User confirmed `manager` should keep falling into **Rank and File** (only `officer` maps to Officer).
+- **Daily Allowance** — source has 12 separate named allowances (ECOLA, Clothing, Communication, Discretionary, Laundry, Meal, Medical, Productivity, Rice, Transportation, Other, De Minimis) but the output template has one generic `Daily Allowance` field. User confirmed: **leave blank**, don't sum — an admin fills it in manually after reviewing the breakdown.
+- **Previous Employer Taxable Compensation** — source's closest match is `Previous Employer Gross Compensation Income`, but gross ≠ taxable. User confirmed: **leave blank** rather than map a non-equivalent concept through.

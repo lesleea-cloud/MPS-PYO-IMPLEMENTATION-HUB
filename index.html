@@ -7711,12 +7711,12 @@ async function mfGenerate(){
       var rawStatus=g(row,srcHeaders,['Employment Status','Emp Status']);
       mapped['Employment Status*']=mfNormStatus(rawStatus);
       mapped['Status Date (mm/dd/yyyy)*']=hireFmt;
-      mapped['ROHQ (Yes/No)']='No';
- 
+      mapped['ROHQ (Yes/No)']=mfNormMWE(g(row,srcHeaders,['ROHQ']))||'No';
+
       // Government IDs
       mapped['TIN*']=mfStrip(g(row,srcHeaders,['TIN','Tax ID','Tax Identification Number']));
       mapped['RDO']=String(g(row,srcHeaders,['RDO'])||'').trim();
-      mapped['Consultant Percent Tax (2, 5, 8, 10, 15, 20 and 25) (Leave blank if not consultant)']='';
+      mapped['Consultant Percent Tax (2, 5, 8, 10, 15, 20 and 25) (Leave blank if not consultant)']=mfNum(g(row,srcHeaders,['Consultant Percent Tax']));
  
       // Government contributions
       mapped['PhilHealth No.']=mfStrip(g(row,srcHeaders,['PhilHealth No.','PhilHealth No','PhilHealth']));
@@ -7731,30 +7731,30 @@ async function mfGenerate(){
       // Salary / compensation
       mapped['Minimum Wage Earner (Yes/No)']=mfNormMWE(g(row,srcHeaders,['Minimum Wage Earner','MWE']));
       var basicSal=g(row,srcHeaders,['Basic Salary','Basic Pay','Salary']);
-      mapped['Basic Salary*']=mfNum(basicSal);
+      var basicSalNum=mfNum(basicSal);
+      mapped['Basic Salary*']=basicSalNum===''?0:basicSalNum;
       mapped['De Minimis']=mfNum(g(row,srcHeaders,['De Minimis','DeMinimis']))||'';
       mapped['Daily Allowance']='';
       var wh=parseFloat(String(g(row,srcHeaders,['Work Hours Per Day','Work Hours per Day','Hours Per Day'])||''));
       mapped['Work Hours per Day']=isNaN(wh)?'':wh;
  
       // Previous employer
-      mapped['Previous Employer Non-Tax 13th Month']='';
-      mapped['Previous Employer Non-Tax Salaries']='';
-      mapped['Previous Employer Taxable Salaries']='';
-      mapped['Previous Employer Tax Withheld']='';
+      mapped['Previous Employer Non-Tax 13th Month']=mfNum(g(row,srcHeaders,['Previous Employer Non-Tax 13th Month']));
+      mapped['Previous Employer Non-Tax Salaries']=mfNum(g(row,srcHeaders,['Previous Employer Non-Tax Salaries']));
+      mapped['Previous Employer Tax Withheld']=mfNum(g(row,srcHeaders,['Previous Employer Tax Withheld']));
       mapped['Previous Employer Government Deductions']='';
       mapped['Previous Employer De Minimis']='';
-      mapped['Previous Employer Taxable Compensation\n']='';
+      mapped['Previous Employer Taxable Compensation']='';
       mapped['Previous Employer Monetized Leave']='';
  
       // Payroll settings
       var empType=g(row,srcHeaders,['Employee Type','Emp Type']);
       mapped['OT Computation Table*']=mfNormOT(g(row,srcHeaders,['OT Computation Table','OT Table']));
       mapped['Work Days Per Year*']=mfNormWorkDays(g(row,srcHeaders,['Work Days Per Year','Work Days/Year']));
-      mapped['SSS Contribution (Leave blank to let the system decide)']='';
-      mapped['PhilHealth Contribution (Leave blank to let the system decide)']='';
-      mapped['HDMF Contribution (Leave blank to let the system decide)']='';
-      mapped['Additional HDMF Contribution']='';
+      mapped['SSS Contribution (Leave blank to let the system decide)']=mfNum(g(row,srcHeaders,['SSS Contribution']));
+      mapped['PhilHealth Contribution (Leave blank to let the system decide)']=mfNum(g(row,srcHeaders,['PhilHealth Contribution']));
+      mapped['HDMF Contribution (Leave blank to let the system decide)']=mfNum(g(row,srcHeaders,['HDMF Contribution']));
+      mapped['Additional HDMF Contribution']=mfNum(g(row,srcHeaders,['HDMF Additional Contribution']));
       mapped['Pay Group*']=mfNormPayGroup(g(row,srcHeaders,['Pay Group','PayGroup','Payroll Group']),empType);
       mapped['Payroll ID']='';
  
