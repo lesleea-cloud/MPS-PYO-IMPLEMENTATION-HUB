@@ -3164,3 +3164,22 @@ var newXf='<xf numFmtId="0" fontId="0" fillId="'+fillCount+'" borderId="0" xfId=
 Used Excel's conventional "Bad" light-red fill (`FFC7CE`) rather than solid red, since solid red would also obscure the red asterisk(`*`) required-field markers already in the template's header styling.
 
 This only touches the rows the tool generates (r≥5) — the template's own header rows and built-in `SAMPLE DATA` row are untouched, same as before. It flags *every* blank cell regardless of whether the field is required or optional (e.g. Middle Name blank because an employee genuinely has none also gets flagged) — no attempt to distinguish "missing" from "not applicable," per the request as given.
+
+---
+
+## 75. Masterfile Creator — exempted specific columns from blank-highlighting ✅ Coded (July 15, 2026)
+
+### What changed
+§74 flagged every blank cell red, including fields that are routinely blank by design (e.g. Middle Name, or all the "Previous Employer" fields when nobody has prior employment info on file) — noisy rather than useful. User supplied the exact columns to exempt, by spreadsheet letter: **A, E, O, U, V, AC, AF, AH–AN**.
+
+Mapped to the template's fixed 48-column layout (`MF_COLUMNS`, `index.html` §~6077), these are: Status(A), Middle Name(E), Cost Center(O), RDO(U), Consultant Percent Tax(V), Minimum Wage Earner(AC), Daily Allowance(AF), and the full block of 7 "Previous Employer" fields Non-Tax 13th Month through Monetized Leave(AH–AN) — all fields that are either system-managed, situational (consultant-only, previous-employer-only), or already-decided-blank (Daily Allowance, per §70).
+
+Added a fixed exemption list, keyed by 0-indexed spreadsheet column number (matching the actual resolved column position in the template, not just `MF_COLUMNS` array order — the two happen to line up 1:1 for this template, but the check is against the real `ci`):
+```js
+var MF_NO_HIGHLIGHT_IDX=[0,4,14,20,21,28,31,33,34,35,36,37,38,39]; // A,E,O,U,V,AC,AF,AH–AN
+```
+`mfInjectRows()` now checks this list before applying the red style to a blank cell — exempt columns still get an empty `<c>` element (so the cell exists) but no `s="..."` style attribute, leaving them in the template's default (unstyled) appearance:
+```js
+if(MF_NO_HIGHLIGHT_IDX.indexOf(ci)>=0){cells+='<c r="'+mfColLetter(ci)+rn+'"></c>';}
+else{cells+='<c r="'+mfColLetter(ci)+rn+'" s="'+blankStyleIdx+'"></c>';}
+```

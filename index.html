@@ -6093,6 +6093,10 @@ var MF_COLUMNS=[
   'Additional HDMF Contribution','Pay Group*','Payroll ID'
 ];
  
+// Columns exempt from red blank-highlighting (0-indexed spreadsheet column, A=0):
+// A, E, O, U, V, AC, AF, AH–AN — optional/system fields that are routinely blank
+var MF_NO_HIGHLIGHT_IDX=[0,4,14,20,21,28,31,33,34,35,36,37,38,39];
+
 var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
  
 function toggleAdminSection(){
@@ -7913,8 +7917,9 @@ function mfInjectRows(sheetXml,rows,cols,colMap,blankStyleIdx){
       if(ci===undefined)return;
       var v=rowData[col];
       if(v===undefined||v===null||v===''){
-        // Blank field — write an empty styled cell so it renders highlighted in red
-        cells+='<c r="'+mfColLetter(ci)+rn+'" s="'+blankStyleIdx+'"></c>';
+        // Blank field — write an empty cell, styled red unless this column is exempt
+        if(MF_NO_HIGHLIGHT_IDX.indexOf(ci)>=0){cells+='<c r="'+mfColLetter(ci)+rn+'"></c>';}
+        else{cells+='<c r="'+mfColLetter(ci)+rn+'" s="'+blankStyleIdx+'"></c>';}
         return;
       }
       cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
