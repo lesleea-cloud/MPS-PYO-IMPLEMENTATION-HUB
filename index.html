@@ -7833,12 +7833,26 @@ async function mfDownload(){
     }
     var zip=await JSZip.loadAsync(buf);
     var sheetXmlPath='xl/worksheets/sheet1.xml';
+    // Resolve the actual "Employee" sheet's XML file via workbook.xml's <sheet r:id> ->
+    // workbook.xml.rels <Relationship Id>. Relationship order in the .rels file does NOT
+    // match tab order (hidden helper sheets can appear first), so matching the first
+    // Type=".../worksheet" entry can land on the wrong sheet — must match by rId.
+    var wbXmlFile=zip.file('xl/workbook.xml');
     var relsFile=zip.file('xl/_rels/workbook.xml.rels');
-    if(relsFile){
-      var relsXml=await relsFile.async('string');
-      var rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
-      if(!rm)rm=relsXml.match(/Target="(worksheets\/[^"]+)"/);
-      if(rm)sheetXmlPath='xl/'+(rm[1].replace(/^\//,''));
+    if(wbXmlFile&&relsFile){
+      var wbXml=await wbXmlFile.async('string');
+      var sheetEls=wbXml.match(/<sheet\b[^>]*\/>/g)||[];
+      var targetSheetEl=sheetEls.filter(function(s){return !/state="hidden"/.test(s);}).find(function(s){return /name="Employee"/i.test(s);})
+        ||sheetEls.find(function(s){return !/state="hidden"/.test(s);})
+        ||sheetEls[0];
+      var ridM=targetSheetEl&&targetSheetEl.match(/r:id="([^"]+)"/);
+      if(ridM){
+        var relsXml=await relsFile.async('string');
+        var relEls=relsXml.match(/<Relationship\b[^>]*\/>/g)||[];
+        var relEl=relEls.find(function(r){return r.indexOf('Id="'+ridM[1]+'"')>=0;});
+        var tgtM=relEl&&relEl.match(/Target="([^"]+)"/);
+        if(tgtM)sheetXmlPath='xl/'+tgtM[1].replace(/^\//,'');
+      }
     }
     var sheetXml=await zip.file(sheetXmlPath).async('string');
     var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);

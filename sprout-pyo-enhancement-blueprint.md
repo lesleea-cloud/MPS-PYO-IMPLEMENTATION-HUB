@@ -3068,3 +3068,35 @@ Also fixed a dead mapping key — the code had `mapped['Previous Employer Taxabl
 - **Pay Group for `manager` Employee Type** — source has 3 Employee Types (rank and file / manager / officer) but PayrollPie's Pay Group has only 2 (Rank and File / Officer). User confirmed `manager` should keep falling into **Rank and File** (only `officer` maps to Officer).
 - **Daily Allowance** — source has 12 separate named allowances (ECOLA, Clothing, Communication, Discretionary, Laundry, Meal, Medical, Productivity, Rice, Transportation, Other, De Minimis) but the output template has one generic `Daily Allowance` field. User confirmed: **leave blank**, don't sum — an admin fills it in manually after reviewing the breakdown.
 - **Previous Employer Taxable Compensation** — source's closest match is `Previous Employer Gross Compensation Income`, but gross ≠ taxable. User confirmed: **leave blank** rather than map a non-equivalent concept through.
+
+---
+
+## 71. Masterfile Creator — download was writing rows into the wrong (hidden) sheet ✅ Coded (July 15, 2026)
+
+### What changed
+User tested the tool end-to-end (real Panasonic source + real ADD template) and reported the downloaded file looked blank. It wasn't blank — `mfGenerate()` had mapped all 6 employees correctly — but `mfDownload()`'s raw-XML row injection (`mfInjectRows()`) was writing them into the wrong worksheet XML file inside the `.xlsx` zip.
+
+Root cause (`index.html` `mfDownload()`): to find which `xl/worksheets/sheetN.xml` corresponds to the visible "Employee" tab, the code scanned `xl/_rels/workbook.xml.rels` for the *first* `Relationship` element whose `Type` ends in `/worksheet`:
+```js
+var rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
+```
+But relationship order in a `.rels` file has no connection to tab order — Excel had written this template's `.rels` with `rId3` (→ `worksheets/sheet3.xml`, the **hidden** "Sheet2" validation/lookup tab) listed *before* `rId1` (→ `worksheets/sheet1.xml`, the actual "Employee" tab):
+```
+<Relationship Id="rId3" .../worksheet" Target="worksheets/sheet3.xml"/>   <!-- hidden Sheet2, listed first -->
+...
+<Relationship Id="rId1" .../worksheet" Target="worksheets/sheet1.xml"/>   <!-- real "Employee" tab -->
+```
+So every generated file had its 6 employee rows silently injected into the hidden "Sheet2" tab instead of "Employee" — invisible unless you unhid it, and useless to PayrollPie's importer, which reads the "Employee" tab. The "Employee" tab itself only ever had the template's original built-in `SAMPLE DATA` row, which read as "blank" once you scrolled past it.
+
+Fixed by resolving the correct worksheet file properly: read `xl/workbook.xml`'s `<sheet>` list, pick the entry named "Employee" (excluding anything `state="hidden"`, falling back to the first non-hidden sheet, then the first sheet overall) to get its `r:id`, then look up that **specific** `r:id` in `workbook.xml.rels` to get its `Target` — instead of trusting file order:
+```js
+var targetSheetEl=sheetEls.filter(s=>!/state="hidden"/.test(s)).find(s=>/name="Employee"/i.test(s))
+  ||sheetEls.find(s=>!/state="hidden"/.test(s))||sheetEls[0];
+var ridM=targetSheetEl.match(/r:id="([^"]+)"/);
+var relEl=relEls.find(r=>r.indexOf('Id="'+ridM[1]+'"')>=0);
+var tgtM=relEl.match(/Target="([^"]+)"/);
+```
+The earlier header/column-detection step (`XLSX.utils` via SheetJS, used to build `colMap`) was never affected — SheetJS resolves sheet order correctly internally; only the hand-rolled raw-XML path used for the actual row injection had the bug.
+
+### Verification
+Confirmed against the real template's `workbook.xml`/`workbook.xml.rels` (`<sheet name="Employee" r:id="rId1">` vs. rels listing `rId3`→`sheet3.xml` first) that the old regex resolved to `sheet3.xml` and the new logic resolves to `sheet1.xml`, matching the "Employee" tab. Re-test in-browser with the real files still pending before this ships to a live client.
