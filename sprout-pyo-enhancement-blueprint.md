@@ -2891,3 +2891,114 @@ var _mon=new Date(_now);_mon.setDate(_now.getDate()+_diffMon);
 var _fri=new Date(_mon);_fri.setDate(_mon.getDate()+4);
 // → "Week of Jul 6 – Jul 10, 2026" on today's date, instead of the old fixed March string
 ```
+
+---
+
+## 64. PM Tool Data — filtering, suggested payload schema, and assign/create/dismiss actions ✅ Coded (July 9, 2026)
+
+### What changed
+Section 57 built PM Tool Data as a pure viewer — see what the PM Tool pushed, no filtering, no way to act on it. This closes that gap: filtering, a documented "suggested format" contract for the PM Tool to send, and three actions per event (assign to an existing client, create a new client from it, or dismiss it).
+
+### Suggested payload schema
+Since no PM Tool is connected yet, there's no real payload shape to build against. Added a `PMTOOL_SCHEMA` array in `index.html` — one entry per field this tool actually has room for on a client record (name, month, service, resource, PM, HR-I, gov/OTK/PD implementers, days, status, all 6 phase dates + done-flags, churn date, billing month, month completed, and all 5 add-on flags). It drives:
+- The "Suggested payload format ▾" collapsible reference box on the PM Tool Data page — a concrete JSON example to hand whoever configures the actual PM Tool.
+- Auto-selecting the mapping target in the Assign modal when an incoming payload's key name matches a schema key (case/punctuation-insensitive) — so if the PM Tool *does* send matching field names, assigning is a couple of clicks; if it doesn't, every field is still manually mappable.
+
+### Filtering
+New filter bar above the table (client name text search against the raw payload JSON, received-date range, status dropdown) — matches the visual pattern already used by Milestone Dates' "Filter by date" bar. `renderPmTool()` now filters `PMTOOL_EVENTS` through `pmtoolMatchesFilters()` before rendering.
+
+### Assigning data into the tool's panels
+Three actions per row, added to a new Status + Actions column:
+- **Assign to client** — opens a modal: pick an existing client (auto-preselected if the payload has a `clientNo`/`client_no`/`no` that matches an existing client, or a `client` name that matches exactly), then for every top-level key in the payload, a row shows its value with a target-field dropdown (pre-filled via `PMTOOL_SCHEMA` when the key matches) and an Apply checkbox. On "Apply to client", `pmtoolSetField()` writes each checked mapping onto the chosen client's `D[]` record, `CL_MILESTONES`, or `CL_ADDONS` (dates go through the existing `parseImportDate()` normalizer, booleans/add-on flags through a small `pmtoolToBool()` coercer), then `autoSave()`/`_supaFlush()`/`logAudit()` run same as any other client edit.
+- **Create new client** — prefills the existing Add Client modal (`openAddClientModal()`) from the payload using the same key names, lets the admin review/edit, then submits normally through `submitAddClient()`. A `PMTOOL_PENDING_EVENT_ID` hook (cleared on modal close, captured before `closeAddClientModal()` runs) marks the source event "assigned" to the newly created client's `no` once the modal is actually submitted.
+- **Dismiss / Restore** — marks an event `dismissed` (or back to `unassigned`) with no data change, for events that don't need any action.
+
+### New Supabase columns — `PM_Tool_Event_Status_Column.sql`
+`integration_events` gains `status TEXT DEFAULT 'unassigned'`, `applied_to_client BIGINT`, `applied_at TIMESTAMPTZ`. Same RLS lockout as the rest of the integration tables (service-role only).
+
+### New/changed backend
+| File | Change |
+|---|---|
+| `api/integrations/events.js` | `select=` list extended to include `status,applied_to_client,applied_at`. |
+| `api/integrations/events-status.js` | **New.** POST `{id,status,clientNo}` — PATCHes an `integration_events` row's status via the service-role key. Called by `pmtoolSetStatus()` after every assign/create/dismiss, optimistic-locally-first (UI updates immediately, the PATCH is fire-and-forget with a silent catch — a failed PATCH just gets retried by the next explicit Refresh). |
+
+### ⚠️ Manual setup required
+Run `PM_Tool_Event_Status_Column.sql` in Supabase → SQL Editor before using Assign/Create/Dismiss — without the new columns, `events.js`'s select will fail on the missing columns.
+
+### Not done yet
+- No saved per-integration mapping profile — every event's field mapping is manual (auto-preselected where names match, but not remembered for next time). Worth adding once a real PM Tool is connected and its actual field names are known.
+- No validation that a mapped "Status" value matches one of the app's real status strings (Live/Ongoing/Not yet started/On-Hold/For Turnover/Churned) — it's written as-is; a mismatched value just won't match any Overview status-badge styling until corrected manually.
+
+---
+
+## 65. Two new Add-on Services — Payroll on Demand (POD) & Final Pay on Demand (FPOD) ✅ Coded (July 9, 2026)
+
+### What changed
+Added two new add-on services, each fully mirroring how **Payroll Disbursement** already works — both a standalone "Availed Service" option AND an add-on checkbox, each with its own dedicated Implementer picker:
+- **Payroll on Demand** (short key `pod`)
+- **Final Pay on Demand** (short key `fpod`)
+
+### Everywhere PD exists, POD/FPOD now exist too
+- **Add new client modal** — two new checkboxes (`#acm-pod`, `#acm-fpod`) in Add-on Services, each revealing its own Implementer picker row (`#acm-pod-row`/`#acm-pod-impl`, `#acm-fpod-row`/`#acm-fpod-impl`) when checked, via new `acmCheckPod()`/`acmCheckFpod()` (same show/hide pattern as `acmCheckPd()`). Also added as standalone options in the Availed Service dropdown.
+- **CL_SERVICES** array — both added as standalone service strings, so the Overview tab's inline service-edit dropdown includes them automatically.
+- **Service chips** (`svcChips()`) — new "POD" (teal `#0D9488`) and "FPOD" (amber `#B45309`) chips for clients whose main service is one of these.
+- **Clients sidebar** — no dedicated nav items (see §66 correction below) — both fold into the existing "Special Projects" bucket. Both excluded from the generic "PYO" bucket's fallback filter.
+- **"All services" filter** (Clients page toolbar) — two new checkboxes.
+- **Resource Team tab** — two new columns, "POD Implementer" / "FPOD Implementer", shown only when the respective add-on flag is set (`a.pod===1`/`a.fpod===1`), same conditional-cell pattern as PD/OTK/Gov. New `clUpdatePodImpl()`/`clUpdateFpodImpl()`.
+- **Add-on Services tab** — two new checkbox columns ("Pay. Demand" / "Final Demand") via `clAddonBox(d.no,'pod',...)`/`'fpod'`.
+- **Team Configuration (Settings)** — two new roster sections, "Payroll on Demand Implementer" / "Final Pay on Demand Implementer" (`#st-pod-list`/`#st-fpod-list`), fully wired into the existing generic `TC_MAP`/`TC_LIST_ID`/`tcRenderTeam()`/`tcAddRow()`/`stSaveTeam()` machinery — no bespoke code needed since that system was already type-driven.
+- **"All resources" filter** (§60) — `implPOD`/`implFPOD` rosters added to the `crList` concat, alongside PYO/Gov/OTK/PD.
+- **Selected Project panel** (Implementer Dashboard) — added to the add-ons detail list. (Also backfilled the pre-existing gap where Payroll Disbursement itself was missing from this same list.)
+- **Excel export/import** ("Add-on Services" sheet, both the real export and the template generator) — two new columns each.
+- **PM Tool Data** — `PMTOOL_SCHEMA` gained `podImpl`/`fpodImpl` and `addons.pod`/`addons.fpod` entries; the "Suggested payload format" reference JSON and `pmtoolCreateClient()`'s prefill mapping both updated to match.
+- **Supabase sync** — `clients.pod_impl`/`fpod_impl`, `client_addons.payroll_on_demand`/`final_pay_on_demand`, `team_config.impl_pod`/`impl_fpod`, read and written everywhere their PD equivalents are.
+
+### New Supabase columns — `POD_FPOD_Addon_Columns.sql`
+```sql
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS pod_impl  TEXT DEFAULT '';
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS fpod_impl TEXT DEFAULT '';
+ALTER TABLE client_addons ADD COLUMN IF NOT EXISTS payroll_on_demand   BOOLEAN DEFAULT FALSE;
+ALTER TABLE client_addons ADD COLUMN IF NOT EXISTS final_pay_on_demand BOOLEAN DEFAULT FALSE;
+ALTER TABLE team_config ADD COLUMN IF NOT EXISTS impl_pod  TEXT[] DEFAULT '{}';
+ALTER TABLE team_config ADD COLUMN IF NOT EXISTS impl_fpod TEXT[] DEFAULT '{}';
+```
+
+### ⚠️ Manual setup required
+Run `POD_FPOD_Addon_Columns.sql` in Supabase → SQL Editor. Without it, Team Configuration will still work locally (falls back to the PM-only save path on error, same as any other `team_config` save failure), but POD/FPOD implementer rosters and add-on flags won't persist across sessions/devices until the columns exist.
+
+### Not done yet
+- The legacy PS Excel-migration importer (Section 12, fixed-column format) was intentionally left untouched — it's a one-time historical migration tool for a spreadsheet format that predates these add-ons.
+- The "Stand Alone Add-on Services" sidebar filter (`CL_TYPE==='addons'`, currently `ba||std` only) and the Weekly Report's "Disbursement" metric (`std` only) were left as-is — POD/FPOD weren't folded into those narrower legacy groupings, matching how `sg`/`otk`/`pd` aren't in them either.
+
+---
+
+## 66. Correction — POD/FPOD sidebar placement moved under Special Projects ✅ Coded (July 9, 2026)
+
+### What changed
+§65 gave Payroll on Demand and Final Pay on Demand their own dedicated Clients-sidebar nav items, siblings to Payroll Disbursement/Sprout Gov/etc. Feedback: these two are conceptually **separate from Payroll Disbursement** — they shouldn't sit as their own top-level sidebar bucket at all. They belong under the existing **Special Projects** nav item instead.
+
+### Fix
+- Removed the `#nav-cl-pod` / `#nav-cl-fpod` sidebar buttons entirely (and their `clPodBtn`/`clFpodBtn` active-state wiring in `go()` and `setClType()`).
+- Folded both into the Special Projects filter:
+  ```js
+  if(CL_TYPE==='special') return d.service==='Special Projects'||d.service==='Payroll on Demand'||d.service==='Final Pay on Demand';
+  ```
+- The `pyo` fallback bucket's exclusion list (added in §65) already excluded both service strings, so no change needed there — they simply moved from "their own bucket" to "the Special Projects bucket" without ever risking double-counting in the generic PYO list.
+
+### Not affected
+Everything else from §65 is untouched — both remain full standalone Availed Service options, add-on checkboxes with their own Implementer pickers, Resource Team/Add-on Services tab columns, Team Configuration rosters, exports, and PM Tool schema entries. Only the Clients-sidebar top-level categorization changed.
+
+## 67. Integrations — PM Tool pull-config fields (placeholder, not wired up yet) (July 15, 2026)
+
+User wants to switch the PM Tool integration from push (tool → Hub webhook, §49) to pull (Hub → tool's API), since the PM Tool is an internal tool built in-house rather than a known third-party product with documented endpoints. Before the actual fetch logic can be written, the developer of that internal tool needs to supply: base URL, auth method (bearer / custom header / basic / query param + header name if custom), and the endpoint path that returns project/task data.
+
+This section only adds the *storage* for those answers — no outbound fetch exists yet.
+
+- **DB** — `PM_Tool_Pull_Config_Columns.sql` adds `base_url`, `endpoint_path`, `auth_type`, `auth_header_name` to `integrations`. Not secret; the key itself stays in the existing `api_key` column.
+- **API** — new `api/integrations/save-pull-config.js` (PATCH-style upsert of the four fields, validates `auth_type` is one of the four known values and requires `auth_header_name` when `auth_type==='custom_header'`). `api/integrations/status.js` extended to also return `baseUrl`/`endpointPath`/`authType`/`headerName` so the form can be pre-filled on load.
+- **UI** — new "Pull settings" block inside the existing `#intg-pm_tool` card (Settings → Integrations), shown once the integration is configured: Base URL input, Endpoint path input, auth-method `<select>`, conditionally-shown header-name input (only for Custom header), and a "Save Pull Settings" button. New JS: `intgAuthTypeChanged()` toggles the header-name field, `intgSavePullConfig()` posts to the new endpoint. `intgSetUI()` extended to show/hide and pre-fill this block alongside the existing webhook block.
+- The existing push/webhook flow (§49, §57, §64) is untouched — both webhook URL and pull-settings blocks are visible side by side under the same "Configured" state, so nothing about the push path was removed or changed.
+
+### Not done yet
+- No actual outbound fetch — once the developer answers, the next step is a new endpoint (e.g. `api/integrations/pull.js`) that reads these stored settings + the API key and calls the internal tool's API, then something to trigger it (manual "Sync now" button or a schedule).
+- No field-mapping from a pulled response into Clients — same gap as the push side (§64's `PMTOOL_SCHEMA` may end up reused here once real field names are known).
