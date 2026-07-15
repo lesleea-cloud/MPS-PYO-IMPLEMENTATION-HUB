@@ -3183,3 +3183,15 @@ var MF_NO_HIGHLIGHT_IDX=[0,4,14,20,21,28,31,33,34,35,36,37,38,39]; // A,E,O,U,V,
 if(MF_NO_HIGHLIGHT_IDX.indexOf(ci)>=0){cells+='<c r="'+mfColLetter(ci)+rn+'"></c>';}
 else{cells+='<c r="'+mfColLetter(ci)+rn+'" s="'+blankStyleIdx+'"></c>';}
 ```
+
+---
+
+## 76. Masterfile Creator — two more columns exempted from blank-highlighting (AT, AV) ✅ Coded (July 15, 2026)
+
+### What changed
+User added two more exempt columns by letter: **AT** and **AV**. Mapped to `MF_COLUMNS`: AT(index 45) = "Additional HDMF Contribution" (system-decided when blank, same family as the SSS/PhilHealth/HDMF contribution fields already left blank-ok in §70), AV(index 47) = "Payroll ID", the template's last column, explicitly marked "Do not change this column. These values are system-generated." — clearly should never be flagged as missing.
+
+Extended the exemption list:
+```js
+var MF_NO_HIGHLIGHT_IDX=[0,4,14,20,21,28,31,33,34,35,36,37,38,39,45,47]; // A,E,O,U,V,AC,AF,AH–AN,AT,AV
+```
