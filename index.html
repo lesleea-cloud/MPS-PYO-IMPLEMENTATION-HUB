@@ -7686,8 +7686,8 @@ async function mfGenerate(){
       // Build the mapped output object keyed by exact output column name
       var mapped={};
 
-      // Status — always ADD for new employees
-      mapped['Status']='ADD';
+      // Status column is left blank — PayrollPie only populates it after import (system-generated)
+      mapped['Status']='';
 
       // Employee ID
       mapped['Employee ID*']=eid;
@@ -7859,8 +7859,26 @@ async function mfDownload(){
         if(tgtM)sheetXmlPath='xl/'+tgtM[1].replace(/^\//,'');
       }
     }
+    // Add a red-fill style to styles.xml for highlighting blank cells, get its cellXfs index
+    var blankStyleIdx=0;
+    var stylesFile=zip.file('xl/styles.xml');
+    if(stylesFile){
+      var stylesXml=await stylesFile.async('string');
+      var fillsM=stylesXml.match(/<fills count="(\d+)">([\s\S]*?)<\/fills>/);
+      var xfsM=stylesXml.match(/<cellXfs count="(\d+)">([\s\S]*?)<\/cellXfs>/);
+      if(fillsM&&xfsM){
+        var fillCount=parseInt(fillsM[1]);
+        var xfCount=parseInt(xfsM[1]);
+        var newFill='<fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill>';
+        stylesXml=stylesXml.replace(fillsM[0],'<fills count="'+(fillCount+1)+'">'+fillsM[2]+newFill+'</fills>');
+        var newXf='<xf numFmtId="0" fontId="0" fillId="'+fillCount+'" borderId="0" xfId="0" applyFill="1"/>';
+        stylesXml=stylesXml.replace(xfsM[0],'<cellXfs count="'+(xfCount+1)+'">'+xfsM[2]+newXf+'</cellXfs>');
+        blankStyleIdx=xfCount;
+        zip.file('xl/styles.xml',stylesXml);
+      }
+    }
     var sheetXml=await zip.file(sheetXmlPath).async('string');
-    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
+    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap,blankStyleIdx);
     zip.file(sheetXmlPath,newSheetXml);
     var cn=(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
     var now=new Date();
@@ -7877,7 +7895,7 @@ async function mfDownload(){
   }catch(err){mfSetStatus('❌ '+err.message,'error');}
 }
 
-function mfInjectRows(sheetXml,rows,cols,colMap){
+function mfInjectRows(sheetXml,rows,cols,colMap,blankStyleIdx){
   // Strip rows r >= 5 — handles namespace prefixes like <x:row>
   var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
     return parseInt(n)>=5?'':m;
@@ -7894,7 +7912,11 @@ function mfInjectRows(sheetXml,rows,cols,colMap){
       }
       if(ci===undefined)return;
       var v=rowData[col];
-      if(v===undefined||v===null||v==='')return;
+      if(v===undefined||v===null||v===''){
+        // Blank field — write an empty styled cell so it renders highlighted in red
+        cells+='<c r="'+mfColLetter(ci)+rn+'" s="'+blankStyleIdx+'"></c>';
+        return;
+      }
       cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
     });
     if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
