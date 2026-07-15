@@ -3002,3 +3002,51 @@ This section only adds the *storage* for those answers — no outbound fetch exi
 ### Not done yet
 - No actual outbound fetch — once the developer answers, the next step is a new endpoint (e.g. `api/integrations/pull.js`) that reads these stored settings + the API key and calls the internal tool's API, then something to trigger it (manual "Sync now" button or a schedule).
 - No field-mapping from a pulled response into Clients — same gap as the push side (§64's `PMTOOL_SCHEMA` may end up reused here once real field names are known).
+
+---
+
+## 68. Main content scrollbar — low-contrast thumb fixed ✅ Coded (July 15, 2026)
+
+### What changed
+User reported the scroll panel on the right edge of the app was barely visible (screenshot `04.jpg`). The global scrollbar rule (used by `main` and any other element without its own `::-webkit-scrollbar` override — the sidebar `nav` and a few panels already had their own) styled the thumb with `var(--s2)` (`#e2e8f0`) against the page background `var(--bg)` (`#F7F5F2`) — near-zero contrast, plus only 5px wide.
+
+```css
+/* before */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--s2);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--s3);}
+
+/* after */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--s5);}
+```
+`--s4` (`#94a3b8`) / `--s5` (`#64748b`) give clear contrast against the light background. Sidebar (`nav`) and the other panels with their own scrollbar overrides (`.impl-left`, `.impl-right`, `.impl-proj-list`, `.impl-attn-body`, `.impl-sel-scroll`) were already fine and untouched.
+
+---
+
+## 69. My Clients — Client Name now editable by admin and implementer ✅ Coded (July 15, 2026)
+
+### What changed
+Across every My Clients sub-tab (Overview, Resource Team, Phases, Add-on Services, Milestone Dates, After Hand Over), the Client Name cell was a plain, non-interactive `<span class="cl-link">` — styled to look like a link but with no click handler and no edit path for any role.
+
+Added a shared cell renderer used by all six tabs instead of six duplicated spans:
+```js
+function clUpdateClientName(no,val){
+  var d=D.find(function(x){return x.no===no;});
+  if(d&&val&&d.client!==val){
+    var old=d.client;d.client=val;
+    logAudit(no,'Overview','client','Client Name',old,val);
+    autoSave();_supaFlush();
+  }
+  renderClients();
+}
+function clNameCell(d,wide){
+  var canEditName=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
+  if(!canEditName)return '<td class="ctd" ...><span class="cl-link">'+d.client+'</span></td>';
+  return '<td class="ctd" ...><input type="text" class="cl-name-inp" value="'+d.client+'" onblur="clUpdateClientName('+d.no+',this.value.trim())" .../></td>';
+}
+```
+`manager` still sees the read-only `cl-link` span (consistent with `ovRO`/`rtRO` elsewhere in this table). Blank input on blur is ignored (keeps the old name) rather than allowed to clear the field. Since `godSwitch()` sets `CURRENT_ROLE` to the literal string `'admin'`/`'implementer'` when a god account previews those roles (§15), the same check covers god without a separate branch.
+
+Note: renaming here only updates `D[].client`, the source of truth for the Clients table. It does not cascade into places that snapshot the name at creation time (Issue Log entries, Vault items grouped by `clientName`) — same pre-existing behavior as other identifying fields in this app (e.g. `resource` renames don't cascade either).
