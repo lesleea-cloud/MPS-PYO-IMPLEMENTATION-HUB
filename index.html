@@ -7670,10 +7670,16 @@ async function mfGenerate(){
       // Skip completely empty rows and the SAMPLE DATA row
       var firstCell=String(row[0]||'').trim().toUpperCase();
       if(firstCell==='SAMPLE DATA'||firstCell==='STATUS AFTER UPLOAD')continue;
+      var g=mfGet;
+      // Employee ID is a required field that's always blank on header/hint rows and
+      // always populated on real employees — a far more reliable "is this real data"
+      // check than Last Name, since a hint row's Last Name cell can itself contain
+      // non-empty instructional text (e.g. "Accepts alphanumeric characters...").
+      var eid=String(g(row,srcHeaders,['Employee ID','Emp ID','Employee No','Employee No.'])||'').trim();
+      if(!eid)continue;
       var ln=String(mfGet(row,srcHeaders,['Last Name','Surname','Family Name'])||'').trim();
       if(!ln)continue;
- 
-      var g=mfGet;
+
       var hireRaw=g(row,srcHeaders,['Hire Date','Date Hired','Start Date']);
       var hireFmt=mfFmtDate(hireRaw);
 
@@ -7682,9 +7688,8 @@ async function mfGenerate(){
 
       // Status — always ADD for new employees
       mapped['Status']='ADD';
- 
+
       // Employee ID
-      var eid=String(g(row,srcHeaders,['Employee ID','Emp ID','Employee No','Employee No.'])||'').trim();
       mapped['Employee ID*']=eid;
  
       // Name

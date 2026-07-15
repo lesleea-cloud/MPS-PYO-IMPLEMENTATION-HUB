@@ -3100,3 +3100,28 @@ The earlier header/column-detection step (`XLSX.utils` via SheetJS, used to buil
 
 ### Verification
 Confirmed against the real template's `workbook.xml`/`workbook.xml.rels` (`<sheet name="Employee" r:id="rId1">` vs. rels listing `rId3`→`sheet3.xml` first) that the old regex resolved to `sheet3.xml` and the new logic resolves to `sheet1.xml`, matching the "Employee" tab. Re-test in-browser with the real files still pending before this ships to a live client.
+
+---
+
+## 72. Masterfile Creator — an instruction/hint row from the source file was leaking through as a fake 7th employee ✅ Coded (July 15, 2026)
+
+### What changed
+User re-tested with §71's fix applied — the Employee tab was now populated, "almost perfect" — but row 5 (right after the template's own SAMPLE DATA row) contained garbage: Last Name = `"Accepts alphanumeric characters (A-Z, a-z, 0-9), coma (,) , apostrophe (') and dash (-)"`, Date of Birth = `"Format: MM/DD/YYYY"`, etc. — clearly the source file's row 3 validation-hint row, not a real employee.
+
+Root cause (`mfGenerate()`, `index.html`): after the header row, the code tries to skip leading "format hint" rows before the real data starts:
+```js
+var hasData=nextR.some(function(c){
+  var s=String(c).trim();
+  return s.length>0&&!s.toLowerCase().startsWith('format')&&
+    !s.toLowerCase().startsWith('select')&&!s.toLowerCase().startsWith('accepts');
+});
+if(hasData)break; // stops skipping — treats this row as real data
+```
+This client's source file's hint row has one cell that breaks the pattern: column 10 (Zip Code) just says `"Zip Code"` — a bare hint phrase that doesn't start with `format`/`select`/`accepts`. That single cell made `hasData` true, so the loop stopped skipping one row too early and treated the hint row itself as the start of real data. Then, in the per-row mapping loop, the only actual data guard was `if(!lastName)continue` — and the hint row's own "Last Name" cell has non-empty text (the "Accepts alphanumeric characters..." instruction), so it sailed through the guard and got fully mapped as employee #0.
+
+Fixed by checking **Employee ID** instead of/before Last Name as the "is this a real row" signal:
+```js
+var eid=String(g(row,srcHeaders,['Employee ID','Emp ID','Employee No','Employee No.'])||'').trim();
+if(!eid)continue;
+```
+Employee ID is a required field (marked `*REQUIRED` in the source template) that's genuinely blank on every header/hint row and populated on every real employee — a template-proof signal, unlike pattern-matching hint phrasing which breaks the moment a client's template phrases a hint differently (as this one did). The leading skip-loop is left in place as a coarse optimization, but the per-row Employee ID check is now the authoritative filter regardless of where `dataStart` lands.
