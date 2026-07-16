@@ -3195,3 +3195,38 @@ Extended the exemption list:
 ```js
 var MF_NO_HIGHLIGHT_IDX=[0,4,14,20,21,28,31,33,34,35,36,37,38,39,45,47]; // A,E,O,U,V,AC,AF,AH–AN,AT,AV
 ```
+
+---
+
+## 77. Simulation Variance Analysis — nav restructure + "From PY Subscription to PYO" tool built ✅ Coded (July 16, 2026)
+
+### What changed
+`sim-variance` had been a "coming soon" placeholder tool key (single nav button opening a generic under-development modal). User wants it developed into a real tool, but split into two distinct workflows depending on client type — PY Subscription clients migrating to PYO have different expected-vs-actual comparison data than entirely new Sprout PYO clients. This section covers the nav restructure plus the first of the two workflows: **From PY Subscription to PYO**.
+
+### Nav restructure
+"Simulation Variance Analysis" in the Administration sidebar (Phase 2 — Simulation) is no longer a direct-open tool button. It's now a nested collapsible sub-section — same open/close pattern as the top-level Administration/Clients sections, scoped one level deeper:
+- New CSS: `.nav-subsection-hdr` (chevron rotates on `.open`), `.nav-subsection-body` (hidden unless `.open`), `.nav-subtool-item` (extra left padding, smaller font)
+- New JS: `toggleSimVarianceSection()` toggles `.open` on `#nav-simvar-hdr` / `#nav-simvar-body`, mirroring `toggleAdminSection()` / `toggleClientsSection()`
+- Two sub-items nested underneath, each a `.nav-tool-item.nav-subtool-item` button with a blue phase dot instead of an icon:
+  1. **From PY Subscription to PYO** → `openTool('sim-py2pyo')`
+  2. **Entirely New Sprout PYO Client** → `openTool('sim-newpyo')` — still a "coming soon" placeholder (not yet designed)
+- `openTool()`'s `TOOLS` map: removed `sim-variance`, added `sim-py2pyo` and `sim-newpyo` entries (both blue, `#2563eb`/`#3b82f6`)
+
+### From PY Subscription to PYO — what it actually compares
+Two real reference documents drove the design (both under `Templates for upload/Simulation/PY Subscription to PYO/`):
+- **`Sample Payroll questionairre.csv`** — the client's answered payroll policy questionnaire (one header row of ~95 questions, one data row of answers). This is the **expected** side — what the client told Sprout their payroll policy should be (OT rates, 13th month inclusions, absent/late deduction basis, SSS/PhilHealth/HDMF basis, tax computation basis, etc.)
+- **`Sample System-up.pdf`** — a 5-page browser "Print to PDF" of the live Sprout Payroll system's Setup screen (Company Profile → Work Policy → Payroll Computation → Government Contributions → Tax Computation → Payslip/Report/Display settings). This is the **actual** side — what's really configured in the sandbox/replication account. Confirmed via `pdftotext` that this PDF has **zero extractable text** — it's fully rasterized per page, so no programmatic parsing was possible without vision.
+
+Considered three approaches for feeding the "actual" side into the tool (manual structured checklist mirroring the Setup screen, AI-vision extraction into an editable table, or a direct DB/API pull from the replication environment). User chose **AI-vision extraction into an editable review table** — no new checklist UI to build or keep in sync with Sprout's Setup screen; Claude's vision API reads the uploaded screenshots/PDF directly and produces a compact field→value table the implementer corrects before comparing.
+
+### Build — 3-step flow (`SVP_STATE`, `sim-py2pyo` in `openTool()`)
+Modeled on the existing `VA` (Parallel Run Variance Analysis) stepper pattern, new `svp`-prefixed functions, own state object:
+1. **Upload** — Payroll Questionnaire CSV (parsed client-side via the existing generic `vaParseCSV()`, reused as-is) + one or more Setup screenshots/PDF pages (multi-file, accepts `.pdf,.png,.jpg,.jpeg`). Claude API key field reuses the same `sprout_ai_key` localStorage key already used by the Payroll Policy Excel Generator.
+2. **Review Extracted Setup** — `svpExtract()` sends the uploaded file(s) to `api.anthropic.com/v1/messages` (`claude-sonnet-4-6`) as `document`/`image` content blocks (PDFs sent as native `document` type — Claude reads PDF pages as images internally, no client-side rasterization needed) alongside a prompt listing `SVP_SETUP_FIELDS` (the ~28 canonical Setup-screen fields seen across the 5 reference pages: Work Days Per Year, OT Rates, Absent/Late Deduction basis, New Hire Proration, 13th Month inclusions, Final Pay, SSS/PhilHealth/HDMF basis, Tax Table type, exemption ceilings, etc.). Response is parsed into an editable field/value table (add/remove/edit rows) for the implementer to correct before continuing — extraction fidelity on dense checkbox grids (e.g. the 24-option OT Rates matrix) isn't fully trusted, so this review step is load-bearing, not a formality.
+3. **Comparison Results** — `svpCompare()` sends the questionnaire Q&A pairs and the confirmed extracted setup table to Claude as plain text, asking it to semantically match each relevant question to its corresponding system field and return a verdict per pair: `match` / `mismatch` / `review`, with a one-sentence note. Questions with no corresponding system setting (company info, contacts, banking, addresses) are skipped by instruction. Results render as a KPI summary (match/mismatch/review counts) plus a color-coded table, mismatches and reviews sorted first.
+
+### Excel export
+`svpExportExcel()` — built from scratch via SheetJS (`XLSX.utils.book_new()`), following the same manual-cell-styling approach as `vaExportExcel` (title band, metadata rows, summary line, styled header row, per-verdict cell fill/font colors: green `#DCFCE7`/mismatch red `#FEE2E2`/review amber `#FEF3C7`). Single sheet ("Variance Results"), downloads as `SimVariance_<questionnaire filename>_<MMDDYY>.xlsx`.
+
+### Verification
+No JS runtime was available on this machine to test interactively. Installed `poppler` (via `winget install oschwartz10612.Poppler`) to render `Sample System-up.pdf` pages as images for manual review, and a portable Node.js v22.11.0 (unzipped, no installer/admin needed — the winget MSI installer hung waiting on a UAC prompt) to run `node --check` against the full extracted inline `<script>` block. Syntax check passed clean; brace/paren counts in the new block balance (157/157, 378/378). Not yet exercised end-to-end in a browser with a real API key — that remains outstanding before this ships.

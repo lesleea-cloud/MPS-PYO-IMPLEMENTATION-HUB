@@ -98,6 +98,12 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .nav-tool-item.active{color:var(--g);font-weight:600;}
 .nav-tool-item svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .nav-common-band{background:rgba(255,255,255,.05);margin:0 8px;border-radius:6px;padding:2px 0;margin-bottom:4px;}
+.nav-subsection-hdr{justify-content:space-between;}
+.nav-subsection-hdr svg.chev{width:9px;height:9px;fill:none;stroke:rgba(255,255,255,.4);stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .2s;margin-left:auto;}
+.nav-subsection-hdr.open svg.chev{transform:rotate(180deg);}
+.nav-subsection-body{display:none;padding-bottom:2px;}
+.nav-subsection-body.open{display:block;}
+.nav-subtool-item{padding-left:2.35rem;font-size:11px;}
 
 /* ══ ISSUE LOG ══ */
 .il-wrap{padding:.85rem 1rem;}
@@ -1349,10 +1355,23 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           Masterfile Creator
         </button>
         <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#3b82f6;"></span>Phase 2 — Simulation</div>
-        <button class="nav-tool-item" onclick="openTool('sim-variance')">
-          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Simulation Variance Analysis
-        </button>
+        <div class="nav-subsection" id="nav-simvar-section">
+          <button class="nav-tool-item nav-subsection-hdr" id="nav-simvar-hdr" onclick="toggleSimVarianceSection()">
+            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Simulation Variance Analysis
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <div class="nav-subsection-body" id="nav-simvar-body">
+            <button class="nav-tool-item nav-subtool-item" onclick="openTool('sim-py2pyo')">
+              <span class="nav-phase-dot" style="background:#3b82f6;"></span>
+              From PY Subscription to PYO
+            </button>
+            <button class="nav-tool-item nav-subtool-item" onclick="openTool('sim-newpyo')">
+              <span class="nav-phase-dot" style="background:#3b82f6;"></span>
+              Entirely New Sprout PYO Client
+            </button>
+          </div>
+        </div>
         <button class="nav-tool-item" onclick="openTool('crf')">
           <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
           CRF Generator (Repli Accts)
@@ -6115,6 +6134,14 @@ function toggleClientsSection(){
   if(hdr)hdr.classList.toggle('open');
 }
 
+function toggleSimVarianceSection(){
+  var body=document.getElementById('nav-simvar-body');
+  var hdr=document.getElementById('nav-simvar-hdr');
+  if(!body)return;
+  body.classList.toggle('open');
+  if(hdr)hdr.classList.toggle('open');
+}
+
 function goClients(type){
   CL_TYPE=type;
   clPg=1;
@@ -6158,7 +6185,8 @@ function openTool(val){
   var TOOLS={
     'masterfile':{name:'Masterfile Creator',icon:'📋',color:'#2563eb'},
     'variance':{name:'Parallel Run Variance Analysis',icon:'📊',desc:'Automatically compare policy vs register and Sprout vs client payroll data during parallel run.',color:'#7c3aed'},
-    'sim-variance':{name:'Simulation Variance Analysis',icon:'📈',desc:'Compare expected vs actual payroll simulation results to identify discrepancies before parallel run.',color:'#3b82f6'},
+    'sim-py2pyo':{name:'Simulation Variance Analysis — From PY Subscription to PYO',icon:'📈',desc:'Compare the client\'s Payroll Questionnaire answers (expected) against the actual Sprout Payroll system setup (actual) to catch configuration mismatches before parallel run.',color:'#2563eb'},
+    'sim-newpyo':{name:'Simulation Variance Analysis — Entirely New Sprout PYO Client',icon:'📈',desc:'Compare expected vs actual payroll simulation results for entirely new Sprout PYO clients.',color:'#3b82f6'},
     'mom':{name:'MOM Generator',icon:'📝',desc:'Upload a meeting transcript and slide deck to generate a Sprout MPS MOM.',color:'#ea580c'},
     'crf':{name:'Copy Database CRF Generator (Repli Accounts)',icon:'📄',desc:'Auto-generate a Change Request Form for replication accounts during the simulation phase.',color:'#16a34a'},
     'sandbox':{name:'Sandbox Account Creator',icon:'🖥️',desc:'Set up a sandbox payroll environment for testing and validation during the simulation phase.',color:'#3b82f6'},
@@ -6198,6 +6226,10 @@ function openTool(val){
     document.getElementById('tool-modal-box').style.maxWidth='780px';
     PP_STATE={pdfFile:null,pdfB64:null,apiKey:localStorage.getItem('sprout_ai_key')||'',extracted:null};
     renderPayrollPolicyUI();
+  } else if(val==='sim-py2pyo'){
+    document.getElementById('tool-modal-box').style.maxWidth='920px';
+    svpReset();
+    renderSVPUI();
   } else {
     document.getElementById('tool-modal-box').style.maxWidth='480px';
     document.getElementById('tool-modal-body').innerHTML='<div style="display:flex;align-items:center;gap:14px;padding:1rem;background:var(--s0);border-radius:10px;border:1px solid var(--s1);margin-bottom:1.25rem;"><div style="font-size:32px;flex-shrink:0;">'+t.icon+'</div><div><div style="font-size:13px;font-weight:600;color:var(--s8);margin-bottom:4px;">'+t.name+'</div><div style="font-size:12px;color:var(--s5);line-height:1.6;">'+(t.desc||'')+'</div></div></div><div style="background:'+t.color+'0d;border:1.5px dashed '+t.color+'40;border-radius:10px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;"><div style="font-size:28px;margin-bottom:.5rem;">🚧</div><div style="font-size:13px;font-weight:700;color:'+t.color+';margin-bottom:4px;">Coming soon</div><div style="font-size:12px;color:var(--s4);">This module is currently under development.</div></div><div style="display:flex;justify-content:flex-end;"><button onclick="closeTool()" style="padding:9px 22px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button></div>';
@@ -6545,6 +6577,357 @@ function ppDownload(){
     ppSetStatus('Downloaded successfully!','success');
   }catch(e){ppSetStatus('Download error: '+e.message,'error');}
 }
+
+// ══════════════ SIMULATION VARIANCE — FROM PY SUBSCRIPTION TO PYO ══════════════
+var SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],apiKey:'',results:null};
+
+var SVP_SETUP_FIELDS=[
+  'Work Days Per Year','Work Hours Per Day','Work Months Per Year','Statutory Period Schedule','Periods Per Month',
+  'Absent Deduction Basis','Late Deduction Basis','Overtime Computation Basis','OT Rates Enabled (which categories)',
+  'Rest Days','New Hire Proration Method','New Hire Proration Basis','New Hire Deduct Absent','New Hire Deduct Late/Undertime',
+  '13th Month Computation Basis (Inclusions)','Final Pay Deduct Absent','Final Pay Deduct Late/Undertime','Final Pay Include 13th Month',
+  'Net Pay Threshold Enabled','SSS Coverage Basis','SSS Contribution Basis (earnings included)','PhilHealth Coverage Basis','PhilHealth Contribution Basis (earnings included)',
+  'HDMF Contribution Type','HDMF Employer Contribution','Tax Table Type','Payroll Calendar','Non-Tax Exemption Ceiling','Deminimis Exemption Ceiling'
+];
+
+var SVP_VERDICT_STYLE={
+  match:{bg:'#f0fdf4',fg:'#15803d',label:'✅ Match'},
+  mismatch:{bg:'#fef2f2',fg:'#dc2626',label:'❌ Mismatch'},
+  review:{bg:'#fffbeb',fg:'#b45309',label:'⚠️ Needs Review'}
+};
+
+function svpReset(){
+  SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],apiKey:localStorage.getItem('sprout_ai_key')||'',results:null};
+}
+
+function renderSVPUI(){
+  document.getElementById('tool-modal-body').innerHTML=
+    '<div id="svp-stepper" style="display:flex;align-items:center;gap:0;margin-bottom:1.25rem;"></div>'
+    +'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:10px;align-items:flex-start;">'
+      +'<span style="font-size:18px;flex-shrink:0;">📈</span>'
+      +'<div><div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:2px;">Simulation Variance Analysis — From PY Subscription to PYO</div>'
+      +'<div style="font-size:11px;color:#2563eb;line-height:1.6;">Compare the client\'s Payroll Questionnaire answers (expected) against the actual Sprout Payroll system setup (actual) to catch configuration mismatches before parallel run.</div></div>'
+    +'</div>'
+    +'<div id="svp-content"></div>'
+    +'<div id="svp-footer" style="display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid var(--s1);margin-top:.75rem;"></div>';
+  svpRenderStepper();
+  svpRenderStep();
+}
+
+function svpRenderStepper(){
+  var steps=[{n:1,l:'Upload'},{n:2,l:'Review Extracted Setup'},{n:3,l:'Comparison Results'}];
+  var s='';
+  steps.forEach(function(st,i){
+    var active=SVP_STATE.step===st.n;var done=SVP_STATE.step>st.n;
+    var col=done?'#16a34a':active?'#2563eb':'#94a3b8';
+    s+='<div style="display:flex;align-items:center;gap:6px;flex:1;">'
+      +'<div style="width:24px;height:24px;border-radius:50%;background:'+(done?'#16a34a':active?'#2563eb':'#e2e8f0')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+      +(done?'<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        :'<span style="font-size:11px;font-weight:700;color:'+(active?'#fff':'#94a3b8')+'">'+st.n+'</span>')
+      +'</div>'
+      +'<span style="font-size:11px;font-weight:'+(active?'700':'500')+';color:'+col+';">'+st.l+'</span>'
+      +(i<steps.length-1?'<div style="flex:1;height:1px;background:'+(done?'#86efac':'#e2e8f0')+';margin:0 6px;"></div>':'')
+      +'</div>';
+  });
+  document.getElementById('svp-stepper').innerHTML=s;
+}
+
+function svpRenderStep(){
+  svpRenderStepper();
+  if(SVP_STATE.step===1) svpRenderUpload();
+  else if(SVP_STATE.step===2) svpRenderExtracted();
+  else if(SVP_STATE.step===3) svpRenderResults();
+}
+
+function svpRenderUpload(){
+  var savedKey=localStorage.getItem('sprout_ai_key')||'';
+  SVP_STATE.apiKey=savedKey;
+  var c=document.getElementById('svp-content');
+  c.innerHTML=
+    '<div style="background:var(--s0);border:1px solid var(--s2);border-radius:10px;padding:9px 12px;margin-bottom:12px;"><div style="font-size:10px;font-weight:700;color:var(--s6);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Claude API Key</div><div style="display:flex;gap:7px;align-items:center;"><input type="password" id="svp-apikey" placeholder="sk-ant-..." value="'+escHtml(savedKey)+'" style="flex:1;border:1px solid var(--s2);border-radius:8px;padding:6px 9px;font-size:12px;font-family:var(--font);outline:none;color:var(--s8);"><button onclick="svpSaveKey()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);white-space:nowrap;">Save Key</button></div><div style="font-size:10px;color:var(--s4);margin-top:3px;">Stored in your browser only. Never sent to Sprout servers.</div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.85rem;">'
+      +'<div id="svp-card-q" style="border:1.5px dashed #7c3aed40;border-radius:10px;padding:1.1rem 1rem;text-align:center;cursor:pointer;background:#7c3aed06;" onclick="document.getElementById(\'svp-input-q\').click()" ondragover="event.preventDefault();this.style.background=\'#7c3aed14\'" ondragleave="this.style.background=\'#7c3aed06\'" ondrop="event.preventDefault();svpHandleQFile(event.dataTransfer.files[0])">'
+        +'<input type="file" id="svp-input-q" accept=".csv" style="display:none"/>'
+        +'<div style="font-size:26px;margin-bottom:6px;">📋</div>'
+        +'<div style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:4px;">Payroll Questionnaire (Expected)</div>'
+        +'<div style="font-size:10px;color:var(--s4);line-height:1.55;">Client\'s answered payroll policy questionnaire<br><strong style="color:#7c3aed">CSV only</strong></div>'
+        +'<div id="svp-label-q" style="margin-top:9px;font-size:10px;font-weight:600;color:#7c3aed;display:none;padding:3px 8px;background:#7c3aed12;border-radius:5px;word-break:break-all;"></div>'
+        +'<div style="margin-top:8px;font-size:10px;color:#7c3aed70;font-weight:500;">Click or drag & drop</div>'
+      +'</div>'
+      +'<div id="svp-card-setup" style="border:1.5px dashed #2563eb40;border-radius:10px;padding:1.1rem 1rem;text-align:center;cursor:pointer;background:#2563eb06;" onclick="document.getElementById(\'svp-input-setup\').click()" ondragover="event.preventDefault();this.style.background=\'#2563eb14\'" ondragleave="this.style.background=\'#2563eb06\'" ondrop="event.preventDefault();svpHandleSetupFiles(event.dataTransfer.files)">'
+        +'<input type="file" id="svp-input-setup" accept=".pdf,.png,.jpg,.jpeg" multiple style="display:none"/>'
+        +'<div style="font-size:26px;margin-bottom:6px;">🖥️</div>'
+        +'<div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:4px;">System Setup (Actual)</div>'
+        +'<div style="font-size:10px;color:var(--s4);line-height:1.55;">Screenshot(s) or printed PDF of the Sprout Payroll Setup screen<br><strong style="color:#2563eb">PDF or image, multiple allowed</strong></div>'
+        +'<div id="svp-label-setup" style="margin-top:9px;font-size:10px;font-weight:600;color:#2563eb;display:none;padding:3px 8px;background:#2563eb12;border-radius:5px;word-break:break-all;"></div>'
+        +'<div style="margin-top:8px;font-size:10px;color:#2563eb70;font-weight:500;">Click or drag & drop</div>'
+      +'</div>'
+    +'</div>'
+    +'<div id="svp-upload-status" style="display:none;"></div>';
+  document.getElementById('svp-input-q').addEventListener('change',function(e){svpHandleQFile(e.target.files[0]);});
+  document.getElementById('svp-input-setup').addEventListener('change',function(e){svpHandleSetupFiles(e.target.files);});
+  svpRenderFooterUpload();
+}
+
+function svpSaveKey(){
+  var k=document.getElementById('svp-apikey');
+  if(k&&k.value.trim()){localStorage.setItem('sprout_ai_key',k.value.trim());SVP_STATE.apiKey=k.value.trim();svpSetStatus('API key saved.','success');}
+}
+
+function svpSetStatus(msg,type){
+  var el=document.getElementById('svp-upload-status');
+  if(!el)return;
+  var styles={info:'background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;',success:'background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;',error:'background:#fef2f2;border:1px solid #fecaca;color:#dc2626;',loading:'background:#fafaf9;border:1px solid var(--s2);color:var(--s6);'};
+  el.style.cssText=(styles[type]||styles.info)+'padding:.7rem 1rem;border-radius:8px;font-size:12px;margin-bottom:.5rem;';
+  el.innerHTML=msg; el.style.display='block';
+}
+
+function svpHandleQFile(file){
+  if(!file)return;
+  if(!/\.csv$/i.test(file.name)){svpSetStatus('❌ Please upload a CSV file.','error');return;}
+  SVP_STATE.qFile=file; SVP_STATE.qFileName=file.name;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var rows=vaParseCSV(e.target.result);
+      if(rows.length<2) throw new Error('CSV needs a header row and at least one answer row.');
+      var headers=rows[0], answers=rows[1];
+      var qData=[];
+      headers.forEach(function(h,i){
+        var a=(answers[i]||'').trim();
+        if(h&&a) qData.push({q:h.trim(),a:a});
+      });
+      SVP_STATE.qData=qData;
+      var lbl=document.getElementById('svp-label-q');
+      lbl.textContent='📄 '+file.name+' ('+qData.length+' answers)'; lbl.style.display='block';
+      document.getElementById('svp-card-q').style.borderStyle='solid';
+      svpCheckReady();
+    }catch(err){svpSetStatus('❌ '+err.message,'error');}
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function svpHandleSetupFiles(fileList){
+  if(!fileList||!fileList.length)return;
+  var files=Array.prototype.slice.call(fileList);
+  var valid=files.filter(function(f){return /\.(pdf|png|jpe?g)$/i.test(f.name);});
+  if(!valid.length){svpSetStatus('❌ Please upload PDF, PNG, or JPG files.','error');return;}
+  var pending=valid.length; SVP_STATE.setupFiles=[];
+  valid.forEach(function(f){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      SVP_STATE.setupFiles.push({name:f.name,mediaType:f.type||(/\.pdf$/i.test(f.name)?'application/pdf':'image/png'),b64:e.target.result.split(',')[1]});
+      pending--;
+      if(pending===0){
+        var lbl=document.getElementById('svp-label-setup');
+        lbl.textContent='📎 '+SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', '); lbl.style.display='block';
+        document.getElementById('svp-card-setup').style.borderStyle='solid';
+        svpCheckReady();
+      }
+    };
+    reader.readAsDataURL(f);
+  });
+}
+
+function svpCheckReady(){
+  var btn=document.getElementById('svp-next-btn');
+  if(!btn)return;
+  var ready=SVP_STATE.qData.length>0 && SVP_STATE.setupFiles.length>0;
+  btn.disabled=!ready; btn.style.opacity=ready?'1':'.4'; btn.title=ready?'':'Upload both the questionnaire and setup file(s) first';
+  if(ready) svpSetStatus('✅ Both files ready. Click <strong>Extract Setup with AI</strong> to continue.','success');
+}
+
+function svpRenderFooterUpload(){
+  var foot=document.getElementById('svp-footer');
+  foot.innerHTML=
+    '<span style="font-size:11px;color:var(--s4);">Upload both to continue</span>'
+    +'<button id="svp-next-btn" onclick="svpExtract()" disabled style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:.4;" title="Upload both files first">✨ Extract Setup with AI →</button>';
+}
+
+async function svpExtract(){
+  var keyEl=document.getElementById('svp-apikey');
+  var key=(keyEl?keyEl.value.trim():'')||SVP_STATE.apiKey||localStorage.getItem('sprout_ai_key')||'';
+  if(!key){svpSetStatus('Enter your Claude API key first.','error');return;}
+  if(!SVP_STATE.qData.length||!SVP_STATE.setupFiles.length){svpSetStatus('Upload both files first.','error');return;}
+  var btn=document.getElementById('svp-next-btn');
+  if(btn){btn.disabled=true;btn.textContent='Extracting…';}
+  svpSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Reading system setup with Claude AI…</span>','loading');
+  var prompt='You are a payroll systems analyst reviewing screenshots or a printed PDF of the Sprout Payroll system\'s Setup screen. Extract every configured payroll setup field and its current value (which checkboxes are checked, which radio option is selected, what text/number is entered). Return ONLY a valid JSON array of objects: [{"field":"<field name>","value":"<detected value, comma-separated if multiple options are selected>"}]. Cover at minimum these fields if visible (use the exact value you see, or "Not found in upload" if a field is not visible in the provided pages): '+JSON.stringify(SVP_SETUP_FIELDS)+'. Add any additional clearly-labeled setup fields you see that are not in that list.';
+  var content=SVP_STATE.setupFiles.map(function(f){
+    if(f.mediaType==='application/pdf') return {type:'document',source:{type:'base64',media_type:'application/pdf',data:f.b64}};
+    return {type:'image',source:{type:'base64',media_type:f.mediaType,data:f.b64}};
+  });
+  content.push({type:'text',text:prompt});
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:content}]})});
+    if(!resp.ok){var er=await resp.json().catch(function(){return {};});throw new Error(er.error&&er.error.message?er.error.message:'API error '+resp.status);}
+    var d=await resp.json();
+    var txt=d.content&&d.content[0]&&d.content[0].text?d.content[0].text:'';
+    var m=txt.match(/\[[\s\S]*\]/);
+    if(!m)throw new Error('Could not parse AI response.');
+    var parsed=JSON.parse(m[0]);
+    SVP_STATE.extracted=parsed.map(function(p){return {field:p.field||'',value:p.value||''};});
+    SVP_STATE.step=2;
+    svpRenderStep();
+  }catch(err){
+    svpSetStatus('❌ '+err.message,'error');
+    if(btn){btn.disabled=false;btn.textContent='✨ Extract Setup with AI →';}
+  }
+}
+
+function svpRenderExtracted(){
+  var c=document.getElementById('svp-content');
+  c.innerHTML=
+    '<div style="font-size:12px;color:var(--s5);margin-bottom:.75rem;line-height:1.6;">Claude extracted <strong style="color:#2563eb">'+SVP_STATE.extracted.length+' setup fields</strong> from the uploaded setup file(s). Review and correct any values before comparing.</div>'
+    +'<div style="max-height:360px;overflow-y:auto;border:1px solid var(--s1);border-radius:10px;">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+    +'<thead><tr style="background:var(--s0);position:sticky;top:0;"><th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;width:38%;">Field</th><th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Detected Value</th><th style="width:34px;"></th></tr></thead>'
+    +'<tbody id="svp-extracted-body">'
+    +SVP_STATE.extracted.map(function(row,i){return svpExtractedRowHTML(row,i);}).join('')
+    +'</tbody></table></div>'
+    +'<button onclick="svpAddExtractedRow()" style="margin-top:8px;padding:6px 12px;border-radius:8px;border:1px dashed var(--s3);background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">+ Add field</button>';
+  var foot=document.getElementById('svp-footer');
+  foot.innerHTML=
+    '<button onclick="SVP_STATE.step=1;svpRenderStep();" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">← Back</button>'
+    +'<button id="svp-compare-btn" onclick="svpCompare()" style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">Compare with Questionnaire →</button>';
+}
+
+function svpExtractedRowHTML(row,i){
+  return '<tr style="border-top:1px solid var(--s1);">'
+    +'<td style="padding:5px 10px;"><input value="'+escHtml(row.field)+'" onchange="svpUpdateExtracted('+i+',\'field\',this.value)" style="width:100%;border:1px solid transparent;border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);font-weight:600;color:var(--s7);"></td>'
+    +'<td style="padding:5px 10px;"><input value="'+escHtml(row.value)+'" onchange="svpUpdateExtracted('+i+',\'value\',this.value)" style="width:100%;border:1px solid var(--s2);border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);color:var(--s7);"></td>'
+    +'<td style="text-align:center;"><button onclick="svpRemoveExtractedRow('+i+')" style="border:none;background:transparent;color:var(--s4);cursor:pointer;font-size:14px;" title="Remove">✕</button></td>'
+    +'</tr>';
+}
+
+function svpUpdateExtracted(i,key,val){ if(SVP_STATE.extracted[i]) SVP_STATE.extracted[i][key]=val; }
+function svpRemoveExtractedRow(i){ SVP_STATE.extracted.splice(i,1); svpRenderExtracted(); }
+function svpAddExtractedRow(){ SVP_STATE.extracted.push({field:'',value:''}); svpRenderExtracted(); }
+
+async function svpCompare(){
+  var key=SVP_STATE.apiKey||localStorage.getItem('sprout_ai_key')||'';
+  if(!key){alert('Missing Claude API key. Go back and enter it.');return;}
+  var btn=document.getElementById('svp-compare-btn');
+  if(btn){btn.disabled=true;btn.textContent='Comparing…';btn.style.opacity='.6';}
+  var prompt='You are a payroll implementation QA analyst. Below are two data sets for the same client:\n\n'
+    +'EXPECTED (from the client\'s answered Payroll Policy Questionnaire):\n'+JSON.stringify(SVP_STATE.qData)+'\n\n'
+    +'ACTUAL (extracted from the live Sprout Payroll system Setup screen):\n'+JSON.stringify(SVP_STATE.extracted)+'\n\n'
+    +'Match each questionnaire question that has a corresponding system setup field, and judge whether the actual system setup correctly implements what the client asked for. Skip questions that have no corresponding system setting (e.g. company info, contacts, banking arrangements, addresses). '
+    +'Return ONLY a valid JSON array of objects, most important mismatches first: [{"question":"<questionnaire question, shortened if long>","expected":"<client\'s answer>","field":"<matched system field name>","actual":"<system value>","verdict":"match"|"mismatch"|"review","note":"<one sentence explaining the verdict, especially for mismatch/review>"}]. Use "mismatch" when the system clearly does not implement what the client asked. Use "review" when it\'s ambiguous or you\'re not fully confident. Use "match" when they align.';
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:[{type:'text',text:prompt}]}]})});
+    if(!resp.ok){var er=await resp.json().catch(function(){return {};});throw new Error(er.error&&er.error.message?er.error.message:'API error '+resp.status);}
+    var d=await resp.json();
+    var txt=d.content&&d.content[0]&&d.content[0].text?d.content[0].text:'';
+    var m=txt.match(/\[[\s\S]*\]/);
+    if(!m)throw new Error('Could not parse AI response.');
+    var parsed=JSON.parse(m[0]);
+    SVP_STATE.results=parsed;
+    SVP_STATE.step=3;
+    svpRenderStep();
+  }catch(err){
+    alert('Comparison failed: '+err.message);
+    if(btn){btn.disabled=false;btn.textContent='Compare with Questionnaire →';btn.style.opacity='1';}
+  }
+}
+
+function svpKpiCard(label,val,fg,bg){
+  return '<div style="background:'+bg+';border-radius:10px;padding:.8rem;text-align:center;">'
+    +'<div style="font-size:22px;font-weight:800;color:'+fg+';">'+val+'</div>'
+    +'<div style="font-size:10px;font-weight:600;color:'+fg+';text-transform:uppercase;letter-spacing:.04em;margin-top:2px;">'+label+'</div>'
+    +'</div>';
+}
+
+function svpResultRowHTML(row){
+  var st=SVP_VERDICT_STYLE[row.verdict]||SVP_VERDICT_STYLE.review;
+  return '<tr style="border-top:1px solid var(--s1);">'
+    +'<td style="padding:6px 10px;vertical-align:top;color:var(--s7);">'+escHtml(row.question||'')+'</td>'
+    +'<td style="padding:6px 10px;vertical-align:top;color:var(--s6);">'+escHtml(row.expected||'')+'</td>'
+    +'<td style="padding:6px 10px;vertical-align:top;color:var(--s6);">'+escHtml(row.actual||'')+(row.field?'<div style="font-size:9.5px;color:var(--s4);margin-top:2px;">via '+escHtml(row.field)+'</div>':'')+'</td>'
+    +'<td style="padding:6px 10px;vertical-align:top;"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:'+st.bg+';color:'+st.fg+';white-space:nowrap;">'+st.label+'</span>'+(row.note?'<div style="font-size:10px;color:var(--s5);margin-top:3px;max-width:220px;">'+escHtml(row.note)+'</div>':'')+'</td>'
+    +'</tr>';
+}
+
+function svpRenderResults(){
+  var r=SVP_STATE.results||[];
+  var counts={match:0,mismatch:0,review:0};
+  r.forEach(function(row){ if(counts[row.verdict]!==undefined) counts[row.verdict]++; });
+  var c=document.getElementById('svp-content');
+  c.innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">'
+      +svpKpiCard('Matches',counts.match,'#16a34a','#f0fdf4')
+      +svpKpiCard('Mismatches',counts.mismatch,'#dc2626','#fef2f2')
+      +svpKpiCard('Needs Review',counts.review,'#b45309','#fffbeb')
+    +'</div>'
+    +'<div style="max-height:380px;overflow-y:auto;border:1px solid var(--s1);border-radius:10px;">'
+    +'<table style="width:100%;border-collapse:collapse;font-size:11.5px;">'
+    +'<thead><tr style="background:var(--s0);position:sticky;top:0;">'
+      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Question</th>'
+      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Expected (Client)</th>'
+      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Actual (System)</th>'
+      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Verdict</th>'
+    +'</tr></thead><tbody>'
+    +r.slice().sort(function(a,b){var order={mismatch:0,review:1,match:2};return (order[a.verdict]||3)-(order[b.verdict]||3);}).map(svpResultRowHTML).join('')
+    +'</tbody></table></div>';
+  var foot=document.getElementById('svp-footer');
+  foot.innerHTML=
+    '<button onclick="SVP_STATE.step=2;svpRenderStep();" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">← Back</button>'
+    +'<button onclick="svpExportExcel()" style="padding:9px 22px;border-radius:9px;border:none;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">⬇ Download Excel</button>';
+}
+
+function svpExportExcel(){
+  var r=SVP_STATE.results;
+  if(!r||!r.length){alert('No results to export.');return;}
+  var X=window.XLSX;
+  var now=new Date();
+  var wb=X.utils.book_new();
+  function sc(ws,row,col,v,s){var addr=X.utils.encode_cell({r:row,c:col});ws[addr]={v:v,t:'s'};if(s)ws[addr].s=s;}
+  function srange(ws,r1,c1,r2,c2){if(!ws['!merges'])ws['!merges']=[];ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}});}
+  function setRowHt(ws,rowIdx,ht){if(!ws['!rows'])ws['!rows']=[];while(ws['!rows'].length<=rowIdx)ws['!rows'].push({});ws['!rows'][rowIdx]={hpt:ht};}
+  var verdictBg={match:'DCFCE7',mismatch:'FEE2E2',review:'FEF3C7'};
+  var verdictFg={match:'166534',mismatch:'B91C1C',review:'92400E'};
+  var verdictLbl={match:'MATCH',mismatch:'MISMATCH',review:'NEEDS REVIEW'};
+
+  var sw={};
+  var row=0;
+  sc(sw,row,0,'Simulation Variance Analysis — From PY Subscription to PYO',{fill:{fgColor:{rgb:'1D4ED8'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:14,name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}});
+  srange(sw,row,0,row,3); setRowHt(sw,row,26); row++;
+  var MK={fill:{fgColor:{rgb:'EFF6FF'}},font:{color:{rgb:'475569'},bold:true,sz:10,name:'Calibri'}};
+  var MV={fill:{fgColor:{rgb:'EFF6FF'}},font:{color:{rgb:'1D4ED8'},sz:10,name:'Calibri'}};
+  sc(sw,row,0,'Generated',MK); sc(sw,row,1,now.toLocaleString(),MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
+  sc(sw,row,0,'Questionnaire file',MK); sc(sw,row,1,SVP_STATE.qFileName||'—',MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
+  sc(sw,row,0,'Setup file(s)',MK); sc(sw,row,1,SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', ')||'—',MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
+  row++;
+
+  var counts={match:0,mismatch:0,review:0};
+  r.forEach(function(rr){if(counts[rr.verdict]!==undefined)counts[rr.verdict]++;});
+  sc(sw,row,0,'Matches: '+counts.match+'   Mismatches: '+counts.mismatch+'   Needs Review: '+counts.review,{font:{bold:true,sz:11,name:'Calibri',color:{rgb:'334155'}}});
+  srange(sw,row,0,row,3); setRowHt(sw,row,18); row+=2;
+
+  var hdrStyle={fill:{fgColor:{rgb:'1E293B'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:10,name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}};
+  ['Question','Expected (Client)','Actual (System)','Verdict'].forEach(function(h,ci){sc(sw,row,ci,h,hdrStyle);});
+  setRowHt(sw,row,20); row++;
+
+  var sorted=r.slice().sort(function(a,b){var order={mismatch:0,review:1,match:2};return (order[a.verdict]||3)-(order[b.verdict]||3);});
+  sorted.forEach(function(rr,i){
+    var alt=i%2===1;
+    var bodyStyle={fill:{fgColor:{rgb:alt?'F8FAFC':'FFFFFF'}},font:{sz:10,name:'Calibri',color:{rgb:'334155'}},alignment:{wrapText:true,vertical:'top'}};
+    sc(sw,row,0,rr.question||'',bodyStyle);
+    sc(sw,row,1,rr.expected||'',bodyStyle);
+    sc(sw,row,2,(rr.actual||'')+(rr.field?' (via '+rr.field+')':''),bodyStyle);
+    var vs={fill:{fgColor:{rgb:verdictBg[rr.verdict]||'F1F5F9'}},font:{bold:true,sz:10,name:'Calibri',color:{rgb:verdictFg[rr.verdict]||'475569'}},alignment:{horizontal:'center',vertical:'top'}};
+    sc(sw,row,3,(verdictLbl[rr.verdict]||rr.verdict||'')+(rr.note?(' — '+rr.note):''),vs);
+    setRowHt(sw,row,32);
+    row++;
+  });
+  sw['!ref']=X.utils.encode_range({s:{r:0,c:0},e:{r:row-1,c:3}});
+  sw['!cols']=[{wch:34},{wch:28},{wch:28},{wch:34}];
+  wb.SheetNames.push('Variance Results'); wb.Sheets['Variance Results']=sw;
+  var cn=(SVP_STATE.qFileName||'SimVariance').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
+  var ts=(now.getMonth()+1+'').padStart(2,'0')+(now.getDate()+'').padStart(2,'0')+(now.getFullYear()+'').slice(2);
+  X.writeFile(wb,'SimVariance_'+cn+'_'+ts+'.xlsx');
+}
+
 // ══════════════ MOM GENERATOR ══════════════
 var MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:'',sproutStaff:[],reviewItems:null,extracted:null};
 
