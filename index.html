@@ -6635,8 +6635,10 @@ var SVP_FIELD_MAP=[
 var SVP_VERDICT_STYLE={
   match:{bg:'#f0fdf4',fg:'#15803d',label:'✅ Match'},
   mismatch:{bg:'#fef2f2',fg:'#dc2626',label:'❌ Mismatch'},
-  review:{bg:'#fffbeb',fg:'#b45309',label:'⚠️ Needs Review'}
+  review:{bg:'#fffbeb',fg:'#b45309',label:'⚠️ Needs Review'},
+  na:{bg:'#f1f5f9',fg:'#64748b',label:'➖ Not Applicable'}
 };
+var SVP_VERDICT_ORDER={mismatch:0,review:1,match:2,na:3};
 
 function svpReset(){
   SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],results:null};
@@ -6881,10 +6883,9 @@ function svpUpdateExtracted(i,key,val){ if(SVP_STATE.extracted[i]) SVP_STATE.ext
 function svpRemoveExtractedRow(i){ SVP_STATE.extracted.splice(i,1); svpRenderExtracted(); }
 function svpAddExtractedRow(){ SVP_STATE.extracted.push({field:'',value:''}); svpRenderExtracted(); }
 
-function svpFindAnswer(qKeyword){
-  var kw=qKeyword.toLowerCase();
-  var hit=SVP_STATE.qData.filter(function(r){return r.q.toLowerCase().indexOf(kw)>=0;})[0];
-  return hit?{q:hit.q,a:hit.a}:null;
+function svpFindFieldMaps(question){
+  var ql=question.toLowerCase();
+  return SVP_FIELD_MAP.filter(function(m){return ql.indexOf(m.q.toLowerCase())>=0;});
 }
 
 function svpFindExtracted(fieldName){
@@ -6908,12 +6909,17 @@ function svpRuleCompare(expected,actual){
 
 function svpCompare(){
   var results=[];
-  SVP_FIELD_MAP.forEach(function(m){
-    var found=svpFindAnswer(m.q);
-    if(!found) return;
-    var actual=svpFindExtracted(m.field);
-    var verdict=svpRuleCompare(found.a,actual);
-    results.push({question:found.q,expected:found.a,field:m.field,actual:actual,verdict:verdict.verdict,note:verdict.note});
+  SVP_STATE.qData.forEach(function(row){
+    var maps=svpFindFieldMaps(row.q);
+    if(!maps.length){
+      results.push({question:row.q,expected:row.a,field:'',actual:'',verdict:'na',note:'No corresponding system setup field for this question — not compared.'});
+      return;
+    }
+    maps.forEach(function(m){
+      var actual=svpFindExtracted(m.field);
+      var v=svpRuleCompare(row.a,actual);
+      results.push({question:row.q,expected:row.a,field:m.field,actual:actual,verdict:v.verdict,note:v.note});
+    });
   });
   SVP_STATE.results=results;
   SVP_STATE.step=3;
@@ -6939,14 +6945,16 @@ function svpResultRowHTML(row){
 
 function svpRenderResults(){
   var r=SVP_STATE.results||[];
-  var counts={match:0,mismatch:0,review:0};
+  var counts={match:0,mismatch:0,review:0,na:0};
   r.forEach(function(row){ if(counts[row.verdict]!==undefined) counts[row.verdict]++; });
   var c=document.getElementById('svp-content');
   c.innerHTML=
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">'
+    '<div style="font-size:11px;color:var(--s4);margin-bottom:.5rem;">'+r.length+' of '+SVP_STATE.qData.length+' questionnaire items compared — every questionnaire question is included below, even ones with no matching system field.</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">'
       +svpKpiCard('Matches',counts.match,'#16a34a','#f0fdf4')
       +svpKpiCard('Mismatches',counts.mismatch,'#dc2626','#fef2f2')
       +svpKpiCard('Needs Review',counts.review,'#b45309','#fffbeb')
+      +svpKpiCard('Not Applicable',counts.na,'#64748b','#f1f5f9')
     +'</div>'
     +'<div style="max-height:380px;overflow-y:auto;border:1px solid var(--s1);border-radius:10px;">'
     +'<table style="width:100%;border-collapse:collapse;font-size:11.5px;">'
@@ -6956,7 +6964,7 @@ function svpRenderResults(){
       +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Actual (System)</th>'
       +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Verdict</th>'
     +'</tr></thead><tbody>'
-    +r.slice().sort(function(a,b){var order={mismatch:0,review:1,match:2};return (order[a.verdict]||3)-(order[b.verdict]||3);}).map(svpResultRowHTML).join('')
+    +r.slice().sort(function(a,b){return (SVP_VERDICT_ORDER[a.verdict]||9)-(SVP_VERDICT_ORDER[b.verdict]||9);}).map(svpResultRowHTML).join('')
     +'</tbody></table></div>';
   var foot=document.getElementById('svp-footer');
   foot.innerHTML=
@@ -6973,9 +6981,9 @@ function svpExportExcel(){
   function sc(ws,row,col,v,s){var addr=X.utils.encode_cell({r:row,c:col});ws[addr]={v:v,t:'s'};if(s)ws[addr].s=s;}
   function srange(ws,r1,c1,r2,c2){if(!ws['!merges'])ws['!merges']=[];ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}});}
   function setRowHt(ws,rowIdx,ht){if(!ws['!rows'])ws['!rows']=[];while(ws['!rows'].length<=rowIdx)ws['!rows'].push({});ws['!rows'][rowIdx]={hpt:ht};}
-  var verdictBg={match:'DCFCE7',mismatch:'FEE2E2',review:'FEF3C7'};
-  var verdictFg={match:'166534',mismatch:'B91C1C',review:'92400E'};
-  var verdictLbl={match:'MATCH',mismatch:'MISMATCH',review:'NEEDS REVIEW'};
+  var verdictBg={match:'DCFCE7',mismatch:'FEE2E2',review:'FEF3C7',na:'F1F5F9'};
+  var verdictFg={match:'166534',mismatch:'B91C1C',review:'92400E',na:'64748B'};
+  var verdictLbl={match:'MATCH',mismatch:'MISMATCH',review:'NEEDS REVIEW',na:'NOT APPLICABLE'};
 
   var sw={};
   var row=0;
@@ -6988,16 +6996,16 @@ function svpExportExcel(){
   sc(sw,row,0,'Setup file(s)',MK); sc(sw,row,1,SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', ')||'—',MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
   row++;
 
-  var counts={match:0,mismatch:0,review:0};
+  var counts={match:0,mismatch:0,review:0,na:0};
   r.forEach(function(rr){if(counts[rr.verdict]!==undefined)counts[rr.verdict]++;});
-  sc(sw,row,0,'Matches: '+counts.match+'   Mismatches: '+counts.mismatch+'   Needs Review: '+counts.review,{font:{bold:true,sz:11,name:'Calibri',color:{rgb:'334155'}}});
+  sc(sw,row,0,'Matches: '+counts.match+'   Mismatches: '+counts.mismatch+'   Needs Review: '+counts.review+'   Not Applicable: '+counts.na+'   ('+r.length+' of '+SVP_STATE.qData.length+' questionnaire items)',{font:{bold:true,sz:11,name:'Calibri',color:{rgb:'334155'}}});
   srange(sw,row,0,row,3); setRowHt(sw,row,18); row+=2;
 
   var hdrStyle={fill:{fgColor:{rgb:'1E293B'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:10,name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}};
   ['Question','Expected (Client)','Actual (System)','Verdict'].forEach(function(h,ci){sc(sw,row,ci,h,hdrStyle);});
   setRowHt(sw,row,20); row++;
 
-  var sorted=r.slice().sort(function(a,b){var order={mismatch:0,review:1,match:2};return (order[a.verdict]||3)-(order[b.verdict]||3);});
+  var sorted=r.slice().sort(function(a,b){return (SVP_VERDICT_ORDER[a.verdict]||9)-(SVP_VERDICT_ORDER[b.verdict]||9);});
   sorted.forEach(function(rr,i){
     var alt=i%2===1;
     var bodyStyle={fill:{fgColor:{rgb:alt?'F8FAFC':'FFFFFF'}},font:{sz:10,name:'Calibri',color:{rgb:'334155'}},alignment:{wrapText:true,vertical:'top'}};

@@ -3255,3 +3255,19 @@ Nav structure, upload UI shape, the editable review-table step, the results KPI/
 
 ### Verification
 Re-ran the same syntax check as §77 (portable Node.js `node --check` against the full extracted inline `<script>` block) after the rewrite — passes clean. Not yet tested against the real `Sample System-up.pdf` / `Sample Payroll questionairre.csv` in an actual browser — OCR accuracy on that specific 5-page print-to-PDF, and whether `SVP_FIELD_MAP`'s keyword matches actually fire against the live questionnaire data, remain unverified until someone runs it.
+
+---
+
+## 79. Simulation Variance Analysis — comparison report now covers every questionnaire item, not just the mapped ones ✅ Coded (July 16, 2026)
+
+### What changed
+User ran the tool end-to-end and shared the real output (`GENERATED 01.xlsb`, `Templates for upload/Simulation/PY Subscription to PYO/`) — parsed it with SheetJS (`XLSX.read` on a `fs.readFileSync` buffer; `XLSX.readFile` itself threw "Cannot access file" on this path for unclear reasons, buffer-read worked fine) to confirm current behavior: 16 rows, one per `SVP_FIELD_MAP` entry, all "Needs Review" since OCR hadn't picked up any of the `SVP_OCR_RULES` fields on this run. User asked for the output to also include items that don't have variance. Clarified which reading was meant: the questionnaire has ~83 answered items total, but only ~15 of them map to a system setup field — the other ~68 (company info, addresses, banking arrangements, contacts, etc.) never appeared in the report at all, regardless of verdict. User confirmed they want **every** questionnaire item to appear, not just the mapped subset.
+
+### What changed in code
+- **`svpCompare()` restructured** to iterate `SVP_STATE.qData` (every parsed questionnaire row) instead of `SVP_FIELD_MAP`. For each question: `svpFindFieldMaps()` (renamed from the old one-hit `svpFindAnswer()`, now returns *all* matching map entries, not just the first) finds every corresponding setup field. If none exist, push a single row with a new verdict, `na`, and note `"No corresponding system setup field for this question — not compared."`. If one or more exist, push one row per matched field exactly as before (a question mapping to 2 fields, e.g. "Work Hours Per day & Work Days Per Year", still produces 2 rows).
+- **New verdict type `na`** ("Not Applicable") added alongside `match`/`mismatch`/`review`: `SVP_VERDICT_STYLE.na` (gray, `#f1f5f9`/`#64748b`), `SVP_VERDICT_ORDER` (new shared sort-order object replacing the two inline `{mismatch:0,review:1,match:2}` literals that used to live separately in `svpRenderResults()` and `svpExportExcel()` — `na` sorts last at `3`) so mismatches/reviews still surface at the top and n/a rows sink to the bottom without cluttering the actionable ones.
+- **Results UI** (`svpRenderResults`): 4th KPI card added ("Not Applicable", gray), KPI grid changed from 3 to 4 columns, and a summary line above the table now reads "X of Y questionnaire items compared" so it's visible at a glance that coverage is total, not partial.
+- **Excel export** (`svpExportExcel`): counts object and summary line include the `na` count and the "(X of Y questionnaire items)" fraction; `verdictBg`/`verdictFg`/`verdictLbl` gained the gray `na` entries; sort now uses the shared `SVP_VERDICT_ORDER`.
+
+### Verified against real data
+Re-implemented the new `svpCompare()` logic standalone in Node against the real `Sample Payroll questionairre.csv` (same CSV-parsing shape as `vaParseCSV`) before considering this done: 83 answered questionnaire items → 15 map to a field (16 field-rows, since one question maps to 2 fields) → 68 produce a `na` row → 84 total rows in the report, matching the intended shape. Re-ran `node --check` on the full extracted inline `<script>` block — passes clean.
