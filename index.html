@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -6579,7 +6580,12 @@ function ppDownload(){
 }
 
 // ══════════════ SIMULATION VARIANCE — FROM PY SUBSCRIPTION TO PYO ══════════════
-var SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],apiKey:'',results:null};
+// Free path: no Claude API calls. Setup screenshots/PDF are read with client-side
+// OCR (Tesseract.js + pdf.js), and the questionnaire-vs-setup comparison runs on a
+// fixed keyword-matching rule table instead of an AI call. Checkbox/radio-selection
+// fields can't be reliably read from OCR text (unchecked options print too), so
+// those are flagged "Needs manual review" rather than guessed.
+var SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],results:null};
 
 var SVP_SETUP_FIELDS=[
   'Work Days Per Year','Work Hours Per Day','Work Months Per Year','Statutory Period Schedule','Periods Per Month',
@@ -6590,6 +6596,42 @@ var SVP_SETUP_FIELDS=[
   'HDMF Contribution Type','HDMF Employer Contribution','Tax Table Type','Payroll Calendar','Non-Tax Exemption Ceiling','Deminimis Exemption Ceiling'
 ];
 
+// Fields OCR text-search can plausibly get right (typed numbers/labels). Everything
+// else in SVP_SETUP_FIELDS is a checkbox/radio grid — OCR can't tell selected from
+// unselected, so those are always seeded as "Needs manual review".
+var SVP_OCR_RULES=[
+  {field:'Work Days Per Year', re:/work\s*days\s*per\s*year\D{0,20}?(\d{2,3})/i},
+  {field:'Work Hours Per Day', re:/work\s*hours\s*per\s*day\D{0,20}?(\d{1,2})/i},
+  {field:'Work Months Per Year', re:/work\s*months\s*per\s*year\D{0,20}?(\d{1,2})/i},
+  {field:'Periods Per Month', re:/periods\s*per\s*month\D{0,10}?(\d\s*\([^)]*\)|\d)/i},
+  {field:'Non-Tax Exemption Ceiling', re:/non-?tax\s*exemption\s*ceiling\D{0,15}?([\d,]+\.\d{2})/i},
+  {field:'Deminimis Exemption Ceiling', re:/deminimis\s*exemption\s*ceiling\D{0,15}?([\d,]+\.\d{2})/i},
+  {field:'HDMF Employer Contribution', re:/fixed\s*deduction\s*of\s*php\s*([\d,]+\.\d{2})/i}
+];
+
+var SVP_NEEDS_REVIEW='Needs manual review — OCR can\'t reliably read checkbox/radio selections';
+
+// Fixed mapping between a questionnaire question (matched by keyword) and the
+// corresponding system setup field, used for the zero-cost rule-based comparison.
+var SVP_FIELD_MAP=[
+  {q:'Work Hours Per day & Work Days Per Year', field:'Work Days Per Year'},
+  {q:'Work Hours Per day & Work Days Per Year', field:'Work Hours Per Day'},
+  {q:'Do you have Net Pay Threshold?', field:'Net Pay Threshold Enabled'},
+  {q:'TAX COMPUTATION BASIS', field:'Tax Table Type'},
+  {q:'Absent Computation (Inclusion)', field:'Absent Deduction Basis'},
+  {q:'Late/Undertime Computation (Inclusion)', field:'Late Deduction Basis'},
+  {q:'OT Rates Policy', field:'OT Rates Enabled (which categories)'},
+  {q:'Overtime Computation (Inclusion)', field:'Overtime Computation Basis'},
+  {q:'New Hire Proration ; Basic Pay', field:'New Hire Proration Basis'},
+  {q:'13th Month Pay (Inclusions)', field:'13th Month Computation Basis (Inclusions)'},
+  {q:'Do you deduct Total Absent per year?', field:'Final Pay Deduct Absent'},
+  {q:'Do you deduct Total Late/Undertime per year?', field:'Final Pay Deduct Late/Undertime'},
+  {q:'To deduct the corresponding statutory contribution from final pay of resigned EE?', field:'Final Pay Deduct Absent'},
+  {q:'SSS Contribution Basis', field:'SSS Contribution Basis (earnings included)'},
+  {q:'PHIC Contribution Basis', field:'PhilHealth Contribution Basis (earnings included)'},
+  {q:'HDMF Contribution Basis', field:'HDMF Contribution Type'}
+];
+
 var SVP_VERDICT_STYLE={
   match:{bg:'#f0fdf4',fg:'#15803d',label:'✅ Match'},
   mismatch:{bg:'#fef2f2',fg:'#dc2626',label:'❌ Mismatch'},
@@ -6597,7 +6639,7 @@ var SVP_VERDICT_STYLE={
 };
 
 function svpReset(){
-  SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],apiKey:localStorage.getItem('sprout_ai_key')||'',results:null};
+  SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],results:null};
 }
 
 function renderSVPUI(){
@@ -6606,7 +6648,7 @@ function renderSVPUI(){
     +'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:10px;align-items:flex-start;">'
       +'<span style="font-size:18px;flex-shrink:0;">📈</span>'
       +'<div><div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:2px;">Simulation Variance Analysis — From PY Subscription to PYO</div>'
-      +'<div style="font-size:11px;color:#2563eb;line-height:1.6;">Compare the client\'s Payroll Questionnaire answers (expected) against the actual Sprout Payroll system setup (actual) to catch configuration mismatches before parallel run.</div></div>'
+      +'<div style="font-size:11px;color:#2563eb;line-height:1.6;">Compare the client\'s Payroll Questionnaire answers (expected) against the actual Sprout Payroll system setup (actual) to catch configuration mismatches before parallel run. Runs entirely in your browser — free OCR + rule-based matching, no API key or cost.</div></div>'
     +'</div>'
     +'<div id="svp-content"></div>'
     +'<div id="svp-footer" style="display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid var(--s1);margin-top:.75rem;"></div>';
@@ -6640,11 +6682,9 @@ function svpRenderStep(){
 }
 
 function svpRenderUpload(){
-  var savedKey=localStorage.getItem('sprout_ai_key')||'';
-  SVP_STATE.apiKey=savedKey;
   var c=document.getElementById('svp-content');
   c.innerHTML=
-    '<div style="background:var(--s0);border:1px solid var(--s2);border-radius:10px;padding:9px 12px;margin-bottom:12px;"><div style="font-size:10px;font-weight:700;color:var(--s6);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Claude API Key</div><div style="display:flex;gap:7px;align-items:center;"><input type="password" id="svp-apikey" placeholder="sk-ant-..." value="'+escHtml(savedKey)+'" style="flex:1;border:1px solid var(--s2);border-radius:8px;padding:6px 9px;font-size:12px;font-family:var(--font);outline:none;color:var(--s8);"><button onclick="svpSaveKey()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);white-space:nowrap;">Save Key</button></div><div style="font-size:10px;color:var(--s4);margin-top:3px;">Stored in your browser only. Never sent to Sprout servers.</div></div>'
+    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#15803d;line-height:1.6;">🆓 <strong>Free, no API key needed.</strong> The setup file is read with on-device OCR and matched against the questionnaire using fixed rules — nothing leaves your browser. Checkbox/radio-selection fields (OT rates, inclusions, basis, etc.) can\'t be reliably read from a screenshot, so those are flagged for you to fill in on the next step instead of guessed.</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.85rem;">'
       +'<div id="svp-card-q" style="border:1.5px dashed #7c3aed40;border-radius:10px;padding:1.1rem 1rem;text-align:center;cursor:pointer;background:#7c3aed06;" onclick="document.getElementById(\'svp-input-q\').click()" ondragover="event.preventDefault();this.style.background=\'#7c3aed14\'" ondragleave="this.style.background=\'#7c3aed06\'" ondrop="event.preventDefault();svpHandleQFile(event.dataTransfer.files[0])">'
         +'<input type="file" id="svp-input-q" accept=".csv" style="display:none"/>'
@@ -6667,11 +6707,6 @@ function svpRenderUpload(){
   document.getElementById('svp-input-q').addEventListener('change',function(e){svpHandleQFile(e.target.files[0]);});
   document.getElementById('svp-input-setup').addEventListener('change',function(e){svpHandleSetupFiles(e.target.files);});
   svpRenderFooterUpload();
-}
-
-function svpSaveKey(){
-  var k=document.getElementById('svp-apikey');
-  if(k&&k.value.trim()){localStorage.setItem('sprout_ai_key',k.value.trim());SVP_STATE.apiKey=k.value.trim();svpSetStatus('API key saved.','success');}
 }
 
 function svpSetStatus(msg,type){
@@ -6712,21 +6747,11 @@ function svpHandleSetupFiles(fileList){
   var files=Array.prototype.slice.call(fileList);
   var valid=files.filter(function(f){return /\.(pdf|png|jpe?g)$/i.test(f.name);});
   if(!valid.length){svpSetStatus('❌ Please upload PDF, PNG, or JPG files.','error');return;}
-  var pending=valid.length; SVP_STATE.setupFiles=[];
-  valid.forEach(function(f){
-    var reader=new FileReader();
-    reader.onload=function(e){
-      SVP_STATE.setupFiles.push({name:f.name,mediaType:f.type||(/\.pdf$/i.test(f.name)?'application/pdf':'image/png'),b64:e.target.result.split(',')[1]});
-      pending--;
-      if(pending===0){
-        var lbl=document.getElementById('svp-label-setup');
-        lbl.textContent='📎 '+SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', '); lbl.style.display='block';
-        document.getElementById('svp-card-setup').style.borderStyle='solid';
-        svpCheckReady();
-      }
-    };
-    reader.readAsDataURL(f);
-  });
+  SVP_STATE.setupFiles=valid.map(function(f){return {file:f,name:f.name,isPdf:/\.pdf$/i.test(f.name)};});
+  var lbl=document.getElementById('svp-label-setup');
+  lbl.textContent='📎 '+SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', '); lbl.style.display='block';
+  document.getElementById('svp-card-setup').style.borderStyle='solid';
+  svpCheckReady();
 }
 
 function svpCheckReady(){
@@ -6734,51 +6759,102 @@ function svpCheckReady(){
   if(!btn)return;
   var ready=SVP_STATE.qData.length>0 && SVP_STATE.setupFiles.length>0;
   btn.disabled=!ready; btn.style.opacity=ready?'1':'.4'; btn.title=ready?'':'Upload both the questionnaire and setup file(s) first';
-  if(ready) svpSetStatus('✅ Both files ready. Click <strong>Extract Setup with AI</strong> to continue.','success');
+  if(ready) svpSetStatus('✅ Both files ready. Click <strong>Read Setup with OCR</strong> to continue.','success');
 }
 
 function svpRenderFooterUpload(){
   var foot=document.getElementById('svp-footer');
   foot.innerHTML=
     '<span style="font-size:11px;color:var(--s4);">Upload both to continue</span>'
-    +'<button id="svp-next-btn" onclick="svpExtract()" disabled style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:.4;" title="Upload both files first">✨ Extract Setup with AI →</button>';
+    +'<button id="svp-next-btn" onclick="svpExtract()" disabled style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:.4;" title="Upload both files first">🔎 Read Setup with OCR →</button>';
+}
+
+function svpLoadOcrLibs(){
+  return new Promise(function(resolve){
+    if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    var attempts=0;
+    var check=setInterval(function(){
+      attempts++;
+      if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      if((window.pdfjsLib&&window.Tesseract)||attempts>50){clearInterval(check);resolve();}
+    },100);
+  });
+}
+
+async function svpPdfToCanvases(file){
+  var buf=await file.arrayBuffer();
+  var pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  var canvases=[];
+  for(var i=1;i<=pdf.numPages;i++){
+    var page=await pdf.getPage(i);
+    var viewport=page.getViewport({scale:2.5});
+    var canvas=document.createElement('canvas');
+    canvas.width=viewport.width; canvas.height=viewport.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
+    canvases.push(canvas);
+  }
+  return canvases;
+}
+
+async function svpOcrSetupFiles(onProgress){
+  await svpLoadOcrLibs();
+  if(!window.Tesseract||!window.pdfjsLib) throw new Error('OCR libraries failed to load. Check your connection and try again.');
+  var pages=[];
+  for(var i=0;i<SVP_STATE.setupFiles.length;i++){
+    var f=SVP_STATE.setupFiles[i];
+    if(f.isPdf){
+      var canvases=await svpPdfToCanvases(f.file);
+      canvases.forEach(function(c){pages.push(c);});
+    } else {
+      pages.push(f.file);
+    }
+  }
+  var texts=[];
+  for(var p=0;p<pages.length;p++){
+    if(onProgress) onProgress(p+1,pages.length);
+    var result=await Tesseract.recognize(pages[p],'eng');
+    texts.push(result.data.text);
+  }
+  return texts.join('\n\n');
+}
+
+function svpParseOcrText(text){
+  var rows=[];
+  SVP_SETUP_FIELDS.forEach(function(field){
+    var rule=SVP_OCR_RULES.filter(function(r){return r.field===field;})[0];
+    var value=SVP_NEEDS_REVIEW;
+    if(rule){
+      var m=text.match(rule.re);
+      if(m&&m[1]) value=m[1].trim();
+    }
+    rows.push({field:field,value:value});
+  });
+  return rows;
 }
 
 async function svpExtract(){
-  var keyEl=document.getElementById('svp-apikey');
-  var key=(keyEl?keyEl.value.trim():'')||SVP_STATE.apiKey||localStorage.getItem('sprout_ai_key')||'';
-  if(!key){svpSetStatus('Enter your Claude API key first.','error');return;}
   if(!SVP_STATE.qData.length||!SVP_STATE.setupFiles.length){svpSetStatus('Upload both files first.','error');return;}
   var btn=document.getElementById('svp-next-btn');
-  if(btn){btn.disabled=true;btn.textContent='Extracting…';}
-  svpSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Reading system setup with Claude AI…</span>','loading');
-  var prompt='You are a payroll systems analyst reviewing screenshots or a printed PDF of the Sprout Payroll system\'s Setup screen. Extract every configured payroll setup field and its current value (which checkboxes are checked, which radio option is selected, what text/number is entered). Return ONLY a valid JSON array of objects: [{"field":"<field name>","value":"<detected value, comma-separated if multiple options are selected>"}]. Cover at minimum these fields if visible (use the exact value you see, or "Not found in upload" if a field is not visible in the provided pages): '+JSON.stringify(SVP_SETUP_FIELDS)+'. Add any additional clearly-labeled setup fields you see that are not in that list.';
-  var content=SVP_STATE.setupFiles.map(function(f){
-    if(f.mediaType==='application/pdf') return {type:'document',source:{type:'base64',media_type:'application/pdf',data:f.b64}};
-    return {type:'image',source:{type:'base64',media_type:f.mediaType,data:f.b64}};
-  });
-  content.push({type:'text',text:prompt});
+  if(btn){btn.disabled=true;btn.textContent='Reading…';}
+  svpSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Loading OCR engine…</span>','loading');
   try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:content}]})});
-    if(!resp.ok){var er=await resp.json().catch(function(){return {};});throw new Error(er.error&&er.error.message?er.error.message:'API error '+resp.status);}
-    var d=await resp.json();
-    var txt=d.content&&d.content[0]&&d.content[0].text?d.content[0].text:'';
-    var m=txt.match(/\[[\s\S]*\]/);
-    if(!m)throw new Error('Could not parse AI response.');
-    var parsed=JSON.parse(m[0]);
-    SVP_STATE.extracted=parsed.map(function(p){return {field:p.field||'',value:p.value||''};});
+    var text=await svpOcrSetupFiles(function(cur,total){
+      svpSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Reading page '+cur+' of '+total+' with OCR…</span>','loading');
+    });
+    SVP_STATE.extracted=svpParseOcrText(text);
     SVP_STATE.step=2;
     svpRenderStep();
   }catch(err){
     svpSetStatus('❌ '+err.message,'error');
-    if(btn){btn.disabled=false;btn.textContent='✨ Extract Setup with AI →';}
+    if(btn){btn.disabled=false;btn.textContent='🔎 Read Setup with OCR →';}
   }
 }
 
 function svpRenderExtracted(){
+  var needReview=SVP_STATE.extracted.filter(function(r){return r.value===SVP_NEEDS_REVIEW;}).length;
   var c=document.getElementById('svp-content');
   c.innerHTML=
-    '<div style="font-size:12px;color:var(--s5);margin-bottom:.75rem;line-height:1.6;">Claude extracted <strong style="color:#2563eb">'+SVP_STATE.extracted.length+' setup fields</strong> from the uploaded setup file(s). Review and correct any values before comparing.</div>'
+    '<div style="font-size:12px;color:var(--s5);margin-bottom:.75rem;line-height:1.6;">OCR read <strong style="color:#2563eb">'+SVP_STATE.extracted.length+' setup fields</strong> from the uploaded file(s). <strong style="color:#b45309">'+needReview+' need manual review</strong> (checkbox/radio selections OCR can\'t read) — look at the setup screenshot and fill those in before comparing. Everything here is editable.</div>'
     +'<div style="max-height:360px;overflow-y:auto;border:1px solid var(--s1);border-radius:10px;">'
     +'<table style="width:100%;border-collapse:collapse;font-size:12px;">'
     +'<thead><tr style="background:var(--s0);position:sticky;top:0;"><th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;width:38%;">Field</th><th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Detected Value</th><th style="width:34px;"></th></tr></thead>'
@@ -6793,9 +6869,10 @@ function svpRenderExtracted(){
 }
 
 function svpExtractedRowHTML(row,i){
-  return '<tr style="border-top:1px solid var(--s1);">'
+  var needsReview=row.value===SVP_NEEDS_REVIEW;
+  return '<tr style="border-top:1px solid var(--s1);'+(needsReview?'background:#fffbeb;':'')+'">'
     +'<td style="padding:5px 10px;"><input value="'+escHtml(row.field)+'" onchange="svpUpdateExtracted('+i+',\'field\',this.value)" style="width:100%;border:1px solid transparent;border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);font-weight:600;color:var(--s7);"></td>'
-    +'<td style="padding:5px 10px;"><input value="'+escHtml(row.value)+'" onchange="svpUpdateExtracted('+i+',\'value\',this.value)" style="width:100%;border:1px solid var(--s2);border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);color:var(--s7);"></td>'
+    +'<td style="padding:5px 10px;"><input value="'+(needsReview?'':escHtml(row.value))+'" onchange="svpUpdateExtracted('+i+',\'value\',this.value)" placeholder="'+(needsReview?'⚠️ Needs review — fill in from screenshot':'')+'" style="width:100%;border:1px solid '+(needsReview?'#fde68a':'var(--s2)')+';border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);color:var(--s7);"></td>'
     +'<td style="text-align:center;"><button onclick="svpRemoveExtractedRow('+i+')" style="border:none;background:transparent;color:var(--s4);cursor:pointer;font-size:14px;" title="Remove">✕</button></td>'
     +'</tr>';
 }
@@ -6804,31 +6881,43 @@ function svpUpdateExtracted(i,key,val){ if(SVP_STATE.extracted[i]) SVP_STATE.ext
 function svpRemoveExtractedRow(i){ SVP_STATE.extracted.splice(i,1); svpRenderExtracted(); }
 function svpAddExtractedRow(){ SVP_STATE.extracted.push({field:'',value:''}); svpRenderExtracted(); }
 
-async function svpCompare(){
-  var key=SVP_STATE.apiKey||localStorage.getItem('sprout_ai_key')||'';
-  if(!key){alert('Missing Claude API key. Go back and enter it.');return;}
-  var btn=document.getElementById('svp-compare-btn');
-  if(btn){btn.disabled=true;btn.textContent='Comparing…';btn.style.opacity='.6';}
-  var prompt='You are a payroll implementation QA analyst. Below are two data sets for the same client:\n\n'
-    +'EXPECTED (from the client\'s answered Payroll Policy Questionnaire):\n'+JSON.stringify(SVP_STATE.qData)+'\n\n'
-    +'ACTUAL (extracted from the live Sprout Payroll system Setup screen):\n'+JSON.stringify(SVP_STATE.extracted)+'\n\n'
-    +'Match each questionnaire question that has a corresponding system setup field, and judge whether the actual system setup correctly implements what the client asked for. Skip questions that have no corresponding system setting (e.g. company info, contacts, banking arrangements, addresses). '
-    +'Return ONLY a valid JSON array of objects, most important mismatches first: [{"question":"<questionnaire question, shortened if long>","expected":"<client\'s answer>","field":"<matched system field name>","actual":"<system value>","verdict":"match"|"mismatch"|"review","note":"<one sentence explaining the verdict, especially for mismatch/review>"}]. Use "mismatch" when the system clearly does not implement what the client asked. Use "review" when it\'s ambiguous or you\'re not fully confident. Use "match" when they align.';
-  try{
-    var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:[{type:'text',text:prompt}]}]})});
-    if(!resp.ok){var er=await resp.json().catch(function(){return {};});throw new Error(er.error&&er.error.message?er.error.message:'API error '+resp.status);}
-    var d=await resp.json();
-    var txt=d.content&&d.content[0]&&d.content[0].text?d.content[0].text:'';
-    var m=txt.match(/\[[\s\S]*\]/);
-    if(!m)throw new Error('Could not parse AI response.');
-    var parsed=JSON.parse(m[0]);
-    SVP_STATE.results=parsed;
-    SVP_STATE.step=3;
-    svpRenderStep();
-  }catch(err){
-    alert('Comparison failed: '+err.message);
-    if(btn){btn.disabled=false;btn.textContent='Compare with Questionnaire →';btn.style.opacity='1';}
-  }
+function svpFindAnswer(qKeyword){
+  var kw=qKeyword.toLowerCase();
+  var hit=SVP_STATE.qData.filter(function(r){return r.q.toLowerCase().indexOf(kw)>=0;})[0];
+  return hit?{q:hit.q,a:hit.a}:null;
+}
+
+function svpFindExtracted(fieldName){
+  var hit=SVP_STATE.extracted.filter(function(r){return r.field===fieldName;})[0];
+  return hit?hit.value:'';
+}
+
+function svpRuleCompare(expected,actual){
+  var e=String(expected||'').toLowerCase().trim();
+  var a=String(actual||'').toLowerCase().trim();
+  if(!a||a===SVP_NEEDS_REVIEW.toLowerCase()) return {verdict:'review',note:'Actual value wasn\'t captured by OCR — check the setup screenshot and fill it in on the previous step.'};
+  if(!e) return {verdict:'review',note:'No questionnaire answer to compare against.'};
+  if(a.indexOf(e)>=0||e.indexOf(a)>=0) return {verdict:'match',note:''};
+  var eTokens=e.split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
+  var aTokens=a.split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
+  var shared=eTokens.filter(function(t){return aTokens.indexOf(t)>=0;});
+  if(eTokens.length&&shared.length/eTokens.length>=0.5) return {verdict:'match',note:''};
+  if(shared.length>0) return {verdict:'review',note:'Partial overlap between the client\'s answer and the system value — please confirm manually.'};
+  return {verdict:'mismatch',note:'Client asked for "'+expected+'" but the system shows "'+actual+'".'};
+}
+
+function svpCompare(){
+  var results=[];
+  SVP_FIELD_MAP.forEach(function(m){
+    var found=svpFindAnswer(m.q);
+    if(!found) return;
+    var actual=svpFindExtracted(m.field);
+    var verdict=svpRuleCompare(found.a,actual);
+    results.push({question:found.q,expected:found.a,field:m.field,actual:actual,verdict:verdict.verdict,note:verdict.note});
+  });
+  SVP_STATE.results=results;
+  SVP_STATE.step=3;
+  svpRenderStep();
 }
 
 function svpKpiCard(label,val,fg,bg){
