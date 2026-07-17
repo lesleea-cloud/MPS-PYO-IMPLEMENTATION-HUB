@@ -8,7 +8,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/8.5.0/docx.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -99,12 +98,6 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .nav-tool-item.active{color:var(--g);font-weight:600;}
 .nav-tool-item svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
 .nav-common-band{background:rgba(255,255,255,.05);margin:0 8px;border-radius:6px;padding:2px 0;margin-bottom:4px;}
-.nav-subsection-hdr{justify-content:space-between;}
-.nav-subsection-hdr svg.chev{width:9px;height:9px;fill:none;stroke:rgba(255,255,255,.4);stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .2s;margin-left:auto;}
-.nav-subsection-hdr.open svg.chev{transform:rotate(180deg);}
-.nav-subsection-body{display:none;padding-bottom:2px;}
-.nav-subsection-body.open{display:block;}
-.nav-subtool-item{padding-left:2.35rem;font-size:11px;}
 
 /* ══ ISSUE LOG ══ */
 .il-wrap{padding:.85rem 1rem;}
@@ -572,9 +565,6 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .ctd{padding:10px 14px;border-bottom:1px solid var(--s1);vertical-align:middle;}
 .cl-link{color:var(--g4);font-weight:600;cursor:pointer;text-decoration:none;}
 .cl-link:hover{text-decoration:underline;}
-.cl-name-inp{border:none;background:transparent;font-size:12px;font-weight:600;font-family:var(--font);color:var(--g4);outline:none;width:100%;min-width:120px;cursor:text;border-radius:4px;padding:2px 4px;}
-.cl-name-inp:hover{background:var(--s1);}
-.cl-name-inp:focus{background:#fff;box-shadow:inset 0 0 0 1.5px var(--g);}
 .cl-mon-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
 .cl-svc-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;max-width:160px;}
 .cl-st-sel{padding:4px 28px 4px 8px;border-radius:7px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);color:var(--s8);background:var(--s0);outline:none;cursor:pointer;}
@@ -674,10 +664,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .svc-ms-opt input[type=checkbox]{width:13px;height:13px;accent-color:var(--g);cursor:pointer;flex-shrink:0;}
 
 /* ══ SCROLLBARS ══ */
-::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:var(--s4);border-radius:4px;}
-::-webkit-scrollbar-thumb:hover{background:var(--s5);}
+::-webkit-scrollbar-thumb{background:var(--s2);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--s3);}
  
  
 /* ══ LOGIN PAGE ══ */
@@ -1356,23 +1346,10 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
           Masterfile Creator
         </button>
         <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#3b82f6;"></span>Phase 2 — Simulation</div>
-        <div class="nav-subsection" id="nav-simvar-section">
-          <button class="nav-tool-item nav-subsection-hdr" id="nav-simvar-hdr" onclick="toggleSimVarianceSection()">
-            <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            Simulation Variance Analysis
-            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <div class="nav-subsection-body" id="nav-simvar-body">
-            <button class="nav-tool-item nav-subtool-item" onclick="openTool('sim-py2pyo')">
-              <span class="nav-phase-dot" style="background:#3b82f6;"></span>
-              From PY Subscription to PYO
-            </button>
-            <button class="nav-tool-item nav-subtool-item" onclick="openTool('sim-newpyo')">
-              <span class="nav-phase-dot" style="background:#3b82f6;"></span>
-              Entirely New Sprout PYO Client
-            </button>
-          </div>
-        </div>
+        <button class="nav-tool-item" onclick="openTool('sim-variance')">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Simulation Variance Analysis
+        </button>
         <button class="nav-tool-item" onclick="openTool('crf')">
           <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
           CRF Generator (Repli Accts)
@@ -2306,9 +2283,12 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
                 <option value="query_param">Query parameter (?api_key=&lt;key&gt;)</option>
               </select>
               <input id="intg-pm_tool-headername" type="text" placeholder="Header name (e.g. X-API-Key)" style="display:none;padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--mono);color:var(--s8);background:#fff;box-sizing:border-box;">
-              <button onclick="intgSavePullConfig('pm_tool')" style="align-self:flex-start;padding:7px 16px;background:var(--b);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Pull Settings</button>
+              <div style="display:flex;gap:8px;">
+                <button onclick="intgSavePullConfig('pm_tool')" style="padding:7px 16px;background:var(--b);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Save Pull Settings</button>
+                <button id="intg-pm_tool-fetchnow-btn" onclick="intgPullNow('pm_tool')" style="padding:7px 16px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Fetch Now</button>
+              </div>
             </div>
-            <div style="font-size:10.5px;color:var(--s4);margin-top:6px;">Fetching data using these settings isn't wired up yet — this just gives you a place to store them once the developer replies.</div>
+            <div style="font-size:10.5px;color:var(--s4);margin-top:6px;">Uses the API key above (paste the PM Tool's key into the field at the top, then Connect) as the credential sent with this request. Pulled records land in <b>PM Tool Data</b> for review — no automatic mapping into Clients yet.</div>
           </div>
         </div>
       </div>
@@ -4018,24 +3998,6 @@ function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(
 function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pm;d.pm=val;logAudit(no,'Overview','pm','Project Manager',old,val);}autoSave();}
 function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.hri;d.hri=val;logAudit(no,'Resource Team','hri','HR-I',old,val);}autoSave();}
 function clUpdateGov(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.gov;d.gov=val;logAudit(no,'Resource Team','gov','Gov Resource',old,val);}autoSave();}
-function clUpdateClientName(no,val){
-  var d=D.find(function(x){return x.no===no;});
-  if(d&&val&&d.client!==val){
-    var old=d.client;d.client=val;
-    logAudit(no,'Overview','client','Client Name',old,val);
-    autoSave();_supaFlush();
-  }
-  renderClients();
-}
-function clNameCell(d,wide){
-  var canEditName=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
-  var style=wide?'min-width:180px;':'';
-  if(!canEditName)return '<td class="ctd" style="'+style+'"><span class="cl-link">'+d.client+'</span></td>';
-  var safe=String(d.client||'').replace(/"/g,'&quot;');
-  return '<td class="ctd" style="'+style+'"><input type="text" class="cl-name-inp" value="'+safe+'" '+
-    'onblur="clUpdateClientName('+d.no+',this.value.trim())" '+
-    'onkeydown="if(event.key===\'Enter\')this.blur()"/></td>';
-}
 function ahUpdateField(no,field,val){
   if(!CL_AFTERHO[no])CL_AFTERHO[no]={};
   var ahLbl={csm:'CSM',processor:'Processor'};
@@ -4850,7 +4812,7 @@ function renderClients(){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.month+'</span></td>':'<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>')+
-        clNameCell(d,true)+
+        '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         (ovRO?'<td class="ctd"><span style="'+roTxt+'">'+d.remarks+'</span></td>':'<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>')+
         '<td class="ctd" style="white-space:nowrap;">'+
           (ovRO
@@ -4893,7 +4855,7 @@ function renderClients(){
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        clNameCell(d,true)+
+        '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
         (rtRO?'<td class="ctd">'+rChip(d.resource)+'</td>':'<td class="ctd"><select class="cl-res-sel" onchange="clUpdateResource('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'"'+(n===d.resource?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
         govCell+
         hriCell+
@@ -4938,7 +4900,7 @@ function renderClients(){
       }
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        clNameCell(d,false)+
+        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         phCell('kom',d.kom,d.komDate||'')+
         phCell('sim',d.sim,d.simDate||'')+
         (CL_TYPE==='ps'?phCell('checklist',d.checklist||0,d.checklistDate||''):phCell('par',d.par,d.parDate||''))+
@@ -4950,7 +4912,7 @@ function renderClients(){
       var a=CL_ADDONS[d.no]||{sg:0,ba:0,std:0,otk:0,pd:0,pod:0,fpod:0};
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        clNameCell(d,false)+
+        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'sg',a.sg||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'ba',a.ba||0)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+clAddonBox(d.no,'std',a.std||0)+'</td>'+
@@ -4994,7 +4956,7 @@ function renderClients(){
       }
       return '<tr>'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        clNameCell(d,false)+
+        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         mDateCell(d.komDate,       'komDate',       'd')+
         mDateCell(d.handOver,      'handOver',      'd')+
         mDateCell(d.liveRun,       'liveRun',       'd')+
@@ -5022,7 +4984,7 @@ function renderClients(){
       }
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        clNameCell(d,false)+
+        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
         '<td class="ctd">'+ahInp('csm',a.csm)+'</td>'+
         '<td class="ctd" style="text-align:center;">'+(ahCanEdit?clPhaseBox(d.no,'post',d.post,d.service,''):ahReadCb(d.post))+'</td>'+
         '<td class="ctd" style="text-align:center;">'+(ahCanEdit?ahCheckbox(d.no,'turnedOver',a.turnedOver):ahReadCb(a.turnedOver))+'</td>'+
@@ -6113,10 +6075,6 @@ var MF_COLUMNS=[
   'Additional HDMF Contribution','Pay Group*','Payroll ID'
 ];
  
-// Columns exempt from red blank-highlighting (0-indexed spreadsheet column, A=0):
-// A, E, O, U, V, AC, AF, AH–AN, AT, AV — optional/system fields that are routinely blank
-var MF_NO_HIGHLIGHT_IDX=[0,4,14,20,21,28,31,33,34,35,36,37,38,39,45,47];
-
 var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
  
 function toggleAdminSection(){
@@ -6130,14 +6088,6 @@ function toggleAdminSection(){
 function toggleClientsSection(){
   var body=document.getElementById('nav-clients-body');
   var hdr=document.getElementById('nav-clients-hdr');
-  if(!body)return;
-  body.classList.toggle('open');
-  if(hdr)hdr.classList.toggle('open');
-}
-
-function toggleSimVarianceSection(){
-  var body=document.getElementById('nav-simvar-body');
-  var hdr=document.getElementById('nav-simvar-hdr');
   if(!body)return;
   body.classList.toggle('open');
   if(hdr)hdr.classList.toggle('open');
@@ -6186,8 +6136,7 @@ function openTool(val){
   var TOOLS={
     'masterfile':{name:'Masterfile Creator',icon:'📋',color:'#2563eb'},
     'variance':{name:'Parallel Run Variance Analysis',icon:'📊',desc:'Automatically compare policy vs register and Sprout vs client payroll data during parallel run.',color:'#7c3aed'},
-    'sim-py2pyo':{name:'Simulation Variance Analysis — From PY Subscription to PYO',icon:'📈',desc:'Compare the client\'s Payroll Questionnaire answers (expected) against the actual Sprout Payroll system setup (actual) to catch configuration mismatches before parallel run.',color:'#2563eb'},
-    'sim-newpyo':{name:'Simulation Variance Analysis — Entirely New Sprout PYO Client',icon:'📈',desc:'Compare expected vs actual payroll simulation results for entirely new Sprout PYO clients.',color:'#3b82f6'},
+    'sim-variance':{name:'Simulation Variance Analysis',icon:'📈',desc:'Compare expected vs actual payroll simulation results to identify discrepancies before parallel run.',color:'#3b82f6'},
     'mom':{name:'MOM Generator',icon:'📝',desc:'Upload a meeting transcript and slide deck to generate a Sprout MPS MOM.',color:'#ea580c'},
     'crf':{name:'Copy Database CRF Generator (Repli Accounts)',icon:'📄',desc:'Auto-generate a Change Request Form for replication accounts during the simulation phase.',color:'#16a34a'},
     'sandbox':{name:'Sandbox Account Creator',icon:'🖥️',desc:'Set up a sandbox payroll environment for testing and validation during the simulation phase.',color:'#3b82f6'},
@@ -6227,10 +6176,6 @@ function openTool(val){
     document.getElementById('tool-modal-box').style.maxWidth='780px';
     PP_STATE={pdfFile:null,pdfB64:null,apiKey:localStorage.getItem('sprout_ai_key')||'',extracted:null};
     renderPayrollPolicyUI();
-  } else if(val==='sim-py2pyo'){
-    document.getElementById('tool-modal-box').style.maxWidth='920px';
-    svpReset();
-    renderSVPUI();
   } else {
     document.getElementById('tool-modal-box').style.maxWidth='480px';
     document.getElementById('tool-modal-body').innerHTML='<div style="display:flex;align-items:center;gap:14px;padding:1rem;background:var(--s0);border-radius:10px;border:1px solid var(--s1);margin-bottom:1.25rem;"><div style="font-size:32px;flex-shrink:0;">'+t.icon+'</div><div><div style="font-size:13px;font-weight:600;color:var(--s8);margin-bottom:4px;">'+t.name+'</div><div style="font-size:12px;color:var(--s5);line-height:1.6;">'+(t.desc||'')+'</div></div></div><div style="background:'+t.color+'0d;border:1.5px dashed '+t.color+'40;border-radius:10px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;"><div style="font-size:28px;margin-bottom:.5rem;">🚧</div><div style="font-size:13px;font-weight:700;color:'+t.color+';margin-bottom:4px;">Coming soon</div><div style="font-size:12px;color:var(--s4);">This module is currently under development.</div></div><div style="display:flex;justify-content:flex-end;"><button onclick="closeTool()" style="padding:9px 22px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button></div>';
@@ -6578,453 +6523,6 @@ function ppDownload(){
     ppSetStatus('Downloaded successfully!','success');
   }catch(e){ppSetStatus('Download error: '+e.message,'error');}
 }
-
-// ══════════════ SIMULATION VARIANCE — FROM PY SUBSCRIPTION TO PYO ══════════════
-// Free path: no Claude API calls. Setup screenshots/PDF are read with client-side
-// OCR (Tesseract.js + pdf.js), and the questionnaire-vs-setup comparison runs on a
-// fixed keyword-matching rule table instead of an AI call. Checkbox/radio-selection
-// fields can't be reliably read from OCR text (unchecked options print too), so
-// those are flagged "Needs manual review" rather than guessed.
-var SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],results:null};
-
-var SVP_SETUP_FIELDS=[
-  'Work Days Per Year','Work Hours Per Day','Work Months Per Year','Statutory Period Schedule','Periods Per Month',
-  'Absent Deduction Basis','Late Deduction Basis','Overtime Computation Basis','OT Rates Enabled (which categories)',
-  'Rest Days','New Hire Proration Method','New Hire Proration Basis','New Hire Deduct Absent','New Hire Deduct Late/Undertime',
-  '13th Month Computation Basis (Inclusions)','Final Pay Deduct Absent','Final Pay Deduct Late/Undertime','Final Pay Include 13th Month',
-  'Net Pay Threshold Enabled','SSS Coverage Basis','SSS Contribution Basis (earnings included)','PhilHealth Coverage Basis','PhilHealth Contribution Basis (earnings included)',
-  'HDMF Contribution Type','HDMF Employer Contribution','Tax Table Type','Payroll Calendar','Non-Tax Exemption Ceiling','Deminimis Exemption Ceiling'
-];
-
-// Fields OCR text-search can plausibly get right (typed numbers/labels). Everything
-// else in SVP_SETUP_FIELDS is a checkbox/radio grid — OCR can't tell selected from
-// unselected, so those are always seeded as "Needs manual review".
-var SVP_OCR_RULES=[
-  {field:'Work Days Per Year', re:/work\s*days\s*per\s*year\D{0,20}?(\d{2,3})/i},
-  {field:'Work Hours Per Day', re:/work\s*hours\s*per\s*day\D{0,20}?(\d{1,2})/i},
-  {field:'Work Months Per Year', re:/work\s*months\s*per\s*year\D{0,20}?(\d{1,2})/i},
-  {field:'Periods Per Month', re:/periods\s*per\s*month\D{0,10}?(\d\s*\([^)]*\)|\d)/i},
-  {field:'Non-Tax Exemption Ceiling', re:/non-?tax\s*exemption\s*ceiling\D{0,15}?([\d,]+\.\d{2})/i},
-  {field:'Deminimis Exemption Ceiling', re:/deminimis\s*exemption\s*ceiling\D{0,15}?([\d,]+\.\d{2})/i},
-  {field:'HDMF Employer Contribution', re:/fixed\s*deduction\s*of\s*php\s*([\d,]+\.\d{2})/i}
-];
-
-var SVP_NEEDS_REVIEW='Needs manual review — OCR can\'t reliably read checkbox/radio selections';
-
-// Fixed mapping between a questionnaire question (matched by keyword) and the
-// corresponding system setup field, used for the zero-cost rule-based comparison.
-var SVP_FIELD_MAP=[
-  {q:'Work Hours Per day & Work Days Per Year', field:'Work Days Per Year'},
-  {q:'Work Hours Per day & Work Days Per Year', field:'Work Hours Per Day'},
-  {q:'Do you have Net Pay Threshold?', field:'Net Pay Threshold Enabled'},
-  {q:'TAX COMPUTATION BASIS', field:'Tax Table Type'},
-  {q:'Absent Computation (Inclusion)', field:'Absent Deduction Basis'},
-  {q:'Late/Undertime Computation (Inclusion)', field:'Late Deduction Basis'},
-  {q:'OT Rates Policy', field:'OT Rates Enabled (which categories)'},
-  {q:'Overtime Computation (Inclusion)', field:'Overtime Computation Basis'},
-  {q:'New Hire Proration ; Basic Pay', field:'New Hire Proration Basis'},
-  {q:'13th Month Pay (Inclusions)', field:'13th Month Computation Basis (Inclusions)'},
-  {q:'Do you deduct Total Absent per year?', field:'Final Pay Deduct Absent'},
-  {q:'Do you deduct Total Late/Undertime per year?', field:'Final Pay Deduct Late/Undertime'},
-  {q:'To deduct the corresponding statutory contribution from final pay of resigned EE?', field:'Final Pay Deduct Absent'},
-  {q:'SSS Contribution Basis', field:'SSS Contribution Basis (earnings included)'},
-  {q:'PHIC Contribution Basis', field:'PhilHealth Contribution Basis (earnings included)'},
-  {q:'HDMF Contribution Basis', field:'HDMF Contribution Type'}
-];
-
-var SVP_VERDICT_STYLE={
-  match:{bg:'#f0fdf4',fg:'#15803d',label:'✅ Match'},
-  mismatch:{bg:'#fef2f2',fg:'#dc2626',label:'❌ Mismatch'},
-  review:{bg:'#fffbeb',fg:'#b45309',label:'⚠️ Needs Review'},
-  na:{bg:'#f1f5f9',fg:'#64748b',label:'➖ Not Applicable'}
-};
-var SVP_VERDICT_ORDER={mismatch:0,review:1,match:2,na:3};
-
-function svpReset(){
-  SVP_STATE={step:1,qFile:null,qFileName:'',qData:[],setupFiles:[],extracted:[],results:null};
-}
-
-function renderSVPUI(){
-  document.getElementById('tool-modal-body').innerHTML=
-    '<div id="svp-stepper" style="display:flex;align-items:center;gap:0;margin-bottom:1.25rem;"></div>'
-    +'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;display:flex;gap:10px;align-items:flex-start;">'
-      +'<span style="font-size:18px;flex-shrink:0;">📈</span>'
-      +'<div><div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:2px;">Simulation Variance Analysis — From PY Subscription to PYO</div>'
-      +'<div style="font-size:11px;color:#2563eb;line-height:1.6;">Compare the client\'s Payroll Questionnaire answers (expected) against the actual Sprout Payroll system setup (actual) to catch configuration mismatches before parallel run. Runs entirely in your browser — free OCR + rule-based matching, no API key or cost.</div></div>'
-    +'</div>'
-    +'<div id="svp-content"></div>'
-    +'<div id="svp-footer" style="display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid var(--s1);margin-top:.75rem;"></div>';
-  svpRenderStepper();
-  svpRenderStep();
-}
-
-function svpRenderStepper(){
-  var steps=[{n:1,l:'Upload'},{n:2,l:'Review Extracted Setup'},{n:3,l:'Comparison Results'}];
-  var s='';
-  steps.forEach(function(st,i){
-    var active=SVP_STATE.step===st.n;var done=SVP_STATE.step>st.n;
-    var col=done?'#16a34a':active?'#2563eb':'#94a3b8';
-    s+='<div style="display:flex;align-items:center;gap:6px;flex:1;">'
-      +'<div style="width:24px;height:24px;border-radius:50%;background:'+(done?'#16a34a':active?'#2563eb':'#e2e8f0')+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
-      +(done?'<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l2.5 2.5L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        :'<span style="font-size:11px;font-weight:700;color:'+(active?'#fff':'#94a3b8')+'">'+st.n+'</span>')
-      +'</div>'
-      +'<span style="font-size:11px;font-weight:'+(active?'700':'500')+';color:'+col+';">'+st.l+'</span>'
-      +(i<steps.length-1?'<div style="flex:1;height:1px;background:'+(done?'#86efac':'#e2e8f0')+';margin:0 6px;"></div>':'')
-      +'</div>';
-  });
-  document.getElementById('svp-stepper').innerHTML=s;
-}
-
-function svpRenderStep(){
-  svpRenderStepper();
-  if(SVP_STATE.step===1) svpRenderUpload();
-  else if(SVP_STATE.step===2) svpRenderExtracted();
-  else if(SVP_STATE.step===3) svpRenderResults();
-}
-
-function svpRenderUpload(){
-  var c=document.getElementById('svp-content');
-  c.innerHTML=
-    '<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:11px;color:#15803d;line-height:1.6;">🆓 <strong>Free, no API key needed.</strong> The setup file is read with on-device OCR and matched against the questionnaire using fixed rules — nothing leaves your browser. Checkbox/radio-selection fields (OT rates, inclusions, basis, etc.) can\'t be reliably read from a screenshot, so those are flagged for you to fill in on the next step instead of guessed.</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:.85rem;">'
-      +'<div id="svp-card-q" style="border:1.5px dashed #7c3aed40;border-radius:10px;padding:1.1rem 1rem;text-align:center;cursor:pointer;background:#7c3aed06;" onclick="document.getElementById(\'svp-input-q\').click()" ondragover="event.preventDefault();this.style.background=\'#7c3aed14\'" ondragleave="this.style.background=\'#7c3aed06\'" ondrop="event.preventDefault();svpHandleQFile(event.dataTransfer.files[0])">'
-        +'<input type="file" id="svp-input-q" accept=".csv" style="display:none"/>'
-        +'<div style="font-size:26px;margin-bottom:6px;">📋</div>'
-        +'<div style="font-size:11px;font-weight:700;color:#7c3aed;margin-bottom:4px;">Payroll Questionnaire (Expected)</div>'
-        +'<div style="font-size:10px;color:var(--s4);line-height:1.55;">Client\'s answered payroll policy questionnaire<br><strong style="color:#7c3aed">CSV only</strong></div>'
-        +'<div id="svp-label-q" style="margin-top:9px;font-size:10px;font-weight:600;color:#7c3aed;display:none;padding:3px 8px;background:#7c3aed12;border-radius:5px;word-break:break-all;"></div>'
-        +'<div style="margin-top:8px;font-size:10px;color:#7c3aed70;font-weight:500;">Click or drag & drop</div>'
-      +'</div>'
-      +'<div id="svp-card-setup" style="border:1.5px dashed #2563eb40;border-radius:10px;padding:1.1rem 1rem;text-align:center;cursor:pointer;background:#2563eb06;" onclick="document.getElementById(\'svp-input-setup\').click()" ondragover="event.preventDefault();this.style.background=\'#2563eb14\'" ondragleave="this.style.background=\'#2563eb06\'" ondrop="event.preventDefault();svpHandleSetupFiles(event.dataTransfer.files)">'
-        +'<input type="file" id="svp-input-setup" accept=".pdf,.png,.jpg,.jpeg" multiple style="display:none"/>'
-        +'<div style="font-size:26px;margin-bottom:6px;">🖥️</div>'
-        +'<div style="font-size:11px;font-weight:700;color:#2563eb;margin-bottom:4px;">System Setup (Actual)</div>'
-        +'<div style="font-size:10px;color:var(--s4);line-height:1.55;">Screenshot(s) or printed PDF of the Sprout Payroll Setup screen<br><strong style="color:#2563eb">PDF or image, multiple allowed</strong></div>'
-        +'<div id="svp-label-setup" style="margin-top:9px;font-size:10px;font-weight:600;color:#2563eb;display:none;padding:3px 8px;background:#2563eb12;border-radius:5px;word-break:break-all;"></div>'
-        +'<div style="margin-top:8px;font-size:10px;color:#2563eb70;font-weight:500;">Click or drag & drop</div>'
-      +'</div>'
-    +'</div>'
-    +'<div id="svp-upload-status" style="display:none;"></div>';
-  document.getElementById('svp-input-q').addEventListener('change',function(e){svpHandleQFile(e.target.files[0]);});
-  document.getElementById('svp-input-setup').addEventListener('change',function(e){svpHandleSetupFiles(e.target.files);});
-  svpRenderFooterUpload();
-}
-
-function svpSetStatus(msg,type){
-  var el=document.getElementById('svp-upload-status');
-  if(!el)return;
-  var styles={info:'background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;',success:'background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;',error:'background:#fef2f2;border:1px solid #fecaca;color:#dc2626;',loading:'background:#fafaf9;border:1px solid var(--s2);color:var(--s6);'};
-  el.style.cssText=(styles[type]||styles.info)+'padding:.7rem 1rem;border-radius:8px;font-size:12px;margin-bottom:.5rem;';
-  el.innerHTML=msg; el.style.display='block';
-}
-
-function svpHandleQFile(file){
-  if(!file)return;
-  if(!/\.csv$/i.test(file.name)){svpSetStatus('❌ Please upload a CSV file.','error');return;}
-  SVP_STATE.qFile=file; SVP_STATE.qFileName=file.name;
-  var reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      var rows=vaParseCSV(e.target.result);
-      if(rows.length<2) throw new Error('CSV needs a header row and at least one answer row.');
-      var headers=rows[0], answers=rows[1];
-      var qData=[];
-      headers.forEach(function(h,i){
-        var a=(answers[i]||'').trim();
-        if(h&&a) qData.push({q:h.trim(),a:a});
-      });
-      SVP_STATE.qData=qData;
-      var lbl=document.getElementById('svp-label-q');
-      lbl.textContent='📄 '+file.name+' ('+qData.length+' answers)'; lbl.style.display='block';
-      document.getElementById('svp-card-q').style.borderStyle='solid';
-      svpCheckReady();
-    }catch(err){svpSetStatus('❌ '+err.message,'error');}
-  };
-  reader.readAsText(file,'UTF-8');
-}
-
-function svpHandleSetupFiles(fileList){
-  if(!fileList||!fileList.length)return;
-  var files=Array.prototype.slice.call(fileList);
-  var valid=files.filter(function(f){return /\.(pdf|png|jpe?g)$/i.test(f.name);});
-  if(!valid.length){svpSetStatus('❌ Please upload PDF, PNG, or JPG files.','error');return;}
-  SVP_STATE.setupFiles=valid.map(function(f){return {file:f,name:f.name,isPdf:/\.pdf$/i.test(f.name)};});
-  var lbl=document.getElementById('svp-label-setup');
-  lbl.textContent='📎 '+SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', '); lbl.style.display='block';
-  document.getElementById('svp-card-setup').style.borderStyle='solid';
-  svpCheckReady();
-}
-
-function svpCheckReady(){
-  var btn=document.getElementById('svp-next-btn');
-  if(!btn)return;
-  var ready=SVP_STATE.qData.length>0 && SVP_STATE.setupFiles.length>0;
-  btn.disabled=!ready; btn.style.opacity=ready?'1':'.4'; btn.title=ready?'':'Upload both the questionnaire and setup file(s) first';
-  if(ready) svpSetStatus('✅ Both files ready. Click <strong>Read Setup with OCR</strong> to continue.','success');
-}
-
-function svpRenderFooterUpload(){
-  var foot=document.getElementById('svp-footer');
-  foot.innerHTML=
-    '<span style="font-size:11px;color:var(--s4);">Upload both to continue</span>'
-    +'<button id="svp-next-btn" onclick="svpExtract()" disabled style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);opacity:.4;" title="Upload both files first">🔎 Read Setup with OCR →</button>';
-}
-
-function svpLoadOcrLibs(){
-  return new Promise(function(resolve){
-    if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    var attempts=0;
-    var check=setInterval(function(){
-      attempts++;
-      if(window.pdfjsLib) window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      if((window.pdfjsLib&&window.Tesseract)||attempts>50){clearInterval(check);resolve();}
-    },100);
-  });
-}
-
-async function svpPdfToCanvases(file){
-  var buf=await file.arrayBuffer();
-  var pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
-  var canvases=[];
-  for(var i=1;i<=pdf.numPages;i++){
-    var page=await pdf.getPage(i);
-    var viewport=page.getViewport({scale:2.5});
-    var canvas=document.createElement('canvas');
-    canvas.width=viewport.width; canvas.height=viewport.height;
-    await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
-    canvases.push(canvas);
-  }
-  return canvases;
-}
-
-async function svpOcrSetupFiles(onProgress){
-  await svpLoadOcrLibs();
-  if(!window.Tesseract||!window.pdfjsLib) throw new Error('OCR libraries failed to load. Check your connection and try again.');
-  var pages=[];
-  for(var i=0;i<SVP_STATE.setupFiles.length;i++){
-    var f=SVP_STATE.setupFiles[i];
-    if(f.isPdf){
-      var canvases=await svpPdfToCanvases(f.file);
-      canvases.forEach(function(c){pages.push(c);});
-    } else {
-      pages.push(f.file);
-    }
-  }
-  var texts=[];
-  for(var p=0;p<pages.length;p++){
-    if(onProgress) onProgress(p+1,pages.length);
-    var result=await Tesseract.recognize(pages[p],'eng');
-    texts.push(result.data.text);
-  }
-  return texts.join('\n\n');
-}
-
-function svpParseOcrText(text){
-  var rows=[];
-  SVP_SETUP_FIELDS.forEach(function(field){
-    var rule=SVP_OCR_RULES.filter(function(r){return r.field===field;})[0];
-    var value=SVP_NEEDS_REVIEW;
-    if(rule){
-      var m=text.match(rule.re);
-      if(m&&m[1]) value=m[1].trim();
-    }
-    rows.push({field:field,value:value});
-  });
-  return rows;
-}
-
-async function svpExtract(){
-  if(!SVP_STATE.qData.length||!SVP_STATE.setupFiles.length){svpSetStatus('Upload both files first.','error');return;}
-  var btn=document.getElementById('svp-next-btn');
-  if(btn){btn.disabled=true;btn.textContent='Reading…';}
-  svpSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Loading OCR engine…</span>','loading');
-  try{
-    var text=await svpOcrSetupFiles(function(cur,total){
-      svpSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Reading page '+cur+' of '+total+' with OCR…</span>','loading');
-    });
-    SVP_STATE.extracted=svpParseOcrText(text);
-    SVP_STATE.step=2;
-    svpRenderStep();
-  }catch(err){
-    svpSetStatus('❌ '+err.message,'error');
-    if(btn){btn.disabled=false;btn.textContent='🔎 Read Setup with OCR →';}
-  }
-}
-
-function svpRenderExtracted(){
-  var needReview=SVP_STATE.extracted.filter(function(r){return r.value===SVP_NEEDS_REVIEW;}).length;
-  var c=document.getElementById('svp-content');
-  c.innerHTML=
-    '<div style="font-size:12px;color:var(--s5);margin-bottom:.75rem;line-height:1.6;">OCR read <strong style="color:#2563eb">'+SVP_STATE.extracted.length+' setup fields</strong> from the uploaded file(s). <strong style="color:#b45309">'+needReview+' need manual review</strong> (checkbox/radio selections OCR can\'t read) — look at the setup screenshot and fill those in before comparing. Everything here is editable.</div>'
-    +'<div style="max-height:360px;overflow-y:auto;border:1px solid var(--s1);border-radius:10px;">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:12px;">'
-    +'<thead><tr style="background:var(--s0);position:sticky;top:0;"><th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;width:38%;">Field</th><th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Detected Value</th><th style="width:34px;"></th></tr></thead>'
-    +'<tbody id="svp-extracted-body">'
-    +SVP_STATE.extracted.map(function(row,i){return svpExtractedRowHTML(row,i);}).join('')
-    +'</tbody></table></div>'
-    +'<button onclick="svpAddExtractedRow()" style="margin-top:8px;padding:6px 12px;border-radius:8px;border:1px dashed var(--s3);background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">+ Add field</button>';
-  var foot=document.getElementById('svp-footer');
-  foot.innerHTML=
-    '<button onclick="SVP_STATE.step=1;svpRenderStep();" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">← Back</button>'
-    +'<button id="svp-compare-btn" onclick="svpCompare()" style="padding:9px 22px;border-radius:9px;border:none;background:#2563eb;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">Compare with Questionnaire →</button>';
-}
-
-function svpExtractedRowHTML(row,i){
-  var needsReview=row.value===SVP_NEEDS_REVIEW;
-  return '<tr style="border-top:1px solid var(--s1);'+(needsReview?'background:#fffbeb;':'')+'">'
-    +'<td style="padding:5px 10px;"><input value="'+escHtml(row.field)+'" onchange="svpUpdateExtracted('+i+',\'field\',this.value)" style="width:100%;border:1px solid transparent;border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);font-weight:600;color:var(--s7);"></td>'
-    +'<td style="padding:5px 10px;"><input value="'+(needsReview?'':escHtml(row.value))+'" onchange="svpUpdateExtracted('+i+',\'value\',this.value)" placeholder="'+(needsReview?'⚠️ Needs review — fill in from screenshot':'')+'" style="width:100%;border:1px solid '+(needsReview?'#fde68a':'var(--s2)')+';border-radius:6px;padding:4px 6px;font-size:12px;font-family:var(--font);color:var(--s7);"></td>'
-    +'<td style="text-align:center;"><button onclick="svpRemoveExtractedRow('+i+')" style="border:none;background:transparent;color:var(--s4);cursor:pointer;font-size:14px;" title="Remove">✕</button></td>'
-    +'</tr>';
-}
-
-function svpUpdateExtracted(i,key,val){ if(SVP_STATE.extracted[i]) SVP_STATE.extracted[i][key]=val; }
-function svpRemoveExtractedRow(i){ SVP_STATE.extracted.splice(i,1); svpRenderExtracted(); }
-function svpAddExtractedRow(){ SVP_STATE.extracted.push({field:'',value:''}); svpRenderExtracted(); }
-
-function svpFindFieldMaps(question){
-  var ql=question.toLowerCase();
-  return SVP_FIELD_MAP.filter(function(m){return ql.indexOf(m.q.toLowerCase())>=0;});
-}
-
-function svpFindExtracted(fieldName){
-  var hit=SVP_STATE.extracted.filter(function(r){return r.field===fieldName;})[0];
-  return hit?hit.value:'';
-}
-
-function svpRuleCompare(expected,actual){
-  var e=String(expected||'').toLowerCase().trim();
-  var a=String(actual||'').toLowerCase().trim();
-  if(!a||a===SVP_NEEDS_REVIEW.toLowerCase()) return {verdict:'review',note:'Actual value wasn\'t captured by OCR — check the setup screenshot and fill it in on the previous step.'};
-  if(!e) return {verdict:'review',note:'No questionnaire answer to compare against.'};
-  if(a.indexOf(e)>=0||e.indexOf(a)>=0) return {verdict:'match',note:''};
-  var eTokens=e.split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
-  var aTokens=a.split(/[^a-z0-9]+/).filter(function(t){return t.length>2;});
-  var shared=eTokens.filter(function(t){return aTokens.indexOf(t)>=0;});
-  if(eTokens.length&&shared.length/eTokens.length>=0.5) return {verdict:'match',note:''};
-  if(shared.length>0) return {verdict:'review',note:'Partial overlap between the client\'s answer and the system value — please confirm manually.'};
-  return {verdict:'mismatch',note:'Client asked for "'+expected+'" but the system shows "'+actual+'".'};
-}
-
-function svpCompare(){
-  var results=[];
-  SVP_STATE.qData.forEach(function(row){
-    var maps=svpFindFieldMaps(row.q);
-    if(!maps.length){
-      results.push({question:row.q,expected:row.a,field:'',actual:'',verdict:'na',note:'No corresponding system setup field for this question — not compared.'});
-      return;
-    }
-    maps.forEach(function(m){
-      var actual=svpFindExtracted(m.field);
-      var v=svpRuleCompare(row.a,actual);
-      results.push({question:row.q,expected:row.a,field:m.field,actual:actual,verdict:v.verdict,note:v.note});
-    });
-  });
-  SVP_STATE.results=results;
-  SVP_STATE.step=3;
-  svpRenderStep();
-}
-
-function svpKpiCard(label,val,fg,bg){
-  return '<div style="background:'+bg+';border-radius:10px;padding:.8rem;text-align:center;">'
-    +'<div style="font-size:22px;font-weight:800;color:'+fg+';">'+val+'</div>'
-    +'<div style="font-size:10px;font-weight:600;color:'+fg+';text-transform:uppercase;letter-spacing:.04em;margin-top:2px;">'+label+'</div>'
-    +'</div>';
-}
-
-function svpResultRowHTML(row){
-  var st=SVP_VERDICT_STYLE[row.verdict]||SVP_VERDICT_STYLE.review;
-  return '<tr style="border-top:1px solid var(--s1);">'
-    +'<td style="padding:6px 10px;vertical-align:top;color:var(--s7);">'+escHtml(row.question||'')+'</td>'
-    +'<td style="padding:6px 10px;vertical-align:top;color:var(--s6);">'+escHtml(row.expected||'')+'</td>'
-    +'<td style="padding:6px 10px;vertical-align:top;color:var(--s6);">'+escHtml(row.actual||'')+(row.field?'<div style="font-size:9.5px;color:var(--s4);margin-top:2px;">via '+escHtml(row.field)+'</div>':'')+'</td>'
-    +'<td style="padding:6px 10px;vertical-align:top;"><span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;background:'+st.bg+';color:'+st.fg+';white-space:nowrap;">'+st.label+'</span>'+(row.note?'<div style="font-size:10px;color:var(--s5);margin-top:3px;max-width:220px;">'+escHtml(row.note)+'</div>':'')+'</td>'
-    +'</tr>';
-}
-
-function svpRenderResults(){
-  var r=SVP_STATE.results||[];
-  var counts={match:0,mismatch:0,review:0,na:0};
-  r.forEach(function(row){ if(counts[row.verdict]!==undefined) counts[row.verdict]++; });
-  var c=document.getElementById('svp-content');
-  c.innerHTML=
-    '<div style="font-size:11px;color:var(--s4);margin-bottom:.5rem;">'+r.length+' of '+SVP_STATE.qData.length+' questionnaire items compared — every questionnaire question is included below, even ones with no matching system field.</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">'
-      +svpKpiCard('Matches',counts.match,'#16a34a','#f0fdf4')
-      +svpKpiCard('Mismatches',counts.mismatch,'#dc2626','#fef2f2')
-      +svpKpiCard('Needs Review',counts.review,'#b45309','#fffbeb')
-      +svpKpiCard('Not Applicable',counts.na,'#64748b','#f1f5f9')
-    +'</div>'
-    +'<div style="max-height:380px;overflow-y:auto;border:1px solid var(--s1);border-radius:10px;">'
-    +'<table style="width:100%;border-collapse:collapse;font-size:11.5px;">'
-    +'<thead><tr style="background:var(--s0);position:sticky;top:0;">'
-      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Question</th>'
-      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Expected (Client)</th>'
-      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Actual (System)</th>'
-      +'<th style="text-align:left;padding:7px 10px;font-size:10px;color:var(--s5);text-transform:uppercase;">Verdict</th>'
-    +'</tr></thead><tbody>'
-    +r.slice().sort(function(a,b){return (SVP_VERDICT_ORDER[a.verdict]||9)-(SVP_VERDICT_ORDER[b.verdict]||9);}).map(svpResultRowHTML).join('')
-    +'</tbody></table></div>';
-  var foot=document.getElementById('svp-footer');
-  foot.innerHTML=
-    '<button onclick="SVP_STATE.step=2;svpRenderStep();" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">← Back</button>'
-    +'<button onclick="svpExportExcel()" style="padding:9px 22px;border-radius:9px;border:none;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">⬇ Download Excel</button>';
-}
-
-function svpExportExcel(){
-  var r=SVP_STATE.results;
-  if(!r||!r.length){alert('No results to export.');return;}
-  var X=window.XLSX;
-  var now=new Date();
-  var wb=X.utils.book_new();
-  function sc(ws,row,col,v,s){var addr=X.utils.encode_cell({r:row,c:col});ws[addr]={v:v,t:'s'};if(s)ws[addr].s=s;}
-  function srange(ws,r1,c1,r2,c2){if(!ws['!merges'])ws['!merges']=[];ws['!merges'].push({s:{r:r1,c:c1},e:{r:r2,c:c2}});}
-  function setRowHt(ws,rowIdx,ht){if(!ws['!rows'])ws['!rows']=[];while(ws['!rows'].length<=rowIdx)ws['!rows'].push({});ws['!rows'][rowIdx]={hpt:ht};}
-  var verdictBg={match:'DCFCE7',mismatch:'FEE2E2',review:'FEF3C7',na:'F1F5F9'};
-  var verdictFg={match:'166534',mismatch:'B91C1C',review:'92400E',na:'64748B'};
-  var verdictLbl={match:'MATCH',mismatch:'MISMATCH',review:'NEEDS REVIEW',na:'NOT APPLICABLE'};
-
-  var sw={};
-  var row=0;
-  sc(sw,row,0,'Simulation Variance Analysis — From PY Subscription to PYO',{fill:{fgColor:{rgb:'1D4ED8'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:14,name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}});
-  srange(sw,row,0,row,3); setRowHt(sw,row,26); row++;
-  var MK={fill:{fgColor:{rgb:'EFF6FF'}},font:{color:{rgb:'475569'},bold:true,sz:10,name:'Calibri'}};
-  var MV={fill:{fgColor:{rgb:'EFF6FF'}},font:{color:{rgb:'1D4ED8'},sz:10,name:'Calibri'}};
-  sc(sw,row,0,'Generated',MK); sc(sw,row,1,now.toLocaleString(),MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
-  sc(sw,row,0,'Questionnaire file',MK); sc(sw,row,1,SVP_STATE.qFileName||'—',MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
-  sc(sw,row,0,'Setup file(s)',MK); sc(sw,row,1,SVP_STATE.setupFiles.map(function(f){return f.name;}).join(', ')||'—',MV); srange(sw,row,1,row,3); setRowHt(sw,row,15); row++;
-  row++;
-
-  var counts={match:0,mismatch:0,review:0,na:0};
-  r.forEach(function(rr){if(counts[rr.verdict]!==undefined)counts[rr.verdict]++;});
-  sc(sw,row,0,'Matches: '+counts.match+'   Mismatches: '+counts.mismatch+'   Needs Review: '+counts.review+'   Not Applicable: '+counts.na+'   ('+r.length+' of '+SVP_STATE.qData.length+' questionnaire items)',{font:{bold:true,sz:11,name:'Calibri',color:{rgb:'334155'}}});
-  srange(sw,row,0,row,3); setRowHt(sw,row,18); row+=2;
-
-  var hdrStyle={fill:{fgColor:{rgb:'1E293B'}},font:{color:{rgb:'FFFFFF'},bold:true,sz:10,name:'Calibri'},alignment:{horizontal:'left',vertical:'center'}};
-  ['Question','Expected (Client)','Actual (System)','Verdict'].forEach(function(h,ci){sc(sw,row,ci,h,hdrStyle);});
-  setRowHt(sw,row,20); row++;
-
-  var sorted=r.slice().sort(function(a,b){return (SVP_VERDICT_ORDER[a.verdict]||9)-(SVP_VERDICT_ORDER[b.verdict]||9);});
-  sorted.forEach(function(rr,i){
-    var alt=i%2===1;
-    var bodyStyle={fill:{fgColor:{rgb:alt?'F8FAFC':'FFFFFF'}},font:{sz:10,name:'Calibri',color:{rgb:'334155'}},alignment:{wrapText:true,vertical:'top'}};
-    sc(sw,row,0,rr.question||'',bodyStyle);
-    sc(sw,row,1,rr.expected||'',bodyStyle);
-    sc(sw,row,2,(rr.actual||'')+(rr.field?' (via '+rr.field+')':''),bodyStyle);
-    var vs={fill:{fgColor:{rgb:verdictBg[rr.verdict]||'F1F5F9'}},font:{bold:true,sz:10,name:'Calibri',color:{rgb:verdictFg[rr.verdict]||'475569'}},alignment:{horizontal:'center',vertical:'top'}};
-    sc(sw,row,3,(verdictLbl[rr.verdict]||rr.verdict||'')+(rr.note?(' — '+rr.note):''),vs);
-    setRowHt(sw,row,32);
-    row++;
-  });
-  sw['!ref']=X.utils.encode_range({s:{r:0,c:0},e:{r:row-1,c:3}});
-  sw['!cols']=[{wch:34},{wch:28},{wch:28},{wch:34}];
-  wb.SheetNames.push('Variance Results'); wb.Sheets['Variance Results']=sw;
-  var cn=(SVP_STATE.qFileName||'SimVariance').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
-  var ts=(now.getMonth()+1+'').padStart(2,'0')+(now.getDate()+'').padStart(2,'0')+(now.getFullYear()+'').slice(2);
-  X.writeFile(wb,'SimVariance_'+cn+'_'+ts+'.xlsx');
-}
-
 // ══════════════ MOM GENERATOR ══════════════
 var MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:'',sproutStaff:[],reviewItems:null,extracted:null};
 
@@ -8154,26 +7652,21 @@ async function mfGenerate(){
       // Skip completely empty rows and the SAMPLE DATA row
       var firstCell=String(row[0]||'').trim().toUpperCase();
       if(firstCell==='SAMPLE DATA'||firstCell==='STATUS AFTER UPLOAD')continue;
-      var g=mfGet;
-      // Employee ID is a required field that's always blank on header/hint rows and
-      // always populated on real employees — a far more reliable "is this real data"
-      // check than Last Name, since a hint row's Last Name cell can itself contain
-      // non-empty instructional text (e.g. "Accepts alphanumeric characters...").
-      var eid=String(g(row,srcHeaders,['Employee ID','Emp ID','Employee No','Employee No.'])||'').trim();
-      if(!eid)continue;
       var ln=String(mfGet(row,srcHeaders,['Last Name','Surname','Family Name'])||'').trim();
       if(!ln)continue;
-
+ 
+      var g=mfGet;
       var hireRaw=g(row,srcHeaders,['Hire Date','Date Hired','Start Date']);
       var hireFmt=mfFmtDate(hireRaw);
 
       // Build the mapped output object keyed by exact output column name
       var mapped={};
 
-      // Status column is left blank — PayrollPie only populates it after import (system-generated)
-      mapped['Status']='';
-
+      // Status — always ADD for new employees
+      mapped['Status']='ADD';
+ 
       // Employee ID
+      var eid=String(g(row,srcHeaders,['Employee ID','Emp ID','Employee No','Employee No.'])||'').trim();
       mapped['Employee ID*']=eid;
  
       // Name
@@ -8200,12 +7693,12 @@ async function mfGenerate(){
       var rawStatus=g(row,srcHeaders,['Employment Status','Emp Status']);
       mapped['Employment Status*']=mfNormStatus(rawStatus);
       mapped['Status Date (mm/dd/yyyy)*']=hireFmt;
-      mapped['ROHQ (Yes/No)']=mfNormMWE(g(row,srcHeaders,['ROHQ']))||'No';
-
+      mapped['ROHQ (Yes/No)']='No';
+ 
       // Government IDs
       mapped['TIN*']=mfStrip(g(row,srcHeaders,['TIN','Tax ID','Tax Identification Number']));
       mapped['RDO']=String(g(row,srcHeaders,['RDO'])||'').trim();
-      mapped['Consultant Percent Tax (2, 5, 8, 10, 15, 20 and 25) (Leave blank if not consultant)']=mfNum(g(row,srcHeaders,['Consultant Percent Tax']));
+      mapped['Consultant Percent Tax (2, 5, 8, 10, 15, 20 and 25) (Leave blank if not consultant)']='';
  
       // Government contributions
       mapped['PhilHealth No.']=mfStrip(g(row,srcHeaders,['PhilHealth No.','PhilHealth No','PhilHealth']));
@@ -8220,30 +7713,30 @@ async function mfGenerate(){
       // Salary / compensation
       mapped['Minimum Wage Earner (Yes/No)']=mfNormMWE(g(row,srcHeaders,['Minimum Wage Earner','MWE']));
       var basicSal=g(row,srcHeaders,['Basic Salary','Basic Pay','Salary']);
-      var basicSalNum=mfNum(basicSal);
-      mapped['Basic Salary*']=basicSalNum===''?0:basicSalNum;
+      mapped['Basic Salary*']=mfNum(basicSal);
       mapped['De Minimis']=mfNum(g(row,srcHeaders,['De Minimis','DeMinimis']))||'';
       mapped['Daily Allowance']='';
       var wh=parseFloat(String(g(row,srcHeaders,['Work Hours Per Day','Work Hours per Day','Hours Per Day'])||''));
       mapped['Work Hours per Day']=isNaN(wh)?'':wh;
  
       // Previous employer
-      mapped['Previous Employer Non-Tax 13th Month']=mfNum(g(row,srcHeaders,['Previous Employer Non-Tax 13th Month']));
-      mapped['Previous Employer Non-Tax Salaries']=mfNum(g(row,srcHeaders,['Previous Employer Non-Tax Salaries']));
-      mapped['Previous Employer Tax Withheld']=mfNum(g(row,srcHeaders,['Previous Employer Tax Withheld']));
+      mapped['Previous Employer Non-Tax 13th Month']='';
+      mapped['Previous Employer Non-Tax Salaries']='';
+      mapped['Previous Employer Taxable Salaries']='';
+      mapped['Previous Employer Tax Withheld']='';
       mapped['Previous Employer Government Deductions']='';
       mapped['Previous Employer De Minimis']='';
-      mapped['Previous Employer Taxable Compensation']='';
+      mapped['Previous Employer Taxable Compensation\n']='';
       mapped['Previous Employer Monetized Leave']='';
  
       // Payroll settings
       var empType=g(row,srcHeaders,['Employee Type','Emp Type']);
       mapped['OT Computation Table*']=mfNormOT(g(row,srcHeaders,['OT Computation Table','OT Table']));
       mapped['Work Days Per Year*']=mfNormWorkDays(g(row,srcHeaders,['Work Days Per Year','Work Days/Year']));
-      mapped['SSS Contribution (Leave blank to let the system decide)']=mfNum(g(row,srcHeaders,['SSS Contribution']));
-      mapped['PhilHealth Contribution (Leave blank to let the system decide)']=mfNum(g(row,srcHeaders,['PhilHealth Contribution']));
-      mapped['HDMF Contribution (Leave blank to let the system decide)']=mfNum(g(row,srcHeaders,['HDMF Contribution']));
-      mapped['Additional HDMF Contribution']=mfNum(g(row,srcHeaders,['HDMF Additional Contribution']));
+      mapped['SSS Contribution (Leave blank to let the system decide)']='';
+      mapped['PhilHealth Contribution (Leave blank to let the system decide)']='';
+      mapped['HDMF Contribution (Leave blank to let the system decide)']='';
+      mapped['Additional HDMF Contribution']='';
       mapped['Pay Group*']=mfNormPayGroup(g(row,srcHeaders,['Pay Group','PayGroup','Payroll Group']),empType);
       mapped['Payroll ID']='';
  
@@ -8322,47 +7815,15 @@ async function mfDownload(){
     }
     var zip=await JSZip.loadAsync(buf);
     var sheetXmlPath='xl/worksheets/sheet1.xml';
-    // Resolve the actual "Employee" sheet's XML file via workbook.xml's <sheet r:id> ->
-    // workbook.xml.rels <Relationship Id>. Relationship order in the .rels file does NOT
-    // match tab order (hidden helper sheets can appear first), so matching the first
-    // Type=".../worksheet" entry can land on the wrong sheet — must match by rId.
-    var wbXmlFile=zip.file('xl/workbook.xml');
     var relsFile=zip.file('xl/_rels/workbook.xml.rels');
-    if(wbXmlFile&&relsFile){
-      var wbXml=await wbXmlFile.async('string');
-      var sheetEls=wbXml.match(/<sheet\b[^>]*\/>/g)||[];
-      var targetSheetEl=sheetEls.filter(function(s){return !/state="hidden"/.test(s);}).find(function(s){return /name="Employee"/i.test(s);})
-        ||sheetEls.find(function(s){return !/state="hidden"/.test(s);})
-        ||sheetEls[0];
-      var ridM=targetSheetEl&&targetSheetEl.match(/r:id="([^"]+)"/);
-      if(ridM){
-        var relsXml=await relsFile.async('string');
-        var relEls=relsXml.match(/<Relationship\b[^>]*\/>/g)||[];
-        var relEl=relEls.find(function(r){return r.indexOf('Id="'+ridM[1]+'"')>=0;});
-        var tgtM=relEl&&relEl.match(/Target="([^"]+)"/);
-        if(tgtM)sheetXmlPath='xl/'+tgtM[1].replace(/^\//,'');
-      }
-    }
-    // Add a red-fill style to styles.xml for highlighting blank cells, get its cellXfs index
-    var blankStyleIdx=0;
-    var stylesFile=zip.file('xl/styles.xml');
-    if(stylesFile){
-      var stylesXml=await stylesFile.async('string');
-      var fillsM=stylesXml.match(/<fills count="(\d+)">([\s\S]*?)<\/fills>/);
-      var xfsM=stylesXml.match(/<cellXfs count="(\d+)">([\s\S]*?)<\/cellXfs>/);
-      if(fillsM&&xfsM){
-        var fillCount=parseInt(fillsM[1]);
-        var xfCount=parseInt(xfsM[1]);
-        var newFill='<fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill>';
-        stylesXml=stylesXml.replace(fillsM[0],'<fills count="'+(fillCount+1)+'">'+fillsM[2]+newFill+'</fills>');
-        var newXf='<xf numFmtId="0" fontId="0" fillId="'+fillCount+'" borderId="0" xfId="0" applyFill="1"/>';
-        stylesXml=stylesXml.replace(xfsM[0],'<cellXfs count="'+(xfCount+1)+'">'+xfsM[2]+newXf+'</cellXfs>');
-        blankStyleIdx=xfCount;
-        zip.file('xl/styles.xml',stylesXml);
-      }
+    if(relsFile){
+      var relsXml=await relsFile.async('string');
+      var rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
+      if(!rm)rm=relsXml.match(/Target="(worksheets\/[^"]+)"/);
+      if(rm)sheetXmlPath='xl/'+(rm[1].replace(/^\//,''));
     }
     var sheetXml=await zip.file(sheetXmlPath).async('string');
-    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap,blankStyleIdx);
+    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
     zip.file(sheetXmlPath,newSheetXml);
     var cn=(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
     var now=new Date();
@@ -8379,7 +7840,7 @@ async function mfDownload(){
   }catch(err){mfSetStatus('❌ '+err.message,'error');}
 }
 
-function mfInjectRows(sheetXml,rows,cols,colMap,blankStyleIdx){
+function mfInjectRows(sheetXml,rows,cols,colMap){
   // Strip rows r >= 5 — handles namespace prefixes like <x:row>
   var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
     return parseInt(n)>=5?'':m;
@@ -8396,12 +7857,7 @@ function mfInjectRows(sheetXml,rows,cols,colMap,blankStyleIdx){
       }
       if(ci===undefined)return;
       var v=rowData[col];
-      if(v===undefined||v===null||v===''){
-        // Blank field — write an empty cell, styled red unless this column is exempt
-        if(MF_NO_HIGHLIGHT_IDX.indexOf(ci)>=0){cells+='<c r="'+mfColLetter(ci)+rn+'"></c>';}
-        else{cells+='<c r="'+mfColLetter(ci)+rn+'" s="'+blankStyleIdx+'"></c>';}
-        return;
-      }
+      if(v===undefined||v===null||v==='')return;
       cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
     });
     if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
@@ -8937,6 +8393,24 @@ function intgSavePullConfig(id){
     .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
     .then(function(){showImportToast('success','Pull settings saved.');})
     .catch(function(e){showImportToast('error','Could not save pull settings: '+e.message);});
+}
+
+function intgPullNow(id){
+  var btn=document.getElementById('intg-'+id+'-fetchnow-btn');
+  if(btn){btn.disabled=true;btn.textContent='Fetching…';}
+  fetch('/api/integrations/pull',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id:id})
+  })
+    .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Server error '+r.status);return d;});})
+    .then(function(d){
+      showImportToast('success','Fetched '+d.fetched+' record(s) from the PM Tool.');
+      if(typeof PMTOOL_EVENTS!=='undefined'&&document.getElementById('page-pmtool')&&document.getElementById('page-pmtool').style.display!=='none'){
+        refreshPmToolEvents();
+      }
+    })
+    .catch(function(e){showImportToast('error','Fetch failed: '+e.message);})
+    .finally(function(){if(btn){btn.disabled=false;btn.textContent='Fetch Now';}});
 }
 
 function intgLoadStatus(id){
