@@ -6524,11 +6524,12 @@ function ppDownload(){
   }catch(e){ppSetStatus('Download error: '+e.message,'error');}
 }
 // ══════════════ MOM GENERATOR ══════════════
-var MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:'',sproutStaff:[],reviewItems:null,extracted:null};
+var MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',apiKey:'',sproutStaff:[],extracted:null};
 
 function renderMOMUI(){
   var defaultStaff=(TEAM_CONFIG.implementers||[]).concat(TEAM_CONFIG.pms||[]).filter(Boolean);
   if(!MOM_STATE.sproutStaff||!MOM_STATE.sproutStaff.length) MOM_STATE.sproutStaff=defaultStaff.slice();
+  var savedKey=localStorage.getItem('sprout_ai_key')||'';
 
   document.getElementById('tool-modal-body').innerHTML=
     // Centered loading overlay
@@ -6553,6 +6554,8 @@ function renderMOMUI(){
         +'<div style="margin-top:6px;"><button onclick="adminDownloadSampleTranscript()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #fed7aa;background:#fff7ed;color:#c2410c;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Download sample transcript (.docx)</button></div>'
       +'</div>'
     +'</div>'
+    // Claude API key
+    +'<div style="background:var(--s0);border:1px solid var(--s2);border-radius:10px;padding:9px 12px;margin-bottom:1rem;"><div style="font-size:10px;font-weight:700;color:var(--s6);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;">Claude API Key</div><div style="display:flex;gap:7px;align-items:center;"><input type="password" id="mom-apikey" placeholder="sk-ant-..." value="'+escHtml(savedKey)+'" style="flex:1;border:1px solid var(--s2);border-radius:8px;padding:6px 9px;font-size:12px;font-family:var(--font);outline:none;color:var(--s8);"><button onclick="momSaveKey()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);white-space:nowrap;">Save Key</button></div><div style="font-size:10px;color:var(--s4);margin-top:3px;">Stored in your browser only. Never sent to Sprout servers. The transcript text IS sent to Anthropic (Claude) to generate the draft.</div></div>'
     // Two upload cards
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">'
       +momUploadCard('transcript','📄','Meeting Transcript <span style=\'color:#dc2626\'>*</span>','Zoom / Teams / Meet export<br>(.docx format)','#ea580c','.docx')
@@ -6586,12 +6589,10 @@ function renderMOMUI(){
     +'</div>'
     // Status bar
     +'<div id="mom-status" style="display:none;padding:.7rem 1rem;border-radius:8px;font-size:12px;margin-bottom:.75rem;"></div>'
-    // Confidence review panel (hidden until generation)
-    +'<div id="mom-review-panel" style="display:none;margin-bottom:.75rem;"></div>'
-    // Preview
+    // Preview / editable draft
     +'<div id="mom-preview" style="display:none;margin-bottom:.75rem;">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;">MOM Preview</div>'
-      +'<div id="mom-preview-body" style="background:var(--s0);border:1px solid var(--s2);border-radius:8px;padding:1rem;font-size:12px;line-height:1.7;color:var(--s7);max-height:260px;overflow-y:auto;white-space:pre-wrap;font-family:var(--font);"></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;"><div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;">MOM Draft — click to edit</div><div style="font-size:10px;color:var(--s4);">Tip: start a line with 👉, 📍 or 🔔 to make it a bold section header</div></div>'
+      +'<div id="mom-preview-body" style="background:var(--s0);border:1px solid var(--s2);border-radius:8px;padding:1rem;font-size:12px;line-height:1.7;color:var(--s7);max-height:340px;overflow-y:auto;font-family:var(--font);outline:none;"></div>'
     +'</div>'
     // Footer
     +'<div style="display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid var(--s1);">'
@@ -6614,6 +6615,14 @@ function renderMOMUI(){
   // Staff input: press Enter to add
   var si=document.getElementById('mom-staff-input');
   if(si) si.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();momAddStaff();}});
+
+  // Draft preview: force plain-text paste so pasted rich text doesn't break the one-div-per-line structure
+  var pv=document.getElementById('mom-preview-body');
+  if(pv) pv.addEventListener('paste',function(e){
+    e.preventDefault();
+    var text=(e.clipboardData||window.clipboardData).getData('text/plain');
+    document.execCommand('insertText',false,text);
+  });
 
   // Render initial staff tags
   momRenderStaffTags();
@@ -6646,6 +6655,11 @@ function momAddStaff(){
 function momRemoveStaff(idx){
   MOM_STATE.sproutStaff.splice(idx,1);
   momRenderStaffTags();
+}
+
+function momSaveKey(){
+  var k=document.getElementById('mom-apikey');
+  if(k&&k.value.trim()){localStorage.setItem('sprout_ai_key',k.value.trim());MOM_STATE.apiKey=k.value.trim();momSetStatus('API key saved.','success');}
 }
 
 function momShowOverlay(step,msg){
@@ -6811,92 +6825,21 @@ function momReadPdfText(file){
   });
 }
 
-// ── SUGGESTION 4: Line cleaning ──
-function momCleanLine(line){
-  // Strip filler words common in Filipino/Taglish transcripts
-  var fillers=/\b(so|basically|like|you know|uh+|um+|ah+|ano|kasi|yung|ito|po|nga|naman|pala|diba|sige|okay\s*po|ok\s*po|oo\s*po)\b[,\s]*/gi;
-  var cleaned=line.replace(fillers,' ').replace(/\s{2,}/g,' ').trim();
-  // Remove lines that end mid-word (cut-off transcripts) — ends without punctuation and very short
-  if(cleaned.length<12) return '';
-  // Remove lines that are just filler/affirmation
-  if(/^(yes|no|okay|ok|oo|yeah|yep|sure|alright|right)[.!?,\s]*$/i.test(cleaned)) return '';
-  return cleaned;
-}
-
-// ── SUGGESTION 3: Context-window subject resolution ──
-function momResolveSubject(line, prevLines, sproutStaff){
-  // If line has dangling pronoun with no clear subject, check prior 2 lines
-  if(!/\b(we will|they will|will send|will provide|will process|will rerun|will update|will coordinate|will prepare|will submit)\b/i.test(line)) return line;
-  if(/\b(sprout|client|company|team)\b/i.test(line)) return line; // already has subject
-
-  // Look back up to 2 lines for speaker
-  for(var i=prevLines.length-1;i>=Math.max(0,prevLines.length-2);i--){
-    var prev=prevLines[i];
-    var speakerMatch=prev.match(/^([A-Za-z][A-Za-z\s]{1,20}):/);
-    if(speakerMatch){
-      var spk=speakerMatch[1].trim();
-      var isStaff=sproutStaff.some(function(s){return spk.toLowerCase().indexOf(s.toLowerCase())!==-1;});
-      if(isStaff){
-        return line.replace(/\bwe will\b/i,'Sprout will').replace(/\bthey will\b/i,'Sprout will');
-      } else {
-        return line.replace(/\bwe will\b/i,'Client will').replace(/\bthey will\b/i,'Client will');
-      }
-    }
-  }
-  return line;
-}
-
-// ── SUGGESTION 5: PDF slide section mapping ──
-function momMapPdfSections(pdfText){
-  // Returns array of {section, line} objects
-  var sectionPatterns=[
-    {re:/pending\s+items?\s+from\s+client/i,   bucket:'client'},
-    {re:/pending\s+items?\s+from\s+sprout/i,   bucket:'sprout'},
-    {re:/items?\s+for\s+confirmation/i,         bucket:'agreed'},
-    {re:/agreed\s+upon\s+items?/i,              bucket:'agreed'},
-    {re:/general\s+reminders?/i,                bucket:'reminder'},
-    {re:/reminders?\s+for\s+live\s+run/i,       bucket:'reminder'},
-    {re:/variance\s+analysis/i,                 bucket:'agreed'},
-    {re:/payroll\s+policy\s+review/i,           bucket:'agreed'},
-    {re:/proposed\s+calendar/i,                 bucket:'reminder'},
-  ];
-  var currentBucket='general';
-  var tagged=[];
-  pdfText.split(/\n/).forEach(function(rawLine){
-    var line=rawLine.trim();
-    if(!line||line.length<3) return;
-    // Check if this line is a section heading
-    var matched=false;
-    for(var i=0;i<sectionPatterns.length;i++){
-      if(sectionPatterns[i].re.test(line)&&line.length<80){
-        currentBucket=sectionPatterns[i].bucket;
-        matched=true; break;
-      }
-    }
-    if(!matched&&line.length>10){
-      tagged.push({bucket:currentBucket,line:line,source:'pdf'});
-    }
-  });
-  return tagged;
-}
-
-// ── SUGGESTION 1+2+3+4+5: Full improved extraction ──
-function momExtract(transcriptText,pdfText,clientName,meetingDate,slidesName,sproutStaff){
+// ── AI-powered extraction: Claude reads the transcript and writes the MOM item lists ──
+async function momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,slidesName,sproutStaff,apiKey){
   sproutStaff=sproutStaff||(TEAM_CONFIG.implementers||[]).filter(Boolean);
 
-  var rawLines=transcriptText.split(/\n/).map(function(l){return l.trim();}).filter(function(l){return l.length>2;});
-
-  // ── Detect next phase ──
+  // ── Detect next phase (deterministic — kept from the prior implementation) ──
   var nextPhase='Next Phase';
   var phasePatterns=[/parallel run ii/i,/parallel run 2/i,/live run/i,/go.?live/i,/parallel run iii/i,/parallel run 3/i,/post.?live/i];
   var phaseNames=['Parallel Run II','Parallel Run II','Live Run','Live Run','Parallel Run III','Parallel Run III','Post Live'];
   var allText=pdfText+' '+transcriptText;
   for(var pi=0;pi<phasePatterns.length;pi++){if(phasePatterns[pi].test(allText)){nextPhase=phaseNames[pi];break;}}
 
-  // ── Detect meeting type ──
+  // ── Detect meeting type (deterministic) ──
   var meetingType='Implementation Discussion';
   var pdfPreview=pdfText.split(/\n/).slice(0,30).join(' ');
-  var txPreview=rawLines.slice(0,20).join(' ');
+  var txPreview=transcriptText.split(/\n/).slice(0,20).join(' ');
   var mtPatterns=[/parallel run i\b/i,/parallel run ii/i,/parallel run iii/i,/variance analysis/i,/kick.?off/i,/kom\b/i,/live run/i,/post.?live/i,/simulation/i];
   var mtNames=['Parallel Run I Discussion','Parallel Run II Discussion','Parallel Run III Discussion','Variance Analysis Discussion','KOM Discussion','KOM Discussion','Live Run Discussion','Post Live Discussion','Simulation Discussion'];
   for(var mi=0;mi<mtPatterns.length;mi++){if(mtPatterns[mi].test(pdfPreview)||mtPatterns[mi].test(txPreview)){meetingType=mtNames[mi];break;}}
@@ -6908,112 +6851,40 @@ function momExtract(transcriptText,pdfText,clientName,meetingDate,slidesName,spr
   var password=initials+'@'+year+'!';
   var deckName=slidesName?slidesName.replace(/\.[^/.]+$/,'').replace(/_/g,' ').trim():'Slide Deck Presented';
 
-  // ── SUGGESTION 5: Map PDF sections first ──
-  var pdfTagged=momMapPdfSections(pdfText);
+  // ── Ask Claude to read the transcript and write the four item lists ──
+  var staffList=sproutStaff.length?sproutStaff.join(', '):'(none specified)';
+  var prompt='You are drafting a "Minutes of the Meeting" (MOM) email for Sprout PYO, a payroll outsourcing company, summarizing an internal payroll-implementation discussion with a client.\n\n'
+    +'Client: '+clientName+'\nMeeting date: '+meetingDate+'\nSprout staff on the call (attribute their spoken lines to Sprout; everyone else on the call is the client): '+staffList+'\n\n'
+    +'Read the FULL transcript below (it is a raw, sometimes messy, Taglish call transcript — ignore filler words, false starts, and transcription errors) and produce four lists of clean, complete, professionally-phrased sentences suitable for a client-facing email, exactly the way a human account manager would write them up. Do NOT copy raw transcript fragments verbatim, and do NOT include filler, hedging, or conversational back-and-forth — synthesize multi-turn exchanges into a single decisive sentence stating what was actually agreed or asked.\n\n'
+    +'1. agreedItems — things agreed upon or confirmed during the call (policies, dates, computations, formats, etc.)\n'
+    +'2. clientItems — action items or information still pending FROM the client (things the client needs to submit, confirm, or provide)\n'
+    +'3. sproutItems — action items still pending FOR Sprout PYO (coordinate, review, follow up, etc.)\n'
+    +'4. reminderItems — general reminders, standing policies, or notes for the upcoming phase (e.g. parallel run, live run) that do not fit the other three buckets\n\n'
+    +'Return ONLY a valid JSON object, no prose before or after, no markdown code fences, with exactly this shape (use an empty array if a bucket has nothing genuinely applicable):\n'
+    +'{"agreedItems":["..."],"clientItems":["..."],"sproutItems":["..."],"reminderItems":["..."]}\n\n'
+    +(pdfText?'--- SLIDE DECK TEXT ---\n'+pdfText.slice(0,6000)+'\n\n':'')
+    +'--- TRANSCRIPT ---\n'+transcriptText;
 
-  // ── SUGGESTION 1: Parse speaker-attributed transcript lines ──
-  // Collect parsed lines with speaker, cleaned text, context
-  var parsedLines=[];
-  rawLines.forEach(function(line,idx){
-    var speakerMatch=line.match(/^([A-Za-z][A-Za-z\s]{1,25}):\s*(.+)$/);
-    var speaker='', content=line;
-    if(speakerMatch){speaker=speakerMatch[1].trim();content=speakerMatch[2].trim();}
-    // SUGGESTION 4: clean the content
-    var cleaned=momCleanLine(content);
-    if(!cleaned) return;
-    // SUGGESTION 3: resolve dangling subject using prior lines
-    var prevTexts=parsedLines.slice(-2).map(function(p){return (p.speaker?p.speaker+': ':'')+p.cleaned;});
-    cleaned=momResolveSubject(cleaned,prevTexts,sproutStaff);
-    var isSproutSpeaker=speaker&&sproutStaff.some(function(s){return speaker.toLowerCase().indexOf(s.toLowerCase())!==-1;});
-    parsedLines.push({speaker:speaker,cleaned:cleaned,isSproutSpeaker:isSproutSpeaker,raw:line,idx:idx});
-  });
+  var resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4096,messages:[{role:'user',content:prompt}]})});
+  if(!resp.ok){var er=await resp.json().catch(function(){return {};});throw new Error(er.error&&er.error.message?er.error.message:'Claude API error '+resp.status);}
+  var d=await resp.json();
+  var txt=d.content&&d.content[0]&&d.content[0].text?d.content[0].text:'';
+  var jm=txt.match(/\{[\s\S]*\}/);
+  if(!jm) throw new Error('Could not parse Claude\'s response as JSON.');
+  var parsed=JSON.parse(jm[0]);
 
-  // ── Keyword sets ──
-  var agreedKw=[/\bagreed\b/i,/\bconfirmed\b/i,/\bproceed\b/i,/\btama\b/i,/\bapproved\b/i,/\bwill\s+(use|follow|retain|apply|set)\b/i,/\bmoving\s+forward\b/i,/\bstandard\b.*\bpolicy\b/i,/\bset\s+up\b/i,/\bcomputation\b.*\bproceed\b/i,/\bwe.ll\s+(use|follow|keep)\b/i];
-  var clientKw=[/please\s+(submit|provide|send|prepare|confirm|share|upload|advise)/i,/client\s+(to|will|must|should)\b/i,/\byou\s+(need|have)\s+to\b/i,/\bkindly\s+(submit|provide|send|confirm|prepare)\b/i,/for\s+your\s+(action|submission|review|approval|confirmation)/i,/\battendance\s+report\b/i,/\bpayroll\s+register\b/i,/\bloan\s+details?\b/i,/\bfinal\s+pay\b/i,/\bcalendar\b.*\bapproval\b/i];
-  var sproutKw=[/sprout\s+(will|to|shall)\b/i,/\bwill\s+(process|rerun|set\s*up|update|check|coordinate|send|prepare|provide|assess|review|follow\s*up)\b/i,/\bto\s+be\s+(set\s*up|processed|updated|provided|assessed)\b/i,/\brerun\b/i,/\bfinal\s+pay\s+(process|timeline|format)\b/i,/\bgl\s+report\b/i,/\breport\s+format\b/i];
-  var reminderKw=[/reminder/i,/on\s+or\s+before/i,/deadline/i,/please\s+(note|be\s+advised|disregard|follow)\b/i,/\bcut.?off\b/i,/\bnext\s+(cutoff|cut-off|payout|payroll|run)\b/i,/\bsubmit.*by\b/i,/\bno\s+later\s+than\b/i,/\bexcel\s+format\b/i,/\btimeline\b/i,/\bdisregard\b/i,/\bupdated\s+timeline\b/i];
+  var agreedItems=(parsed.agreedItems||[]).filter(Boolean);
+  var clientItems=(parsed.clientItems||[]).filter(Boolean);
+  var sproutItems=(parsed.sproutItems||[]).filter(Boolean);
+  var reminderItems=(parsed.reminderItems||[]).filter(Boolean);
 
-  // Confidence scoring helper
-  function scoreItem(text, kwList, strongBonus){
-    var kwHits=kwList.filter(function(kw){return kw.test(text);}).length;
-    var isClean=text.length>25&&!/\b(basically|so |ah |uh |ano |kasi )/i.test(text);
-    var isComplete=/[.!?]$/.test(text.trim())||text.length>40;
-    var score=0;
-    if(kwHits>=2) score=3;       // HIGH
-    else if(kwHits===1&&isClean&&isComplete) score=2; // HIGH
-    else if(kwHits===1) score=1; // MED
-    else score=0;                // LOW
-    if(strongBonus) score=Math.min(3,score+1);
-    return score; // 3=HIGH,2=HIGH,1=MED,0=LOW
-  }
-  function confLabel(score){return score>=2?'HIGH':score===1?'MED':'LOW';}
+  if(!agreedItems.length) agreedItems.push('[No agreed items detected — please fill in manually]');
+  if(!clientItems.length) clientItems.push('[No pending client items detected — please fill in manually]');
+  if(!sproutItems.length) sproutItems.push('[No pending Sprout items detected — please fill in manually]');
+  if(!reminderItems.length) reminderItems.push('[No reminders detected — please fill in manually]');
 
-  // Collect items with confidence scores
-  var reviewItems={agreed:[],client:[],sprout:[],reminder:[]};
-  var seen={agreed:{},client:{},sprout:{},reminder:{}};
-
-  function addItem(bucket,text,conf,source){
-    var key=text.slice(0,30);
-    if(seen[bucket][key]) return;
-    seen[bucket][key]=true;
-    reviewItems[bucket].push({text:text,conf:conf,label:confLabel(conf),source:source});
-  }
-
-  // ── SUGGESTION 1: Speaker-attributed lines ──
-  parsedLines.forEach(function(p){
-    var t=p.cleaned;
-    if(t.length<15) return;
-
-    if(p.isSproutSpeaker){
-      // Sprout speaker lines
-      if(agreedKw.some(function(kw){return kw.test(t);})){
-        addItem('agreed',t,scoreItem(t,agreedKw,true),'🎤 '+p.speaker);
-      }
-      if(sproutKw.some(function(kw){return kw.test(t);})||/\b(i will|we will|will send|will process|will rerun|will prepare|will coordinate)\b/i.test(t)){
-        addItem('sprout',t,scoreItem(t,sproutKw,true),'🎤 '+p.speaker);
-      }
-      if(reminderKw.some(function(kw){return kw.test(t);})){
-        addItem('reminder',t,scoreItem(t,reminderKw,true),'🎤 '+p.speaker);
-      }
-    } else {
-      // Non-Sprout speaker (client or unknown)
-      if(agreedKw.some(function(kw){return kw.test(t);})){
-        addItem('agreed',t,scoreItem(t,agreedKw,false),'🎤 '+(p.speaker||'Unknown'));
-      }
-      if(clientKw.some(function(kw){return kw.test(t);})){
-        addItem('client',t,scoreItem(t,clientKw,true),'🎤 '+(p.speaker||'Unknown'));
-      }
-      if(reminderKw.some(function(kw){return kw.test(t);})){
-        addItem('reminder',t,scoreItem(t,reminderKw,false),'🎤 '+(p.speaker||'Unknown'));
-      }
-    }
-  });
-
-  // ── SUGGESTION 5: PDF section-tagged items (high confidence) ──
-  pdfTagged.forEach(function(tagged){
-    var t=tagged.line;
-    if(t.length<10) return;
-    var bucket=tagged.bucket;
-    if(bucket==='general') return; // skip unclassified PDF lines
-    addItem(bucket,t,2,'📍 Slide');
-  });
-
-  // Fallbacks for empty buckets
-  if(!reviewItems.agreed.length) reviewItems.agreed.push({text:'[No agreed items detected — please fill in manually]',conf:0,label:'LOW',source:'auto'});
-  if(!reviewItems.client.length) reviewItems.client.push({text:'[No pending client items detected — please fill in manually]',conf:0,label:'LOW',source:'auto'});
-  if(!reviewItems.sprout.length) reviewItems.sprout.push({text:'[No pending Sprout items detected — please fill in manually]',conf:0,label:'LOW',source:'auto'});
-  if(!reviewItems.reminder.length) reviewItems.reminder.push({text:'[No reminders detected — please fill in manually]',conf:0,label:'LOW',source:'auto'});
-
-  // Always add password item (HIGH confidence, no review needed)
-  reviewItems.agreed.push({text:'To open the attachments, please use this password: '+password,conf:3,label:'HIGH',source:'auto',locked:true});
-
-  // Trim to reasonable maxima
-  function trimBucket(arr,max){return arr.slice(0,max);}
-  reviewItems.agreed=trimBucket(reviewItems.agreed,14);
-  reviewItems.client=trimBucket(reviewItems.client,12);
-  reviewItems.sprout=trimBucket(reviewItems.sprout,10);
-  reviewItems.reminder=trimBucket(reviewItems.reminder,10);
+  // Password is a fixed company convention — never let the AI generate this
+  agreedItems.push('To open the attachments, please use this password: '+password);
 
   return {
     title:clientName+': '+meetingType+' - Minutes of the Meeting',
@@ -7022,22 +6893,11 @@ function momExtract(transcriptText,pdfText,clientName,meetingDate,slidesName,spr
     meetingDate:meetingDate,
     deckName:deckName,
     nextPhase:nextPhase,
-    reviewItems:reviewItems,
-    // Final confirmed items (set after review)
-    agreedItems:null,
-    clientItems:null,
-    sproutItems:null,
-    reminderItems:null,
+    agreedItems:agreedItems,
+    clientItems:clientItems,
+    sproutItems:sproutItems,
+    reminderItems:reminderItems
   };
-}
-
-// ── Build final MOM from confirmed items ──
-function momBuildFromConfirmed(extracted){
-  extracted.agreedItems=extracted.reviewItems.agreed.map(function(i){return i.text;});
-  extracted.clientItems=extracted.reviewItems.client.map(function(i){return i.text;});
-  extracted.sproutItems=extracted.reviewItems.sprout.map(function(i){return i.text;});
-  extracted.reminderItems=extracted.reviewItems.reminder.map(function(i){return i.text;});
-  return extracted;
 }
 
 // ── Build preview text ──
@@ -7065,121 +6925,55 @@ function momBuildText(m){
   return lines.join('\n');
 }
 
-// ── SUGGESTION 2: Render confidence review panel ──
-function momRenderReviewPanel(extracted){
-  var panel=document.getElementById('mom-review-panel');
-  if(!panel)return;
-  var ri=extracted.reviewItems;
-
-  function sectionHtml(bucket,label,emoji,color){
-    var items=ri[bucket];
-    var flagged=items.filter(function(i){return i.conf<1;}).length;
-    var html='<div style="margin-bottom:10px;">';
-    html+='<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:'+color+';margin-bottom:5px;">'+emoji+' '+label+' <span style="font-size:10px;font-weight:400;color:var(--s4);">('+items.length+' items'+(flagged?' · '+flagged+' flagged':'')+')</span></div>';
-    items.forEach(function(item,idx){
-      var isLow=item.conf<1;
-      var isMed=item.conf===1;
-      var bg=isLow?'#fef2f2':isMed?'#fff7ed':'#f0fdf4';
-      var border=isLow?'#dc2626':isMed?'#ea580c':'#16a34a';
-      var badgeBg=isLow?'#fecaca':isMed?'#fed7aa':'#dcfce7';
-      var badgeColor=isLow?'#991b1b':isMed?'#c2410c':'#15803d';
-      html+='<div id="mom-item-'+bucket+'-'+idx+'" style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:'+bg+';border-radius:7px;border-left:3px solid '+border+';margin-bottom:3px;">';
-      html+='<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;background:'+badgeBg+';color:'+badgeColor+';flex-shrink:0;">'+item.label+(isLow?' ⚠':'')+'</span>';
-      html+='<span contenteditable="true" onblur="this.style.borderBottomColor=\'transparent\';momSaveItemEdit(\''+bucket+'\','+idx+',this.textContent)" onfocus="this.style.borderBottomColor=\'#ea580c\'" onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" style="font-size:11px;color:'+(isLow?'#94a3b8':'#334155')+';flex:1;'+(isLow?'font-style:italic;':'')+'outline:none;border-bottom:1px dotted transparent;cursor:text;" title="Click to edit">'+item.text+'</span>';
-      if(item.source&&item.source!=='auto'){
-        html+='<span style="font-size:10px;color:'+(item.source.indexOf('Slide')!==-1?'#7c3aed':'#16a34a')+';font-weight:500;flex-shrink:0;white-space:nowrap;">'+item.source+'</span>';
-      }
-      if(isLow&&!item.locked){
-        html+='<span style="font-size:10px;color:#dc2626;font-weight:500;flex-shrink:0;white-space:nowrap;">Likely noise</span>';
-      }
-      if(!item.locked){
-        html+='<button onclick="momRemoveReviewItem(\''+bucket+'\','+idx+')" style="padding:2px 8px;border-radius:4px;border:0.5px solid #e2e8f0;background:#fff;font-size:10px;cursor:pointer;color:#64748b;flex-shrink:0;">✕</button>';
-      }
-      html+='</div>';
-    });
-    html+='<div style="display:flex;gap:5px;margin-top:5px;">'
-      +'<input type="text" id="mom-add-'+bucket+'" placeholder="Add item…" onkeydown="if(event.key===\'Enter\'){event.preventDefault();momAddManualItem(\''+bucket+'\');}" style="flex:1;padding:5px 9px;border-radius:6px;border:1px dashed var(--s2);font-size:11px;font-family:var(--font);color:var(--s7);outline:none;background:var(--s0);"/>'
-      +'<button onclick="momAddManualItem(\''+bucket+'\')" style="padding:5px 10px;border-radius:6px;border:none;background:'+color+';color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">+</button>'
-      +'</div>';
-    html+='</div>';
-    return html;
-  }
-
-  var html='<div style="background:var(--s0);border:1px solid var(--s2);border-radius:10px;padding:.9rem 1rem;">';
-  html+='<div style="font-size:11px;font-weight:700;color:var(--s6);margin-bottom:.75rem;">🔍 Review extracted items — remove anything incorrect before building the MOM</div>';
-  html+=sectionHtml('agreed','Agreed Upon Items','👉','#170E31');
-  html+=sectionHtml('client','Pending Items for '+extracted.shortName,'📍','#7c3aed');
-  html+=sectionHtml('sprout','Pending Items for Sprout PYO','📍','#ea580c');
-  html+=sectionHtml('reminder','Reminders','🔔','#0e7490');
-  html+='<div style="display:flex;justify-content:space-between;align-items:center;padding-top:.75rem;border-top:1px solid var(--s1);margin-top:.5rem;">';
-  html+='<button onclick="momGenerate()" style="padding:8px 16px;border-radius:8px;border:1px solid var(--s2);background:#fff;font-size:12px;font-weight:600;cursor:pointer;color:var(--s6);">← Re-generate</button>';
-  html+='<button onclick="momConfirmAndBuild()" style="padding:8px 20px;border-radius:8px;border:none;background:#ea580c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">✅ Confirm & Build MOM →</button>';
-  html+='</div>';
-  html+='</div>';
-  panel.innerHTML=html;
-  panel.style.display='block';
+// ── Editable full-draft preview: one <div> per line, contenteditable ──
+function momRenderDraftPreview(momText){
+  var body=document.getElementById('mom-preview-body');
+  if(!body) return;
+  body.innerHTML=momText.split('\n').map(function(l){
+    return '<div>'+(l?escHtml(l):'<br>')+'</div>';
+  }).join('');
+  body.contentEditable='true';
+  document.getElementById('mom-preview').style.display='block';
 }
 
-function momRemoveReviewItem(bucket,idx){
-  if(!MOM_STATE.extracted||!MOM_STATE.extracted.reviewItems) return;
-  MOM_STATE.extracted.reviewItems[bucket].splice(idx,1);
-  momRenderReviewPanel(MOM_STATE.extracted);
-}
-
-function momSaveItemEdit(bucket,idx,text){
-  text=(text||'').trim();
-  if(!text||!MOM_STATE.extracted||!MOM_STATE.extracted.reviewItems)return;
-  if(MOM_STATE.extracted.reviewItems[bucket]&&MOM_STATE.extracted.reviewItems[bucket][idx]){
-    MOM_STATE.extracted.reviewItems[bucket][idx].text=text;
-  }
-}
-
-function momAddManualItem(bucket){
-  var inp=document.getElementById('mom-add-'+bucket);
-  if(!inp)return;
-  var text=inp.value.trim();
-  if(!text)return;
-  if(!MOM_STATE.extracted||!MOM_STATE.extracted.reviewItems)return;
-  MOM_STATE.extracted.reviewItems[bucket].push({text:text,conf:3,label:'HIGH',source:'✍️ Manual'});
-  inp.value='';
-  momRenderReviewPanel(MOM_STATE.extracted);
+// Reads the live edited draft back out as an array of lines (structural, not innerText-derived)
+function momPreviewLines(){
+  var body=document.getElementById('mom-preview-body');
+  if(!body) return [];
+  var out=[];
+  body.childNodes.forEach(function(node){
+    if(node.nodeType===1&&node.tagName==='DIV') out.push(node.textContent.replace(/ /g,' '));
+    else if(node.nodeType===1&&node.tagName==='BR') out.push('');
+    else if(node.nodeType===3&&node.textContent.trim()!=='') out.push(node.textContent);
+  });
+  return out;
 }
 
 function momCopyToClipboard(){
-  if(!MOM_STATE.result){momSetStatus('⚠️ Please generate and build the MOM first.','error');return;}
+  var lines=momPreviewLines();
+  if(!lines.length){momSetStatus('⚠️ Please generate the MOM first.','error');return;}
+  var text=lines.join('\n');
   var btn=document.getElementById('mom-copy-btn');
   var prev=btn?btn.innerHTML:'';
   function flash(){if(btn){btn.innerHTML='✅ Copied!';setTimeout(function(){btn.innerHTML=prev;},1800);}}
   if(navigator.clipboard){
-    navigator.clipboard.writeText(MOM_STATE.result).then(flash).catch(function(){
-      var ta=document.createElement('textarea');ta.value=MOM_STATE.result;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();
+    navigator.clipboard.writeText(text).then(flash).catch(function(){
+      var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();
     });
   } else {
-    var ta=document.createElement('textarea');ta.value=MOM_STATE.result;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();
+    var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);flash();
   }
-}
-
-function momConfirmAndBuild(){
-  if(!MOM_STATE.extracted) return;
-  var m=momBuildFromConfirmed(MOM_STATE.extracted);
-  var momText=momBuildText(m);
-  MOM_STATE.result=momText;
-  MOM_STATE.extracted=m;
-  document.getElementById('mom-review-panel').style.display='none';
-  document.getElementById('mom-preview-body').textContent=momText;
-  document.getElementById('mom-preview').style.display='block';
-  momSetStatus('✅ MOM built from confirmed items! Review the preview below, then download.','success');
-  document.getElementById('mom-download-btn').style.display='inline-flex';
-  var _cpb=document.getElementById('mom-copy-btn');if(_cpb)_cpb.style.display='inline-flex';
 }
 
 async function momGenerate(){
   var clientName=(document.getElementById('mom-client-name').value||'').trim()||'[Client]';
   var meetingDate=(document.getElementById('mom-meeting-date').value||'').trim()||'[Date]';
   if(!MOM_STATE.transcript){momSetStatus('⚠️ Please upload the meeting transcript (.docx).','error');return;}
+  var keyEl=document.getElementById('mom-apikey');
+  var apiKey=(keyEl?keyEl.value.trim():'')||MOM_STATE.apiKey||localStorage.getItem('sprout_ai_key')||'';
+  if(!apiKey){momSetStatus('⚠️ Enter your Claude API key first.','error');return;}
 
   document.getElementById('mom-preview').style.display='none';
-  document.getElementById('mom-review-panel').style.display='none';
   document.getElementById('mom-download-btn').style.display='none';
   document.getElementById('mom-status').style.display='none';
   document.getElementById('mom-generate-btn').disabled=true;
@@ -7194,14 +6988,13 @@ async function momGenerate(){
     var transcriptText=await momReadDocxText(MOM_STATE.transcript);
     var pdfText=MOM_STATE.slides?await momReadPdfText(MOM_STATE.slides):'';
 
-    // Step 3 — parse speakers, clean lines, resolve context
-    momShowOverlay(3,'Parsing speakers and cleaning transcript lines…');
-    await new Promise(function(r){setTimeout(r,300);});
+    // Step 3 — send to Claude for real comprehension
+    momShowOverlay(3,'Sending transcript to Claude for analysis…');
     var sproutStaff=MOM_STATE.sproutStaff||(TEAM_CONFIG.implementers||[]).filter(Boolean);
-    var extracted=momExtract(transcriptText,pdfText,clientName,meetingDate,MOM_STATE.slidesName||'',sproutStaff);
+    var extracted=await momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,MOM_STATE.slidesName||'',sproutStaff,apiKey);
 
-    // Step 4 — map PDF slide sections
-    momShowOverlay(4,'Mapping PDF slide sections…');
+    // Step 4 — Claude drafts the summary
+    momShowOverlay(4,'Claude is drafting the summary…');
     await new Promise(function(r){setTimeout(r,200);});
 
     // Step 5 — structure MOM
@@ -7213,8 +7006,10 @@ async function momGenerate(){
     MOM_STATE.extracted=extracted;
 
     momHideOverlay();
-    momSetStatus('✅ Extraction complete! Review items below — remove anything that looks wrong, then click <strong>Confirm & Build MOM</strong>.','success');
-    momRenderReviewPanel(extracted);
+    momSetStatus('✅ Draft ready! Edit anything below, then copy or download.','success');
+    momRenderDraftPreview(momBuildText(extracted));
+    document.getElementById('mom-download-btn').style.display='inline-flex';
+    var _cpb=document.getElementById('mom-copy-btn');if(_cpb)_cpb.style.display='inline-flex';
 
   }catch(err){
     momHideOverlay();
@@ -7226,15 +7021,38 @@ async function momGenerate(){
 }
 
 function momDownload(){
-  if(!MOM_STATE.result){momSetStatus('⚠️ Please generate the MOM first.','error');return;}
-  if(window.docx){momBuildDocxInner();return;}
+  var lines=momPreviewLines();
+  if(!lines.length){momSetStatus('⚠️ Please generate the MOM first.','error');return;}
+  if(window.docx){momBuildDocxInner(lines);return;}
   // docx.js not available — use RTF which opens perfectly in Word, no library needed
-  momDownloadRTF();
+  momDownloadRTF(lines);
 }
 
-function momDownloadRTF(){
-  var m=MOM_STATE.extracted;
-  if(!m){momSetStatus('⚠️ Please generate the MOM first.','error');return;}
+// ── Classify the LIVE edited draft into title / section header / numbered item / blank / plain ──
+// Renumbers items per-section rather than trusting the user's literal digits, so edits (add/remove/reorder) stay correct.
+function momClassifyLines(lines){
+  var out=[];
+  var counter=0;
+  var titleUsed=false;
+  lines.forEach(function(line){
+    var trimmed=line.trim();
+    if(!titleUsed){
+      if(!trimmed) return; // skip leading blank lines when hunting for the title
+      out.push({type:'title',text:trimmed});
+      titleUsed=true;
+      return;
+    }
+    if(!trimmed){ out.push({type:'blank'}); return; }
+    if(/^📍/.test(trimmed)){ out.push({type:'header',text:trimmed,color:'7C3AED'}); counter=0; return; }
+    if(/^(👉|🔔)/.test(trimmed)){ out.push({type:'header',text:trimmed}); counter=0; return; }
+    var numMatch=trimmed.match(/^\d+\.\s+(.*)$/);
+    if(numMatch){ counter++; out.push({type:'item',n:counter,text:numMatch[1]}); return; }
+    out.push({type:'plain',text:trimmed});
+  });
+  return out;
+}
+
+function momDownloadRTF(lines){
   function esc(s){
     return (s||'').replace(/\\/g,'\\\\').replace(/\{/g,'\\{').replace(/\}/g,'\\}')
       .replace(/[^\x00-\x7F]/g,function(c){var code=c.charCodeAt(0);return code<256?"\\'"+code.toString(16).padStart(2,'0'):'\\u'+code+'?';});
@@ -7244,18 +7062,6 @@ function momDownloadRTF(){
   L.push('{\\fonttbl{\\f0\\froman\\fcharset0 Arial;}}');
   L.push('{\\colortbl;\\red234\\green88\\blue12;\\red124\\green58\\blue237;}');
   L.push('\\paperw12240\\paperh15840\\margl1440\\margr1440\\margt1440\\margb1440\\f0\\fs23');
-  // Title
-  L.push('\\pard\\sb0\\sa240\\b\\fs26 '+esc(m.title)+'\\b0\\fs23\\par');
-  L.push('\\pard\\sb0\\sa120\\par');
-  // Greeting
-  L.push('\\pard\\sb0\\sa120\\b '+esc('Hi '+m.shortName+' Team,')+'\\b0\\par');
-  L.push('\\pard\\sb0\\sa120\\par');
-  L.push('\\pard\\sb0\\sa120 '+esc('Good day!')+'\\par');
-  L.push('\\pard\\sb0\\sa120\\par');
-  L.push('\\pard\\sb0\\sa120 '+esc('Thank you for meeting with us yesterday.')+'\\par');
-  L.push('\\pard\\sb0\\sa120\\par');
-  L.push('\\pard\\sb0\\sa200 '+esc('Here is the MOM for your reference.')+'\\par');
-  L.push('\\pard\\sb0\\sa120\\par');
   function secHdr(text,col){
     col=col||1;
     L.push('\\pard\\sb280\\sa100\\b\\cf'+col+' '+esc(text)+'\\cf0\\b0\\par');
@@ -7268,32 +7074,13 @@ function momDownloadRTF(){
       L.push('\\pard\\li720\\fi-360\\sb0\\sa100 '+esc(n+'. '+text)+'\\par');
     }
   }
-  // Attachments
-  secHdr('Attachments');
-  L.push('\\pard\\sb0\\sa80 '+esc('Please see the zipped folder to access the following:')+'\\par');
-  numItem(1,m.deckName);
-  numItem(2,'Variance Analysis Report');
-  L.push('\\pard\\sb0\\sa120\\par');
-  // Agreed Upon Items
-  secHdr('Agreed Upon Items');
-  m.agreedItems.forEach(function(item,i){numItem(i+1,item);});
-  L.push('\\pard\\sb0\\sa120\\par');
-  // Pending Client
-  secHdr('Pending Items for '+m.shortName+':',2);
-  m.clientItems.forEach(function(item,i){numItem(i+1,item);});
-  L.push('\\pard\\sb0\\sa120\\par');
-  // Pending Sprout
-  secHdr('Pending Items for Sprout PYO:',2);
-  m.sproutItems.forEach(function(item,i){numItem(i+1,item);});
-  L.push('\\pard\\sb0\\sa120\\par');
-  // Reminders
-  secHdr('Reminders for '+m.nextPhase);
-  m.reminderItems.forEach(function(item,i){numItem(i+1,item);});
-  L.push('\\pard\\sb0\\sa120\\par');
-  // Closing
-  L.push('\\pard\\sb200\\sa120 '+esc('Should you have any questions or clarifications please feel free to reach out.')+'\\par');
-  L.push('\\pard\\sb0\\sa120\\par');
-  L.push('\\pard\\sb0\\sa120 '+esc('Thank you, and we would appreciate it if you could confirm receipt of this email.')+'\\par');
+  momClassifyLines(lines).forEach(function(l){
+    if(l.type==='title'){ L.push('\\pard\\sb0\\sa240\\b\\fs26 '+esc(l.text)+'\\b0\\fs23\\par'); }
+    else if(l.type==='header'){ secHdr(l.text,l.color==='7C3AED'?2:1); }
+    else if(l.type==='item'){ numItem(l.n,l.text); }
+    else if(l.type==='blank'){ L.push('\\pard\\sb0\\sa120\\par'); }
+    else { L.push('\\pard\\sb0\\sa120 '+esc(l.text)+'\\par'); }
+  });
   L.push('}');
   var blob=new Blob([L.join('\n')],{type:'application/msword'});
   var slug=(MOM_STATE.clientName||'MOM').replace(/[^a-zA-Z0-9\s]/g,'').replace(/\s+/g,'_').slice(0,40);
@@ -7306,10 +7093,9 @@ function momDownloadRTF(){
   momSetStatus('✅ <strong>'+fname+'</strong> downloaded! Opens in Microsoft Word with full formatting.','success');
 }
 
-function momBuildDocxInner(){
+function momBuildDocxInner(lines){
   try{
     var d=window.docx;
-    var m=MOM_STATE.extracted;
     var paras=[];
     function txt(text,opts){var o=Object.assign({font:'Arial',size:23},opts||{});return new d.TextRun({text:text,font:o.font,size:o.size,bold:o.bold||false,color:o.color||undefined});}
     function para(runs,opts){var o=opts||{};return new d.Paragraph({children:Array.isArray(runs)?runs:[runs],spacing:{before:o.before||0,after:o.after||120},numbering:o.numbering||undefined,border:o.border||undefined});}
@@ -7319,35 +7105,13 @@ function momBuildDocxInner(){
       var runs=pw?[txt(pw[1]),txt(pw[2],{bold:true})]:[txt(text)];
       paras.push(new d.Paragraph({children:runs,numbering:{reference:'mom-num',level:0},spacing:{after:100}}));
     }
-    paras.push(para(txt(m.title,{bold:true,size:26}),{after:240,border:{bottom:{style:d.BorderStyle.SINGLE,size:6,color:'EA580C',space:6}}}));
-    paras.push(para(txt('')));
-    paras.push(para(txt('Hi '+m.shortName+' Team,',{bold:true})));
-    paras.push(para(txt('')));
-    paras.push(para(txt('Good day!')));
-    paras.push(para(txt('')));
-    paras.push(para(txt('Thank you for meeting with us yesterday.')));
-    paras.push(para(txt('')));
-    paras.push(para(txt('Here is the MOM for your reference.')));
-    paras.push(para(txt('')));
-    secHdr('👉 Attachments');
-    paras.push(para(txt('Please see the zipped folder to access the following:'),{after:80}));
-    numItem(m.deckName);numItem('Variance Analysis Report');
-    paras.push(para(txt('')));
-    secHdr('👉 Agreed Upon Items');
-    m.agreedItems.forEach(function(item){numItem(item);});
-    paras.push(para(txt('')));
-    secHdr('📍Pending Items for '+m.shortName+':','7C3AED');
-    m.clientItems.forEach(function(item){numItem(item);});
-    paras.push(para(txt('')));
-    secHdr('📍Pending Items for Sprout PYO:','7C3AED');
-    m.sproutItems.forEach(function(item){numItem(item);});
-    paras.push(para(txt('')));
-    secHdr('🔔 Reminders for '+m.nextPhase);
-    m.reminderItems.forEach(function(item){numItem(item);});
-    paras.push(para(txt('')));
-    paras.push(para(txt('Should you have any questions or clarifications please feel free to reach out.'),{before:160}));
-    paras.push(para(txt('')));
-    paras.push(para(txt('Thank you, and we would appreciate it if you could confirm receipt of this email.')));
+    momClassifyLines(lines).forEach(function(l){
+      if(l.type==='title'){ paras.push(para(txt(l.text,{bold:true,size:26}),{after:240,border:{bottom:{style:d.BorderStyle.SINGLE,size:6,color:'EA580C',space:6}}})); }
+      else if(l.type==='header'){ secHdr(l.text,l.color); }
+      else if(l.type==='item'){ numItem(l.text); }
+      else if(l.type==='blank'){ paras.push(para(txt(''))); }
+      else { paras.push(para(txt(l.text))); }
+    });
     var doc=new d.Document({
       numbering:{config:[{reference:'mom-num',levels:[
         {level:0,format:d.LevelFormat.DECIMAL,text:'%1.',alignment:d.AlignmentType.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}},
@@ -7363,8 +7127,8 @@ function momBuildDocxInner(){
       var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download=fname;
       document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
       momSetStatus('✅ <strong>'+fname+'</strong> downloaded!','success');
-    }).catch(function(){momDownloadRTF();});
-  }catch(err){momDownloadRTF();}
+    }).catch(function(){momDownloadRTF(lines);});
+  }catch(err){momDownloadRTF(lines);}
 }
  
 function renderMasterfileUI(){
