@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
   }
   try {
     const r = await restFetch(
-      '/integrations?id=eq.' + encodeURIComponent(id) + '&select=id,status,key_last4,configured_by,configured_at'
+      '/integrations?id=eq.' + encodeURIComponent(id) + '&select=id,status,key_last4,configured_by,configured_at,base_url,endpoint_path,auth_type,auth_header_name'
     );
     if (!r.ok) {
       res.status(502).json({ error: 'Lookup failed' });
@@ -29,6 +29,10 @@ module.exports = async function handler(req, res) {
       last4: row.key_last4,
       configuredBy: row.configured_by,
       configuredAt: row.configured_at,
+      baseUrl: row.base_url,
+      endpointPath: row.endpoint_path,
+      authType: row.auth_type,
+      headerName: row.auth_header_name,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
