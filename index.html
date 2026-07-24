@@ -1573,6 +1573,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
           <div id="ctab-addons" onclick="switchClientTab('addons')" class="ctab">Add On Services Availed <span class="ctab-count" id="ctc-addons">0</span></div>
           <div id="ctab-milestones" onclick="switchClientTab('milestones')" class="ctab">Milestone Dates <span class="ctab-count" id="ctc-milestones">29</span></div>
           <div id="ctab-afterho" onclick="switchClientTab('afterho')" class="ctab ctab-on">After Hand Over <span class="ctab-count" id="ctc-afterho">17</span></div>
+          <div id="ctab-pmtooldata" onclick="switchClientTab('pmtooldata')" class="ctab">PM Tool Data <span class="ctab-count" id="ctc-pmtooldata">0</span></div>
           <div class="tab-edit-actions" id="tab-edit-actions" style="display:none;">
             <div class="lock-badge is-locked" id="tab-lock-badge">
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="7" width="10" height="7" rx="1.5"></rect><path d="M5 7V5a3 3 0 016 0v2"></path></svg>
@@ -1672,6 +1673,10 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
               </tr></thead>
               <tbody id="cl-body-afterho"><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">1</td><td class="ctd"><span class="cl-link">Brandfox Digital</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(1,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Tiara" placeholder="—" onblur="ahUpdateField(1,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">2</td><td class="ctd"><span class="cl-link">Appen Services Philippines</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(2,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Jaysel" placeholder="—" onblur="ahUpdateField(2,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">3</td><td class="ctd"><span class="cl-link">DIS TECH PHILIPPINES, LLC</span></td><td class="ctd"><input type="text" value="Jerry San Pedro" placeholder="—" onblur="ahUpdateField(3,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="Rez-ann" placeholder="—" onblur="ahUpdateField(3,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">4</td><td class="ctd"><span class="cl-link">Evermere Food Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(4,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">5</td><td class="ctd"><span class="cl-link">Powers Technical Services OPC</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(5,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">6</td><td class="ctd"><span class="cl-link">Wilmar Sugar Philippines Inc.</span></td><td class="ctd"><input type="text" value="Myka Batara" placeholder="—" onblur="ahUpdateField(6,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(6,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">7</td><td class="ctd"><span class="cl-link">Glowify Aesthetic Clinic</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(7,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">8</td><td class="ctd"><span class="cl-link">Kuh Meal</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(8,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">9</td><td class="ctd"><span class="cl-link">Q&amp;A Consulting OPC/ Arden Consult</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(9,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bN">Not yet started</span></td></tr><tr onmouseover="this.style.background='var(--g0)'" onmouseout="this.style.background=''"><td class="ctd" style="color:var(--s4);font-family:var(--mono)">10</td><td class="ctd"><span class="cl-link">Exter Philippines Corporation</span></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'csm',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><input type="text" value="" placeholder="—" onblur="ahUpdateField(10,'processor',this.value.trim())" onkeydown="if(event.key==='Enter')this.blur()" style="border:none;background:transparent;font-size:12px;font-family:var(--font);color:var(--s8);outline:none;width:100%;min-width:110px;cursor:text;border-radius:4px;padding:2px 4px;" onmouseover="this.style.background='var(--s1)'" onmouseout="this.style.background='transparent'"></td><td class="ctd"><span class="badge bL">Live</span></td></tr></tbody>
             </table>
+          </div>
+          <!-- PM TOOL DATA TAB — read-only, fields pushed in via PM Tool Data > Assign to client -->
+          <div id="ctab-body-pmtooldata" style="display:none;padding:1rem;">
+            <div id="cl-pmtooldata-body"></div>
           </div>
         </div>
         <div style="display:flex;align-items:center;padding:.6rem 1rem;border-top:1px solid var(--s1);gap:6px;flex-shrink:0;" id="cl-pag"><span style="font-size:12px;color:var(--s4);margin-right:auto">36 records</span><button onclick="clPg=1;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--g);background:var(--g);color:#fff;cursor:pointer;font-size:12px;font-family:var(--font);font-weight:700">1</button><button onclick="clPg=2;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;color:var(--s6);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:400">2</button><button onclick="clPg=3;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;color:var(--s6);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:400">3</button><button onclick="clPg=4;renderClients()" style="padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;color:var(--s6);cursor:pointer;font-size:12px;font-family:var(--font);font-weight:400">4</button></div>
@@ -2508,6 +2513,7 @@ function pmtoolMatchesFilters(e){
   return true;
 }
 function pmtoolTargetLabel(target){
+  if(target.indexOf('pmtool.')===0)return pmtoolPrettyKey(target.slice(7))+' (PM Tool Data)';
   var m=PMTOOL_SCHEMA.find(function(s){return s.target===target;});
   return m?m.label:target;
 }
@@ -2733,11 +2739,23 @@ function pmtoolOpenAssign(rid){
       var disp=(val&&typeof val==='object')?JSON.stringify(val):String(val);
       var norm=k.toLowerCase().replace(/[^a-z0-9]/g,'');
       var match=PMTOOL_SCHEMA.find(function(s){return s.key.toLowerCase().replace(/[^a-z0-9]/g,'')===norm;});
-      var opts='<option value="">— Skip —</option>'+PMTOOL_SCHEMA.map(function(s){return '<option value="'+s.target+'"'+(match&&match.target===s.target?' selected':'')+'>'+s.label+'</option>';}).join('');
+      var populated=val!==null&&val!==undefined&&String(val).trim()!=='';
+      // Any field with no curated PMTOOL_SCHEMA target still gets a generic
+      // "PM Tool Data" slot on the client (CL_PMTOOL, see pmtoolSetField) —
+      // auto-selected + pre-checked when populated, so one click on "Apply to
+      // client" pushes every populated field somewhere instead of requiring a
+      // manual per-field mapping choice.
+      var genericTarget='pmtool.'+k;
+      var genericLabel='Store as "'+pmtoolPrettyKey(k)+'" (PM Tool Data)';
+      var useGeneric=!match&&populated;
+      var opts='<option value=""'+(useGeneric?'':' selected')+'>— Skip —</option>'+
+        PMTOOL_SCHEMA.map(function(s){return '<option value="'+s.target+'"'+(match&&match.target===s.target?' selected':'')+'>'+s.label+'</option>';}).join('')+
+        (match?'':'<option value="'+escHtml(genericTarget)+'"'+(useGeneric?' selected':'')+'>'+escHtml(genericLabel)+'</option>');
+      var checked=match||useGeneric;
       rowsHtml+='<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--s1);">'+
         '<div style="font-size:11px;color:var(--s7);word-break:break-all;"><b>'+escHtml(k)+'</b><br><span style="color:var(--s5);font-family:var(--mono);">'+escHtml(disp.length>60?disp.slice(0,60)+'…':disp)+'</span></div>'+
         '<select class="pmtool-map-target" data-key="'+escHtml(k)+'" style="padding:6px 8px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--font);">'+opts+'</select>'+
-        '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--s6);cursor:pointer;"><input type="checkbox" class="pmtool-map-apply" '+(match?'checked':'')+'> Apply</label>'+
+        '<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--s6);cursor:pointer;"><input type="checkbox" class="pmtool-map-apply" '+(checked?'checked':'')+'> Apply</label>'+
       '</div>';
     });
   } else {
@@ -2760,6 +2778,12 @@ function pmtoolToBool(v){
 function pmtoolSetField(rec,target,raw){
   var DATE_FIELDS=['komDate','simDate','checklistDate','parDate','handOver','liveRun'];
   var BOOL_FIELDS=['kom','sim','checklist','par','live','post'];
+  if(target.indexOf('pmtool.')===0){
+    var pf=target.slice(7);
+    if(!CL_PMTOOL[rec.no])CL_PMTOOL[rec.no]={};
+    CL_PMTOOL[rec.no][pf]=(raw===null||raw===undefined)?'':(typeof raw==='object'?JSON.stringify(raw):raw);
+    return;
+  }
   if(target.indexOf('milestones.')===0){
     var f=target.split('.')[1];
     if(!CL_MILESTONES[rec.no])CL_MILESTONES[rec.no]={};
@@ -3956,6 +3980,7 @@ var SVC_SELECTED=[];  // multi-select state for service filter
 var CL_ADDONS={};   // {no:{sg,ba,std,otk,pd}} 0=empty,1=yes,-1=no
 var CL_AFTERHO={};  // {no:{csm,processor}}
 var CL_MILESTONES={}; // {no:{billingMonth,monthCompleted,churnDate}}
+var CL_PMTOOL={}; // {no:{<any PM Tool payload field pushed via Assign to client>}} — see PM Tool Data tab
 var CL_ISSUES=(function(){try{var s=localStorage.getItem('pyo_issues');return s?JSON.parse(s):[];}catch(e){return [];}})();
 var CL_AUDIT=(function(){try{var s=localStorage.getItem('pyo_audit');return s?JSON.parse(s):[];}catch(e){return [];}})();
 var PENDING_BANK=(function(){try{var s=localStorage.getItem('pyo_pending_bank');if(s){var p=JSON.parse(s);var map={'1':'kom','2':'sim','3':'par','4':'live','Common':'general'};p.forEach(function(i){if(map[i.phase])i.phase=map[i.phase];});return p;}var def=[{id:'pb1',label:'Complete Employee Masterfile',phase:'kom',category:'Data'},{id:'pb2',label:'Submit Government IDs (SSS, PhilHealth, HDMF)',phase:'kom',category:'Document'},{id:'pb3',label:'CRF submission and approval',phase:'sim',category:'Approval'},{id:'pb4',label:'Sandbox account setup confirmation',phase:'sim',category:'Account'},{id:'pb5',label:'Simulation result sign-off',phase:'sim',category:'Approval'},{id:'pb6',label:'Parallel run variance resolved',phase:'par',category:'Data'},{id:'pb7',label:'Final payroll register sign-off',phase:'par',category:'Approval'},{id:'pb8',label:'SLA signed and submitted',phase:'live',category:'Document'},{id:'pb9',label:'Go-live confirmation from client',phase:'live',category:'Approval'}];localStorage.setItem('pyo_pending_bank',JSON.stringify(def));return def;}catch(e){return [];}})();
@@ -3964,7 +3989,7 @@ var IMPL_ACK=(function(){try{var s=localStorage.getItem('pyo_impl_ack');return s
 
 // Snapshot of last known Supabase state — used to diff before saving so we only
 // upsert rows that THIS user actually changed, never clobbering other users' edits.
-var _snap={clients:{},addons:{},milestones:{},afterho:{}};
+var _snap={clients:{},addons:{},milestones:{},afterho:{},pmtool:{}};
 function _snapClients(){D.forEach(function(d){_snap.clients[d.no]=JSON.stringify(d);});}
 function _snapAddons(){Object.keys(CL_ADDONS).forEach(function(k){_snap.addons[k]=JSON.stringify(CL_ADDONS[k]);});}
 function _snapMilestones(){Object.keys(CL_MILESTONES).forEach(function(k){_snap.milestones[k]=JSON.stringify(CL_MILESTONES[k]);});}
@@ -4046,7 +4071,7 @@ function switchClientTab(tab){
   }
   CL_TAB=tab;
   clPg=1;
-  ['overview','resource','phases','addons','milestones','afterho'].forEach(function(t){
+  ['overview','resource','phases','addons','milestones','afterho','pmtooldata'].forEach(function(t){
     document.getElementById('ctab-'+t).classList.remove('ctab-on');
     document.getElementById('ctab-body-'+t).style.display='none';
   });
@@ -4916,6 +4941,7 @@ function renderClients(){
   document.getElementById('ctc-addons').textContent=rows.filter(function(d){var a=CL_ADDONS[d.no]||{};return a.sg||a.ba||a.std||a.otk||a.pd||a.pod||a.fpod;}).length;
   document.getElementById('ctc-milestones').textContent=rows.filter(function(d){return d.komDate||d.handOver||d.liveRun;}).length;
   document.getElementById('ctc-afterho').textContent=rows.filter(function(d){var a=CL_AFTERHO[d.no]||{};return a.csm||d.remarks==='Live';}).length;
+  document.getElementById('ctc-pmtooldata').textContent=rows.filter(function(d){var pm=CL_PMTOOL[d.no];return pm&&Object.keys(pm).some(function(k){return pm[k]!==null&&pm[k]!==undefined&&String(pm[k]).trim()!=='';});}).length;
 
   var slice=rows.slice((clPg-1)*PS,clPg*PS);
 
@@ -5118,6 +5144,18 @@ function renderClients(){
         '<td class="ctd">'+bdg(ahRemark)+'</td>'+
       '</tr>';
     }).join('');
+  } else if(CL_TAB==='pmtooldata'){
+    var pmContainer=document.getElementById('cl-pmtooldata-body');
+    if(pmContainer){
+      pmContainer.innerHTML=slice.map(function(d){
+        var pm=CL_PMTOOL[d.no];
+        var hasData=pm&&Object.keys(pm).some(function(k){return pm[k]!==null&&pm[k]!==undefined&&String(pm[k]).trim()!=='';});
+        return '<div style="border:1px solid var(--s2);border-radius:10px;padding:.85rem 1rem;margin-bottom:10px;">'+
+          '<div style="font-weight:700;font-size:13px;color:var(--s8);margin-bottom:6px;">'+escHtml(d.client)+'</div>'+
+          (hasData?pmtoolDetailRows(pm):'<div style="font-size:11.5px;color:var(--s5);">No PM Tool data applied yet — use "Assign to client" on the PM Tool Data page to push fields here.</div>')+
+        '</div>';
+      }).join('');
+    }
   }
 
   clPaginate(rows);
@@ -8543,6 +8581,8 @@ async function loadFromSupabase(){
     if(rm.data){CL_MILESTONES={};rm.data.forEach(function(m){CL_MILESTONES[m.client_no]={churnDate:m.churn_date||'',billingMonth:m.billing_month||'',monthCompleted:m.month_completed||''};});}
     var rh=await _supa.from('client_afterho').select('*');
     if(rh.data){CL_AFTERHO={};rh.data.forEach(function(a){CL_AFTERHO[a.client_no]={csm:a.csm||'',processor:a.processor||'',turnedOver:a.turned_over?1:0};});}
+    var rp=await _supa.from('client_pmtool_data').select('*');
+    if(rp.data){CL_PMTOOL={};rp.data.forEach(function(x){CL_PMTOOL[x.client_no]=x.data||{};});}
     var rt=await _supa.from('team_config').select('*').eq('id',1).maybeSingle();
     if(rt.data){
       if(rt.data.impl_pyo)TEAM_CONFIG.implPYO=rt.data.impl_pyo;
@@ -8556,7 +8596,7 @@ async function loadFromSupabase(){
       if(rt.data.pms && !TEAM_CONFIG._fromLocalStorage)TEAM_CONFIG.pms=rt.data.pms;
       try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD||[],implPOD:TEAM_CONFIG.implPOD||[],implFPOD:TEAM_CONFIG.implFPOD||[],pms:TEAM_CONFIG.pms}));}catch(e){}
     }
-    try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));}catch(e){}
+    try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));localStorage.setItem('pyo_pmtool',JSON.stringify(CL_PMTOOL));}catch(e){}
     // Load vault items from Supabase — merges with localStorage, preserving offline base64
     var rv=await _supa.from('vault_items').select('id,name,category,client_name,type,url,file_name,file_path,file_type,notes,uploaded_by,uploaded_at,mom_type,mom_date,deck_type').order('uploaded_at',{ascending:false});
     if(!rv.error&&rv.data&&rv.data.length){
@@ -8633,6 +8673,13 @@ async function _supaFlush(){
       var r4=await _supa.from('client_afterho').upsert(hr,{onConflict:'client_no'});
       if(r4.error){console.warn('afterho save error:',r4.error.message);}
       else{changedAfterho.forEach(function(k){_snap.afterho[k]=JSON.stringify(CL_AFTERHO[k]);});}
+    }
+    var changedPmtool=Object.keys(CL_PMTOOL).filter(function(k){return JSON.stringify(CL_PMTOOL[k])!==_snap.pmtool[k];});
+    if(changedPmtool.length){
+      var pr=changedPmtool.map(function(k){return{client_no:parseInt(k),data:CL_PMTOOL[k]};});
+      var r5=await _supa.from('client_pmtool_data').upsert(pr,{onConflict:'client_no'});
+      if(r5.error){console.warn('pmtool data save error:',r5.error.message);}
+      else{changedPmtool.forEach(function(k){_snap.pmtool[k]=JSON.stringify(CL_PMTOOL[k]);});}
     }
   }catch(e){console.warn('Supabase save failed:',e);}
 }
