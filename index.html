@@ -3155,6 +3155,7 @@ function go(page){
     if(ni)ni.classList.remove('on');
     if(p==='impl'&&pg)pg.style.display='none';
     if(p==='issues'&&pg)pg.style.display='none';
+    if(p==='pmtool'&&pg)pg.style.display='none';
   });
   var myClientsNav=document.getElementById('nav-my-clients');
   if(myClientsNav)myClientsNav.classList.remove('on');
@@ -3184,6 +3185,7 @@ function go(page){
   // Restore flex display when impl is the active page
   if(page==='impl'&&pg)pg.style.display='flex';
   if(page==='issues'&&pg)pg.style.display='flex';
+  if(page==='pmtool'&&pg)pg.style.display='flex';
   // Sync new clients dropdown active state and keep it open
   if(page==='clients'){
     if(CL_TYPE==='ps'){if(clPsBtn)clPsBtn.classList.add('active');}
