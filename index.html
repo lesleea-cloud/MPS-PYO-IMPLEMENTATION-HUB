@@ -1853,9 +1853,9 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
         <button onclick="pmtoolFilterClear()" style="padding:5px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">Clear</button>
       </div>
 
-      <div class="panel" style="padding:0;overflow-x:auto;">
-        <div id="pmtool-body"></div>
-      </div>
+      <div id="pmtool-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+
+      <div id="pmtool-body"></div>
     </div>
 
     <!-- ══ AUDIT TRAIL PAGE ══ -->
@@ -2469,14 +2469,12 @@ async function refreshPmToolEvents(){
   if(btn){btn.style.opacity='';btn.style.pointerEvents='';}
 }
 function pmtoolTogglePayload(rid){
-  var prev=document.getElementById('pmtool-prev-'+rid);
   var full=document.getElementById('pmtool-full-'+rid);
   var btn=document.getElementById('pmtool-btn-'+rid);
-  if(!prev||!full||!btn)return;
+  if(!full||!btn)return;
   var showingFull=full.style.display!=='none';
   full.style.display=showingFull?'none':'block';
-  prev.style.display=showingFull?'block':'none';
-  btn.textContent=showingFull?'View full payload':'Hide';
+  btn.textContent=showingFull?'View full payload':'Hide full payload';
 }
 function pmtoolToggleSchema(){
   var box=document.getElementById('pmtool-schema-box');
@@ -2517,14 +2515,13 @@ function pmtoolPrettyKey(k){
   return s.replace(/\b\w/g,function(c){return c.toUpperCase();});
 }
 var PMTOOL_NAME_KEYS=['title','client','clientName','client_name','company','companyName'];
-function pmtoolSummaryHtml(p){
+function pmtoolChipsHtml(p,excludeKeys){
   if(!p||typeof p!=='object'||Array.isArray(p)){
     return '<span style="color:var(--s5);font-size:11px;">(payload isn\'t a plain object — use "View full payload")</span>';
   }
-  var nameKey=PMTOOL_NAME_KEYS.find(function(k){return p[k]!=null&&String(p[k]).trim()!=='';});
-  var name=nameKey?String(p[nameKey]).trim():'';
+  var ex=excludeKeys||[];
   var chips=Object.keys(p).filter(function(k){
-    if(k===nameKey)return false;
+    if(ex.indexOf(k)>=0)return false;
     var v=p[k];
     return v!==null&&v!==undefined&&String(v).trim()!=='';
   }).map(function(k){
@@ -2533,61 +2530,112 @@ function pmtoolSummaryHtml(p){
     if(disp.length>40)disp=disp.slice(0,40)+'…';
     return '<span style="display:inline-block;padding:2px 8px;border-radius:6px;background:var(--s0);border:1px solid var(--s2);font-size:10.5px;color:var(--s7);margin:2px 4px 2px 0;"><b style="color:var(--s5);font-weight:600;">'+escHtml(pmtoolPrettyKey(k))+':</b> '+escHtml(disp)+'</span>';
   }).join('');
-  return (name?'<div style="font-weight:700;font-size:12.5px;color:var(--s8);margin-bottom:4px;">'+escHtml(name)+'</div>':'')+
-    '<div>'+(chips||'<span style="color:var(--s5);font-size:11px;">No other populated fields</span>')+'</div>';
+  return chips||'<span style="color:var(--s5);font-size:11px;">No other populated fields</span>';
+}
+// Fixed categorical order (never cycled per-row) — each segment value gets the
+// same color everywhere (card + matching stat tile) for the life of a render.
+// Slate is the deliberate "ran out of brand hues" fallback past 3 segments,
+// not a 4th invented color.
+var PMTOOL_CAT_COLORS=[
+  {c:'var(--b)',c0:'var(--b0)',c1:'var(--b1)'},
+  {c:'var(--v)',c0:'var(--v0)',c1:'var(--v1)'},
+  {c:'var(--g4)',c0:'var(--g0)',c1:'var(--g2)'}
+];
+var PMTOOL_NEUTRAL_COLOR={c:'var(--s6)',c0:'var(--s0)',c1:'var(--s2)'};
+function pmtoolCatColor(key,knownKeys){
+  var idx=knownKeys.indexOf(key);
+  if(idx<0||idx>=PMTOOL_CAT_COLORS.length)return PMTOOL_NEUTRAL_COLOR;
+  return PMTOOL_CAT_COLORS[idx];
+}
+function pmtoolFmtDate(v){
+  if(!v)return '—';
+  var d=new Date(v);
+  if(isNaN(d.getTime()))return String(v);
+  var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return MN[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
 }
 function renderPmTool(){
   var body=document.getElementById('pmtool-body');
+  var statsEl=document.getElementById('pmtool-stats');
   if(!body)return;
   if(!PMTOOL_EVENTS.length){
+    if(statsEl)statsEl.innerHTML='';
     body.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg><div class="vault-empty-title">No PM Tool data yet</div><div class="vault-empty-sub">Once the PM Tool pushes data to the webhook URL (Settings → Integrations), incoming entries will show up here.</div></div>';
     return;
   }
   var visible=PMTOOL_EVENTS.filter(pmtoolMatchesFilters);
   if(!visible.length){
+    if(statsEl)statsEl.innerHTML='';
     body.innerHTML='<div class="vault-empty"><div class="vault-empty-title">No events match these filters</div><div class="vault-empty-sub">Try clearing the client, date, or status filters above.</div></div>';
     return;
   }
+  var segments=[];
+  visible.forEach(function(e){
+    var seg=e.payload&&typeof e.payload==='object'&&!Array.isArray(e.payload)?e.payload.segment:null;
+    if(seg&&segments.indexOf(seg)===-1)segments.push(seg);
+  });
+  segments.sort();
+  if(statsEl){
+    var unassignedCount=visible.filter(function(e){return (e.status||'unassigned')==='unassigned';}).length;
+    var tiles=[{label:'Total staged',value:visible.length,c:'var(--s7)'},{label:'Unassigned',value:unassignedCount,c:'var(--o)'}];
+    segments.forEach(function(seg){
+      var count=visible.filter(function(e){return e.payload&&e.payload.segment===seg;}).length;
+      tiles.push({label:seg,value:count,c:pmtoolCatColor(seg,segments).c});
+    });
+    statsEl.innerHTML=tiles.map(function(t){
+      return '<div style="flex:1;min-width:130px;background:#fff;border-radius:var(--r12);padding:.75rem 1rem;border-top:3px solid '+t.c+';box-shadow:var(--sh);">'+
+        '<div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">'+escHtml(t.label)+'</div>'+
+        '<div style="font-size:24px;font-weight:700;color:'+t.c+';font-family:var(--mono);line-height:1;">'+t.value+'</div>'+
+      '</div>';
+    }).join('');
+  }
   var STATUS_STYLE={
-    unassigned:'color:var(--s6);background:var(--s0);border:1px solid var(--s2);',
-    assigned:'color:#15803d;background:var(--g0);border:1px solid var(--g2);',
+    unassigned:'color:var(--o);background:var(--o0);border:1px solid var(--o1);',
+    assigned:'color:var(--g4);background:var(--g0);border:1px solid var(--g2);',
     dismissed:'color:var(--s5);background:var(--s0);border:1px solid var(--s2);'
   };
   var STATUS_LABEL={unassigned:'Unassigned',assigned:'Assigned',dismissed:'Dismissed'};
-  var h='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>'+
-    '<th class="cth">Received</th><th class="cth">Integration</th><th class="cth" style="min-width:240px;">Summary</th><th class="cth">Status</th><th class="cth" style="min-width:140px;">Actions</th>'+
-  '</tr></thead><tbody>';
-  visible.forEach(function(e){
-    var raw=JSON.stringify(e.payload,null,2)||'';
+  body.innerHTML=visible.map(function(e){
+    var p=e.payload&&typeof e.payload==='object'&&!Array.isArray(e.payload)?e.payload:null;
     var rid=String(e.id);
     var status=e.status||'unassigned';
-    var chip='<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;'+(STATUS_STYLE[status]||STATUS_STYLE.unassigned)+'">'+STATUS_LABEL[status]+'</span>';
+    var nameKey=p&&PMTOOL_NAME_KEYS.find(function(k){return p[k]!=null&&String(p[k]).trim()!=='';});
+    var name=nameKey?String(p[nameKey]).trim():'(untitled record)';
+    var seg=p&&p.segment;
+    var subtitle=[seg,p&&p.clientStage].filter(function(x){return x&&String(x).trim()!=='';}).join(' · ');
+    var col=seg?pmtoolCatColor(seg,segments):PMTOOL_NEUTRAL_COLOR;
+    var products=p&&Array.isArray(p.productsAvailed)&&p.productsAvailed.length?p.productsAvailed:null;
+    var chipsHtml=products
+      ?products.map(function(prod){return '<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:700;color:#fff;background:'+col.c+';margin:2px 5px 2px 0;">'+escHtml(String(prod))+'</span>';}).join('')
+      :pmtoolChipsHtml(p,[nameKey,'segment','clientStage','lastUpdated'].filter(Boolean));
+    var updatedDisp=pmtoolFmtDate((p&&p.lastUpdated)||e.received_at);
+    var raw=JSON.stringify(e.payload,null,2)||'';
+    var chip='<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10.5px;font-weight:600;'+(STATUS_STYLE[status]||STATUS_STYLE.unassigned)+'">'+STATUS_LABEL[status]+'</span>';
     if(status==='assigned'&&e.applied_to_client){
       var c=D.find(function(d){return d.no===e.applied_to_client;});
-      if(c)chip+='<div style="font-size:10px;color:var(--s5);margin-top:3px;">→ '+escHtml(c.client)+'</div>';
+      if(c)chip+='<div style="font-size:10px;color:var(--s5);margin-top:3px;text-align:right;">→ '+escHtml(c.client)+'</div>';
     }
-    var btnStyle='padding:3px 9px;border-radius:6px;border:1px solid var(--s2);background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);text-align:left;';
-    var actions='<div style="display:flex;flex-direction:column;gap:4px;">'+
-      '<button onclick="pmtoolOpenAssign(\''+rid+'\')" style="'+btnStyle+'">Assign to client</button>'+
-      '<button onclick="pmtoolCreateClient(\''+rid+'\')" style="'+btnStyle+'">Create new client</button>'+
+    var btnStyle='padding:3px 10px;border-radius:6px;border:1px solid '+col.c1+';background:#fff;font-size:10.5px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);';
+    var actions='<button onclick="pmtoolOpenAssign(\''+rid+'\')" style="'+btnStyle+'">Assign to client</button>'+
+      '<button onclick="pmtoolCreateClient(\''+rid+'\')" style="'+btnStyle+'margin-left:6px;">Create new client</button>'+
       (status!=='dismissed'
-        ?'<button onclick="pmtoolDismiss(\''+rid+'\')" style="'+btnStyle+'">Dismiss</button>'
-        :'<button onclick="pmtoolUndismiss(\''+rid+'\')" style="'+btnStyle+'">Restore</button>')+
+        ?'<button onclick="pmtoolDismiss(\''+rid+'\')" style="'+btnStyle+'margin-left:6px;">Dismiss</button>'
+        :'<button onclick="pmtoolUndismiss(\''+rid+'\')" style="'+btnStyle+'margin-left:6px;">Restore</button>')+
+      '<button id="pmtool-btn-'+rid+'" onclick="pmtoolTogglePayload(\''+rid+'\')" style="'+btnStyle+'margin-left:6px;">View full payload</button>';
+    return '<div style="background:'+col.c0+';border:1px solid '+col.c1+';border-radius:var(--r12);padding:1rem 1.1rem;margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+        '<div style="font-size:14px;font-weight:700;color:var(--s9);">'+escHtml(name)+'</div>'+
+        '<div>'+chip+'</div>'+
+      '</div>'+
+      (subtitle?'<div style="font-size:11.5px;font-weight:600;color:'+col.c+';margin-top:2px;">'+escHtml(subtitle)+'</div>':'')+
+      '<div style="margin-top:8px;">'+chipsHtml+'</div>'+
+      '<div style="border-top:1px solid '+col.c1+';margin-top:10px;padding-top:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'+
+        '<div style="font-size:10.5px;font-weight:600;color:'+col.c+';">Updated '+escHtml(updatedDisp)+'</div>'+
+        '<div>'+actions+'</div>'+
+      '</div>'+
+      '<pre id="pmtool-full-'+rid+'" style="display:none;font-family:var(--mono);font-size:11px;color:var(--s7);white-space:pre-wrap;word-break:break-all;background:#fff;padding:8px;border-radius:6px;margin-top:8px;">'+escHtml(raw)+'</pre>'+
     '</div>';
-    h+='<tr>'+
-      '<td class="ctd" style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--s6);">'+escHtml(e.received_at||'')+'</td>'+
-      '<td class="ctd">'+escHtml(e.integration_id||'—')+'</td>'+
-      '<td class="ctd">'+
-        '<div id="pmtool-prev-'+rid+'">'+pmtoolSummaryHtml(e.payload)+'</div>'+
-        '<pre id="pmtool-full-'+rid+'" style="display:none;font-family:var(--mono);font-size:11px;color:var(--s7);white-space:pre-wrap;word-break:break-all;background:var(--s0);padding:8px;border-radius:6px;margin:4px 0;">'+escHtml(raw)+'</pre>'+
-        (raw.length>0?'<button id="pmtool-btn-'+rid+'" onclick="pmtoolTogglePayload(\''+rid+'\')" style="margin-top:4px;padding:2px 8px;border:1px solid var(--s2);border-radius:6px;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);">View full payload</button>':'')+
-      '</td>'+
-      '<td class="ctd">'+chip+'</td>'+
-      '<td class="ctd">'+actions+'</td>'+
-    '</tr>';
-  });
-  h+='</tbody></table>';
-  body.innerHTML=h;
+  }).join('');
 }
 function pmtoolFindEvent(rid){
   return PMTOOL_EVENTS.find(function(x){return String(x.id)===String(rid);});
