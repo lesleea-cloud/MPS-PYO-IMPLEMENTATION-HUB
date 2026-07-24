@@ -1176,6 +1176,20 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
   </div>
 </div>
 
+<!-- ══ PM TOOL EVENT — DISMISSED PROJECTS MODAL ══ -->
+<div class="modal-ov" id="pmtool-dismissed-modal">
+  <div class="modal-box" style="max-width:640px;">
+    <div class="modal-hdr">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">PM Tool Data</div>
+        <div class="modal-title">Dismissed projects</div>
+      </div>
+      <button class="modal-close" onclick="pmtoolCloseDismissed()">×</button>
+    </div>
+    <div id="pmtool-dismissed-body" style="padding:0 1.5rem 1.5rem;display:flex;flex-direction:column;gap:10px;max-height:65vh;overflow-y:auto;"></div>
+  </div>
+</div>
+
 <!-- ══ CANCEL DIALOG ══ -->
 <div class="cancel-dialog-bg" id="tab-cancel-dialog">
   <div class="cancel-dialog">
@@ -1854,9 +1868,12 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
           <option value="">All statuses</option>
           <option value="unassigned">Unassigned</option>
           <option value="assigned">Assigned</option>
-          <option value="dismissed">Dismissed</option>
         </select>
         <button onclick="pmtoolFilterClear()" style="padding:5px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">Clear</button>
+        <button id="pmtool-dismissed-btn" onclick="pmtoolOpenDismissed()" style="margin-left:auto;padding:5px 10px;border-radius:7px;border:1px solid var(--s2);background:#fff;color:var(--s6);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>
+          Dismissed <span id="pmtool-dismissed-count" style="background:var(--s2);color:var(--s7);border-radius:10px;padding:1px 7px;font-family:var(--mono);">0</span>
+        </button>
       </div>
 
       <div id="pmtool-stats" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
@@ -2498,11 +2515,12 @@ function pmtoolFilterClear(){
   renderPmTool();
 }
 function pmtoolMatchesFilters(e){
+  var status=e.status||'unassigned';
+  if(status==='dismissed')return false;
   var clientQ=((document.getElementById('pmtool-filt-client')||{}).value||'').trim().toLowerCase();
   var from=(document.getElementById('pmtool-filt-from')||{}).value||'';
   var to=(document.getElementById('pmtool-filt-to')||{}).value||'';
   var statusQ=(document.getElementById('pmtool-filt-status')||{}).value||'';
-  var status=e.status||'unassigned';
   if(statusQ&&status!==statusQ)return false;
   if(clientQ&&JSON.stringify(e.payload||{}).toLowerCase().indexOf(clientQ)===-1)return false;
   if(from||to){
@@ -2511,6 +2529,47 @@ function pmtoolMatchesFilters(e){
     if(to&&recv>to)return false;
   }
   return true;
+}
+function pmtoolDismissedEvents(){
+  return PMTOOL_EVENTS.filter(function(e){return (e.status||'unassigned')==='dismissed';});
+}
+function pmtoolRenderDismissed(){
+  var countEl=document.getElementById('pmtool-dismissed-count');
+  var list=pmtoolDismissedEvents();
+  if(countEl)countEl.textContent=list.length;
+  var body=document.getElementById('pmtool-dismissed-body');
+  if(!body)return;
+  if(!list.length){
+    body.innerHTML='<div class="vault-empty"><div class="vault-empty-title">No dismissed projects</div><div class="vault-empty-sub">Projects you dismiss from the main list will show up here.</div></div>';
+    return;
+  }
+  body.innerHTML=list.map(function(e){
+    var p=e.payload&&typeof e.payload==='object'&&!Array.isArray(e.payload)?e.payload:null;
+    var rid=String(e.id);
+    var nameKey=p&&PMTOOL_NAME_KEYS.find(function(k){return p[k]!=null&&String(p[k]).trim()!=='';});
+    var name=nameKey?String(p[nameKey]).trim():'(untitled record)';
+    var seg=p&&p.segment;
+    var subtitle=[seg,p&&p.clientStage].filter(function(x){return x&&String(x).trim()!=='';}).join(' · ');
+    var updatedDisp=pmtoolFmtDate((p&&p.lastUpdated)||e.received_at);
+    return '<div style="background:var(--s0);border:1px solid var(--s2);border-radius:var(--r12);padding:.85rem 1rem;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">'+
+        '<div>'+
+          '<div style="font-size:13.5px;font-weight:700;color:var(--s9);">'+escHtml(name)+'</div>'+
+          (subtitle?'<div style="font-size:11px;font-weight:600;color:var(--s5);margin-top:2px;">'+escHtml(subtitle)+'</div>':'')+
+          '<div style="font-size:10.5px;color:var(--s4);margin-top:4px;">Updated '+escHtml(updatedDisp)+'</div>'+
+        '</div>'+
+        '<button onclick="pmtoolUndismiss(\''+rid+'\')" style="padding:4px 12px;border-radius:6px;border:1px solid var(--s2);background:#fff;font-size:11px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);white-space:nowrap;">Restore</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function pmtoolOpenDismissed(){
+  pmtoolRenderDismissed();
+  document.getElementById('pmtool-dismissed-modal').classList.add('open');
+}
+function pmtoolCloseDismissed(){
+  var mo=document.getElementById('pmtool-dismissed-modal');
+  if(mo)mo.classList.remove('open');
 }
 function pmtoolTargetLabel(target){
   if(target.indexOf('pmtool.')===0)return pmtoolPrettyKey(target.slice(7))+' (PM Tool Data)';
@@ -2611,6 +2670,7 @@ function renderPmTool(){
   var body=document.getElementById('pmtool-body');
   var statsEl=document.getElementById('pmtool-stats');
   if(!body)return;
+  pmtoolRenderDismissed();
   if(!PMTOOL_EVENTS.length){
     if(statsEl)statsEl.innerHTML='';
     body.innerHTML='<div class="vault-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg><div class="vault-empty-title">No PM Tool data yet</div><div class="vault-empty-sub">Once the PM Tool pushes data to the webhook URL (Settings → Integrations), incoming entries will show up here.</div></div>';
