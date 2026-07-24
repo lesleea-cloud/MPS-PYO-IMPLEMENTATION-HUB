@@ -2570,6 +2570,36 @@ function pmtoolFmtDate(v){
   var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return MN[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear();
 }
+// "View full payload" used to mean the literal raw JSON — for this integration's
+// ~33-field schema where only a handful are ever non-null, that's 25+ lines of
+// "null" to scan past. This renders only the populated fields as label/value
+// rows; the literal JSON is still one more click away via "Show raw JSON".
+function pmtoolDetailRows(p){
+  if(!p||typeof p!=='object'||Array.isArray(p))return '<div style="color:var(--s5);font-size:11px;">(payload isn\'t a plain object)</div>';
+  var keys=Object.keys(p).filter(function(k){
+    var v=p[k];
+    return v!==null&&v!==undefined&&String(v).trim()!=='';
+  });
+  if(!keys.length)return '<div style="color:var(--s5);font-size:11px;">No populated fields.</div>';
+  return '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;">'+keys.map(function(k){
+    var v=p[k];
+    var disp;
+    if(typeof v==='boolean')disp=v?'Yes':'No';
+    else if(v&&typeof v==='object')disp=JSON.stringify(v);
+    else disp=String(v);
+    if(/^\d{4}-\d{2}-\d{2}/.test(disp))disp=pmtoolFmtDate(disp);
+    return '<div style="font-size:10.5px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;">'+escHtml(pmtoolPrettyKey(k))+'</div>'+
+      '<div style="font-size:12px;color:var(--s8);word-break:break-all;">'+escHtml(disp)+'</div>';
+  }).join('')+'</div>';
+}
+function pmtoolToggleRawJson(rid){
+  var pre=document.getElementById('pmtool-rawjson-'+rid);
+  var btn=document.getElementById('pmtool-rawbtn-'+rid);
+  if(!pre||!btn)return;
+  var showing=pre.style.display!=='none';
+  pre.style.display=showing?'none':'block';
+  btn.textContent=showing?'Show raw JSON':'Hide raw JSON';
+}
 function renderPmTool(){
   var body=document.getElementById('pmtool-body');
   var statsEl=document.getElementById('pmtool-stats');
@@ -2620,7 +2650,10 @@ function renderPmTool(){
     var seg=p&&p.segment;
     var subtitle=[seg,p&&p.clientStage].filter(function(x){return x&&String(x).trim()!=='';}).join(' · ');
     var col=PMTOOL_CARD_COLORS[idx%PMTOOL_CARD_COLORS.length];
-    var products=p&&Array.isArray(p.productsAvailed)&&p.productsAvailed.length?p.productsAvailed:null;
+    var productsRaw=p&&p.productsAvailed;
+    var products=null;
+    if(Array.isArray(productsRaw)&&productsRaw.length)products=productsRaw;
+    else if(typeof productsRaw==='string'&&productsRaw.trim())products=productsRaw.split(';').map(function(s){return s.trim();}).filter(Boolean);
     var chipsHtml=products
       ?products.map(function(prod){return '<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:700;color:#fff;background:'+col.c+';margin:2px 5px 2px 0;">'+escHtml(String(prod))+'</span>';}).join('')
       :pmtoolChipsHtml(p,[nameKey,'segment','clientStage','lastUpdated'].filter(Boolean));
@@ -2649,7 +2682,11 @@ function renderPmTool(){
         '<div style="font-size:10.5px;font-weight:600;color:'+col.c+';">Updated '+escHtml(updatedDisp)+'</div>'+
         '<div>'+actions+'</div>'+
       '</div>'+
-      '<pre id="pmtool-full-'+rid+'" style="display:none;font-family:var(--mono);font-size:11px;color:var(--s7);white-space:pre-wrap;word-break:break-all;background:#fff;padding:8px;border-radius:6px;margin-top:8px;">'+escHtml(raw)+'</pre>'+
+      '<div id="pmtool-full-'+rid+'" style="display:none;background:#fff;border-radius:6px;padding:10px 12px;margin-top:8px;">'+
+        pmtoolDetailRows(p)+
+        '<button id="pmtool-rawbtn-'+rid+'" onclick="pmtoolToggleRawJson(\''+rid+'\')" style="margin-top:10px;padding:2px 8px;border:1px solid var(--s2);border-radius:6px;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);">Show raw JSON</button>'+
+        '<pre id="pmtool-rawjson-'+rid+'" style="display:none;font-family:var(--mono);font-size:11px;color:var(--s7);white-space:pre-wrap;word-break:break-all;background:var(--s0);padding:8px;border-radius:6px;margin-top:6px;">'+escHtml(raw)+'</pre>'+
+      '</div>'+
     '</div>';
   }).join('');
 }
