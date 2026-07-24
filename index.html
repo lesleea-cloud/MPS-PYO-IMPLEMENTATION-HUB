@@ -2533,9 +2533,9 @@ function pmtoolChipsHtml(p,excludeKeys){
   return chips||'<span style="color:var(--s5);font-size:11px;">No other populated fields</span>';
 }
 // Fixed categorical order (never cycled per-row) — each segment value gets the
-// same color everywhere (card + matching stat tile) for the life of a render.
-// Slate is the deliberate "ran out of brand hues" fallback past 3 segments,
-// not a 4th invented color.
+// same color everywhere on the STAT TILES, so a tile's count and its color both
+// mean "this segment" consistently. Slate is the deliberate "ran out of brand
+// hues" fallback past 3 segments, not a 4th invented color.
 var PMTOOL_CAT_COLORS=[
   {c:'var(--b)',c0:'var(--b0)',c1:'var(--b1)'},
   {c:'var(--v)',c0:'var(--v0)',c1:'var(--v1)'},
@@ -2547,6 +2547,22 @@ function pmtoolCatColor(key,knownKeys){
   if(idx<0||idx>=PMTOOL_CAT_COLORS.length)return PMTOOL_NEUTRAL_COLOR;
   return PMTOOL_CAT_COLORS[idx];
 }
+// Card backgrounds are pure visual rhythm, not a data encoding (unlike the stat
+// tiles above) — the user asked for a colorful list, so this cycles through all
+// four Sprout brand hues by position rather than mapping to segment. Because
+// it's decorative, not identity-bearing, cycling here doesn't violate "color
+// follows the entity" — nothing about the card's meaning is being encoded by it.
+var PMTOOL_CARD_COLORS=[
+  {c:'var(--g4)',c0:'var(--g0)',c1:'var(--g2)'},
+  {c:'var(--b)',c0:'var(--b0)',c1:'var(--b1)'},
+  {c:'var(--o)',c0:'var(--o0)',c1:'var(--o1)'},
+  {c:'var(--v)',c0:'var(--v0)',c1:'var(--v1)'}
+];
+var PMTOOL_STATUS_ICON={
+  unassigned:'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="9"/></svg>',
+  assigned:'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  dismissed:'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+};
 function pmtoolFmtDate(v){
   if(!v)return '—';
   var d=new Date(v);
@@ -2590,12 +2606,12 @@ function renderPmTool(){
     }).join('');
   }
   var STATUS_STYLE={
-    unassigned:'color:var(--o);background:var(--o0);border:1px solid var(--o1);',
-    assigned:'color:var(--g4);background:var(--g0);border:1px solid var(--g2);',
-    dismissed:'color:var(--s5);background:var(--s0);border:1px solid var(--s2);'
+    unassigned:'color:var(--o);background:#fff;border:1px solid var(--s2);',
+    assigned:'color:var(--g4);background:#fff;border:1px solid var(--s2);',
+    dismissed:'color:var(--s5);background:#fff;border:1px solid var(--s2);'
   };
   var STATUS_LABEL={unassigned:'Unassigned',assigned:'Assigned',dismissed:'Dismissed'};
-  body.innerHTML=visible.map(function(e){
+  body.innerHTML=visible.map(function(e,idx){
     var p=e.payload&&typeof e.payload==='object'&&!Array.isArray(e.payload)?e.payload:null;
     var rid=String(e.id);
     var status=e.status||'unassigned';
@@ -2603,14 +2619,14 @@ function renderPmTool(){
     var name=nameKey?String(p[nameKey]).trim():'(untitled record)';
     var seg=p&&p.segment;
     var subtitle=[seg,p&&p.clientStage].filter(function(x){return x&&String(x).trim()!=='';}).join(' · ');
-    var col=seg?pmtoolCatColor(seg,segments):PMTOOL_NEUTRAL_COLOR;
+    var col=PMTOOL_CARD_COLORS[idx%PMTOOL_CARD_COLORS.length];
     var products=p&&Array.isArray(p.productsAvailed)&&p.productsAvailed.length?p.productsAvailed:null;
     var chipsHtml=products
       ?products.map(function(prod){return '<span style="display:inline-block;padding:3px 11px;border-radius:20px;font-size:10.5px;font-weight:700;color:#fff;background:'+col.c+';margin:2px 5px 2px 0;">'+escHtml(String(prod))+'</span>';}).join('')
       :pmtoolChipsHtml(p,[nameKey,'segment','clientStage','lastUpdated'].filter(Boolean));
     var updatedDisp=pmtoolFmtDate((p&&p.lastUpdated)||e.received_at);
     var raw=JSON.stringify(e.payload,null,2)||'';
-    var chip='<span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10.5px;font-weight:600;'+(STATUS_STYLE[status]||STATUS_STYLE.unassigned)+'">'+STATUS_LABEL[status]+'</span>';
+    var chip='<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:20px;font-size:10.5px;font-weight:600;'+(STATUS_STYLE[status]||STATUS_STYLE.unassigned)+'">'+(PMTOOL_STATUS_ICON[status]||'')+STATUS_LABEL[status]+'</span>';
     if(status==='assigned'&&e.applied_to_client){
       var c=D.find(function(d){return d.no===e.applied_to_client;});
       if(c)chip+='<div style="font-size:10px;color:var(--s5);margin-top:3px;text-align:right;">→ '+escHtml(c.client)+'</div>';
