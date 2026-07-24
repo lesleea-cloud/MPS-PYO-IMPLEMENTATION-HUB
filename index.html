@@ -1186,6 +1186,9 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
       </div>
       <button class="modal-close" onclick="pmtoolCloseDismissed()">×</button>
     </div>
+    <div style="padding:0 1.5rem .9rem;">
+      <input id="pmtool-dismissed-search" type="text" placeholder="Search dismissed projects…" oninput="pmtoolRenderDismissed()" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+    </div>
     <div id="pmtool-dismissed-body" style="padding:0 1.5rem 1.5rem;display:flex;flex-direction:column;gap:10px;max-height:65vh;overflow-y:auto;"></div>
   </div>
 </div>
@@ -2535,12 +2538,18 @@ function pmtoolDismissedEvents(){
 }
 function pmtoolRenderDismissed(){
   var countEl=document.getElementById('pmtool-dismissed-count');
-  var list=pmtoolDismissedEvents();
-  if(countEl)countEl.textContent=list.length;
+  var all=pmtoolDismissedEvents();
+  if(countEl)countEl.textContent=all.length;
   var body=document.getElementById('pmtool-dismissed-body');
   if(!body)return;
-  if(!list.length){
+  var q=((document.getElementById('pmtool-dismissed-search')||{}).value||'').trim().toLowerCase();
+  var list=q?all.filter(function(e){return JSON.stringify(e.payload||{}).toLowerCase().indexOf(q)!==-1;}):all;
+  if(!all.length){
     body.innerHTML='<div class="vault-empty"><div class="vault-empty-title">No dismissed projects</div><div class="vault-empty-sub">Projects you dismiss from the main list will show up here.</div></div>';
+    return;
+  }
+  if(!list.length){
+    body.innerHTML='<div class="vault-empty"><div class="vault-empty-title">No dismissed projects match "'+escHtml(q)+'"</div><div class="vault-empty-sub">Try a different search term.</div></div>';
     return;
   }
   body.innerHTML=list.map(function(e){
@@ -2564,6 +2573,8 @@ function pmtoolRenderDismissed(){
   }).join('');
 }
 function pmtoolOpenDismissed(){
+  var search=document.getElementById('pmtool-dismissed-search');
+  if(search)search.value='';
   pmtoolRenderDismissed();
   document.getElementById('pmtool-dismissed-modal').classList.add('open');
 }
