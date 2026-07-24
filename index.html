@@ -2512,6 +2512,30 @@ function pmtoolTargetLabel(target){
   var m=PMTOOL_SCHEMA.find(function(s){return s.target===target;});
   return m?m.label:target;
 }
+function pmtoolPrettyKey(k){
+  var s=String(k||'').replace(/_/g,' ').replace(/([a-z0-9])([A-Z])/g,'$1 $2');
+  return s.replace(/\b\w/g,function(c){return c.toUpperCase();});
+}
+var PMTOOL_NAME_KEYS=['title','client','clientName','client_name','company','companyName'];
+function pmtoolSummaryHtml(p){
+  if(!p||typeof p!=='object'||Array.isArray(p)){
+    return '<span style="color:var(--s5);font-size:11px;">(payload isn\'t a plain object — use "View full payload")</span>';
+  }
+  var nameKey=PMTOOL_NAME_KEYS.find(function(k){return p[k]!=null&&String(p[k]).trim()!=='';});
+  var name=nameKey?String(p[nameKey]).trim():'';
+  var chips=Object.keys(p).filter(function(k){
+    if(k===nameKey)return false;
+    var v=p[k];
+    return v!==null&&v!==undefined&&String(v).trim()!=='';
+  }).map(function(k){
+    var v=p[k];
+    var disp=(v&&typeof v==='object')?JSON.stringify(v):String(v);
+    if(disp.length>40)disp=disp.slice(0,40)+'…';
+    return '<span style="display:inline-block;padding:2px 8px;border-radius:6px;background:var(--s0);border:1px solid var(--s2);font-size:10.5px;color:var(--s7);margin:2px 4px 2px 0;"><b style="color:var(--s5);font-weight:600;">'+escHtml(pmtoolPrettyKey(k))+':</b> '+escHtml(disp)+'</span>';
+  }).join('');
+  return (name?'<div style="font-weight:700;font-size:12.5px;color:var(--s8);margin-bottom:4px;">'+escHtml(name)+'</div>':'')+
+    '<div>'+(chips||'<span style="color:var(--s5);font-size:11px;">No other populated fields</span>')+'</div>';
+}
 function renderPmTool(){
   var body=document.getElementById('pmtool-body');
   if(!body)return;
@@ -2531,11 +2555,10 @@ function renderPmTool(){
   };
   var STATUS_LABEL={unassigned:'Unassigned',assigned:'Assigned',dismissed:'Dismissed'};
   var h='<table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr>'+
-    '<th class="cth">Received</th><th class="cth">Integration</th><th class="cth" style="min-width:240px;">Payload</th><th class="cth">Status</th><th class="cth" style="min-width:140px;">Actions</th>'+
+    '<th class="cth">Received</th><th class="cth">Integration</th><th class="cth" style="min-width:240px;">Summary</th><th class="cth">Status</th><th class="cth" style="min-width:140px;">Actions</th>'+
   '</tr></thead><tbody>';
   visible.forEach(function(e){
     var raw=JSON.stringify(e.payload,null,2)||'';
-    var preview=raw.length>140?raw.slice(0,140)+'…':raw;
     var rid=String(e.id);
     var status=e.status||'unassigned';
     var chip='<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;'+(STATUS_STYLE[status]||STATUS_STYLE.unassigned)+'">'+STATUS_LABEL[status]+'</span>';
@@ -2555,9 +2578,9 @@ function renderPmTool(){
       '<td class="ctd" style="white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--s6);">'+escHtml(e.received_at||'')+'</td>'+
       '<td class="ctd">'+escHtml(e.integration_id||'—')+'</td>'+
       '<td class="ctd">'+
-        '<div id="pmtool-prev-'+rid+'" style="font-family:var(--mono);font-size:11px;color:var(--s6);white-space:pre-wrap;word-break:break-all;">'+escHtml(preview)+'</div>'+
+        '<div id="pmtool-prev-'+rid+'">'+pmtoolSummaryHtml(e.payload)+'</div>'+
         '<pre id="pmtool-full-'+rid+'" style="display:none;font-family:var(--mono);font-size:11px;color:var(--s7);white-space:pre-wrap;word-break:break-all;background:var(--s0);padding:8px;border-radius:6px;margin:4px 0;">'+escHtml(raw)+'</pre>'+
-        (raw.length>140?'<button id="pmtool-btn-'+rid+'" onclick="pmtoolTogglePayload(\''+rid+'\')" style="margin-top:4px;padding:2px 8px;border:1px solid var(--s2);border-radius:6px;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);">View full payload</button>':'')+
+        (raw.length>0?'<button id="pmtool-btn-'+rid+'" onclick="pmtoolTogglePayload(\''+rid+'\')" style="margin-top:4px;padding:2px 8px;border:1px solid var(--s2);border-radius:6px;background:#fff;font-size:10px;font-weight:600;cursor:pointer;color:var(--s6);font-family:var(--font);">View full payload</button>':'')+
       '</td>'+
       '<td class="ctd">'+chip+'</td>'+
       '<td class="ctd">'+actions+'</td>'+
@@ -2586,7 +2609,7 @@ function pmtoolGuessClientNo(p){
     if(p[k]!=null){var n=parseInt(p[k]);if(D.some(function(d){return d.no===n;}))no=n;}
   });
   if(no)return no;
-  var name=String(p.client||p.clientName||p.client_name||p.company||p.companyName||'').trim().toLowerCase();
+  var name=String(p.title||p.client||p.clientName||p.client_name||p.company||p.companyName||'').trim().toLowerCase();
   if(!name)return null;
   var m=D.find(function(d){return d.client.trim().toLowerCase()===name;});
   return m?m.no:null;
