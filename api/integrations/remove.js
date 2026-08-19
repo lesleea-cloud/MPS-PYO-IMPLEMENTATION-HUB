@@ -15,7 +15,18 @@ module.exports = async function handler(req, res) {
     return;
   }
   try {
-    const r = await restFetch('/integrations?id=eq.' + encodeURIComponent(id), { method: 'DELETE' });
+    const r = await restFetch('/integrations?id=eq.' + encodeURIComponent(id), {
+      method: 'PATCH',
+      headers: { Prefer: 'return=minimal' },
+      body: JSON.stringify({
+        api_key: null,
+        key_last4: null,
+        status: 'not_configured',
+        configured_by: null,
+        configured_at: null,
+        updated_at: new Date().toISOString(),
+      }),
+    });
     if (!r.ok) {
       const t = await r.text();
       res.status(502).json({ error: 'Remove failed: ' + t });
