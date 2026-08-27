@@ -2399,6 +2399,13 @@ function fd(src,q,mon,st,res){
     return ok&&(!mon||d.month===mon)&&(!st||d.remarks===st)&&(!res||d.resource.indexOf(res)>=0);
   });
 }
+function implOwnsClient(d,user){
+  var u=(user||'').trim().toLowerCase();
+  if(!u)return false;
+  var res=(d.resource||'').toLowerCase().split('/').some(function(p){return p.trim()===u;});
+  var gov=(d.gov||'').trim().toLowerCase()===u;
+  return res||gov;
+}
  
 var TEAM_CONFIG = (function(){
   try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);t._fromLocalStorage=true;return t;}}catch(e){}
@@ -2988,7 +2995,7 @@ function vaultShowForm(){
   var vfClient=document.getElementById('vf-client');
   if(vfClient){
     var clientList=CURRENT_ROLE==='implementer'
-      ?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();})
+      ?D.filter(function(d){return implOwnsClient(d,IMPL_USER);})
       :D;
     vfClient.innerHTML='<option value="">— Select client (optional) —</option>'
       +clientList.map(function(d){return '<option value="'+d.client+'">'+d.client+'</option>';}).join('');
@@ -3527,7 +3534,7 @@ function renderWeekly(){
   var sk=['Live','Ongoing','Not yet started','Churned'];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var isImpl=CURRENT_ROLE==='implementer';
-  var myD=isImpl?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var myD=isImpl?D.filter(function(d){return implOwnsClient(d,IMPL_USER);}):D;
   var rl;
   if(isImpl){
     rl=[IMPL_USER];
@@ -3754,7 +3761,7 @@ function renderMonthlyStats(){
     {k:'Churned',       label:'Churned',     c:SC['Churned']},
   ];
   var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return implOwnsClient(d,IMPL_USER);}):D;
 
   /* Build row data — only months that have clients */
   var rows=[];
@@ -3988,7 +3995,7 @@ function tabTriggerDownload(fname){
     if (typeof XLSX === 'undefined') return;
     // Filter records: implementer gets own rows only, admin/manager gets all
     var exportData = CURRENT_ROLE==='implementer'
-      ? D.filter(function(d){ return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase(); })
+      ? D.filter(function(d){ return implOwnsClient(d,IMPL_USER); })
       : D;
     var wb = XLSX.utils.book_new();
 
@@ -4948,7 +4955,7 @@ function setClType(type){
 }
 
 function renderClients(){
-  var baseData=(CURRENT_ROLE==='implementer')?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var baseData=(CURRENT_ROLE==='implementer')?D.filter(function(d){return implOwnsClient(d,IMPL_USER);}):D;
   // Client type filter
   baseData=baseData.filter(function(d){
     if(CL_TYPE==='ps')      return d.service==='Payroll Starter';
@@ -5245,7 +5252,7 @@ function renderClients(){
 function ilSaveToStorage(){try{localStorage.setItem('pyo_issues',JSON.stringify(CL_ISSUES));}catch(e){}}
 
 function renderIssuesPage(){
-  var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return implOwnsClient(d,IMPL_USER);}):D;
   var sub=document.getElementById('issues-sub');
   if(sub)sub.textContent=CURRENT_ROLE==='implementer'?'Issues for '+IMPL_USER+'\'s clients':'All client issues';
   var container=document.getElementById('page-issues-body');
@@ -5417,7 +5424,7 @@ function implSetMode(mode){
     if(back)back.style.display='none';
     var titleEl=document.getElementById('impl-proj-panel-title');
     if(titleEl)titleEl.textContent='My Projects';
-    var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+    var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
     renderNewAssignPanel(myD);
     renderMissingProposalPanel(myD);
     renderPendingPanel(myD);
@@ -5437,7 +5444,7 @@ function implToggleSort(btn){
 }
 
 function implRenderProjects(){
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   var filtered=myD;
   if(IMPL_FILTER==='live')filtered=myD.filter(function(d){return d.remarks==='Live';});
   else if(IMPL_FILTER==='ongoing')filtered=myD.filter(function(d){return d.remarks==='Ongoing';});
@@ -5485,7 +5492,7 @@ function implRenderProjects(){
 }
 
 function renderImpl(){
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   document.getElementById('impl-name').textContent=IMPL_USER;
 
   /* Show admin section for implementer */
@@ -5572,7 +5579,7 @@ function _vaultCount(clientName,category){
   return VAULT_ITEMS.filter(function(v){return v.clientName===clientName&&v.category===category;}).length;
 }
 function renderMissingProposalPanel(myD){
-  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  if(!myD)myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   var panel=document.getElementById('cpanel-missproposal');
   var body=document.getElementById('cpbody-missproposal');
   var badge=document.getElementById('impl-missprop-badge');
@@ -5593,7 +5600,7 @@ function renderMissingProposalPanel(myD){
     +'</div>';
 }
 function renderPendingPanel(myD){
-  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  if(!myD)myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   var panel=document.getElementById('cpanel-pending');
   var body=document.getElementById('cpbody-pending');
   var badge=document.getElementById('impl-pending-badge');
@@ -5656,7 +5663,7 @@ function renderPendingPanel(myD){
 }
 
 function renderNewAssignPanel(myD){
-  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  if(!myD)myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   var panel=document.getElementById('cpanel-newassign');
   var body=document.getElementById('cpbody-newassign');
   if(!panel||!body)return;
@@ -5690,12 +5697,12 @@ function ackProject(no){
   if(IMPL_ACK[IMPL_USER].indexOf(no)<0)IMPL_ACK[IMPL_USER].push(no);
   localStorage.setItem('pyo_impl_ack',JSON.stringify(IMPL_ACK));
   _ackSupaSave();
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   renderNewAssignPanel(myD);
 }
 
 function ackAll(){
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   if(!IMPL_ACK[IMPL_USER])IMPL_ACK[IMPL_USER]=[];
   myD.forEach(function(d){if(IMPL_ACK[IMPL_USER].indexOf(d.no)<0)IMPL_ACK[IMPL_USER].push(d.no);});
   localStorage.setItem('pyo_impl_ack',JSON.stringify(IMPL_ACK));
@@ -5711,7 +5718,7 @@ function dashPendingToggle(clientNo,idx,done){
   if(!CLIENT_PENDING[clientNo]||CLIENT_PENDING[clientNo][idx]===undefined)return;
   CLIENT_PENDING[clientNo][idx].done=done;
   pibSavePending();_cpSupaSave(clientNo);
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   renderPendingPanel(myD);
 }
 
@@ -5753,13 +5760,13 @@ function pendSaveUpdate(){
   if(resolve)item.done=true;
   pibSavePending();_cpSupaSave(cn);
   pendCloseUpdate();
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   renderPendingPanel(myD);
   showImportToast('success','Update saved'+(resolve?' — marked as resolved':'')+'.');
 }
 
 function implRenderAttention(myD){
-  if(!myD)myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  if(!myD)myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   var alerts=[];
 
   myD.forEach(function(d){
@@ -6165,7 +6172,7 @@ function selProject(no){
 
 function implSearch(){
   var q=document.getElementById('impl-search').value.toLowerCase();
-  var myD=D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();});
+  var myD=D.filter(function(d){return implOwnsClient(d,IMPL_USER);});
   var res=q?myD.filter(function(d){return d.client.toLowerCase().indexOf(q)>=0||d.service.toLowerCase().indexOf(q)>=0||d.remarks.toLowerCase().indexOf(q)>=0;}):[];
   var el=document.getElementById('srch-results');
   if(!res.length){el.style.display='none';return;}
@@ -6449,7 +6456,7 @@ function renderPendingBankUI(view){
   var done=pending.filter(function(i){return i.done;}).length;
   var total=pending.length;
   var pct=total>0?Math.round(done/total*100):0;
-  var pibClients=CURRENT_ROLE==='implementer'?D.filter(function(d){return d.resource.trim().toLowerCase()===IMPL_USER.trim().toLowerCase();}):D;
+  var pibClients=CURRENT_ROLE==='implementer'?D.filter(function(d){return implOwnsClient(d,IMPL_USER);}):D;
   var clientOpts='<option value="0">— Select a client —</option>'+pibClients.map(function(d){
     var cnt=(CLIENT_PENDING[d.no]||[]).length;
     var dnCnt=(CLIENT_PENDING[d.no]||[]).filter(function(i){return i.done;}).length;

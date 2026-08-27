@@ -297,6 +297,7 @@ Priority 2 alert in `implRenderAttention` will activate automatically once `simD
 | **CSV source files failed to parse** | index.html | `mfReadXlsx` now detects `.csv` by extension and uses `readAsText` + `XLSX.read({type:'string'})` instead of the binary array path. |
 | **Duplicate `display:none` on download button** | index.html | Removed the second `display:none` from the `#mf-download-btn` inline style (the property appeared twice; `align-items` and `gap` were unreachable). |
 | **Dead outer `TOOLS` object** | index.html | Removed unused `var TOOLS={...}` at the top of the admin tools section — `openTool()` already redefines it locally. |
+| **Gov Resource assignment invisible to implementer** | index.html | "My Clients" and every implementer-scoped view (dashboard, weekly status, issue log, PS monitoring export, acknowledgements) filtered strictly on `d.resource === IMPL_USER`, ignoring the `Gov Resource` (`d.gov`) field and combo assignments like `"Pau / Alva"`. An implementer assigned to a client only as Gov Resource (not primary Resource) saw 0 of their clients. Added `implOwnsClient(d,user)` helper (checks `resource` split on `/` OR `gov`, case-insensitive) and replaced all 19 call sites of the old strict-equality predicate with it. (August 27, 2026) |
 
 ---
 
@@ -3043,3 +3044,207 @@ Replaced the whole extraction path with a real Claude API call, reusing the exac
 ### Not done yet
 - No cost/usage guardrails on the Claude call (e.g. warning on very long transcripts before sending) — transcripts seen so far comfortably fit in one request.
 - No retry/backoff on transient API errors — a failed call just surfaces the error message and lets the user click Generate again.
+
+## 70. PM Tool Data page — fixed blank page after navigating there (July 24, 2026)
+
+After §68 wired up the pull flow and a live `Fetch Now` successfully pulled 281 records into `integration_events`, clicking **PM Tool Data** in the sidebar rendered a completely blank content pane — not even the static header, filter row, or "Suggested payload format" button showed up, which ruled out a data/rendering problem inside `renderPmTool()` and pointed at the page container itself never becoming visible.
+
+Root cause: `<div class="page" id="page-pmtool" style="display:none;">` (line ~1787) carries an inline `display:none`. The shared `.page.active{display:flex}` CSS rule (line 157) that `go()` relies on to reveal a page by adding the `active` class can't override an inline style — inline always wins over a class selector. So `go('pmtool')` was adding the `active` class exactly as designed, but the page stayed hidden regardless. Two other pages (`page-issues`, `page-impl`) have the same inline-`display:none` pattern and were already special-cased in `go()` with explicit `pg.style.display='none'/'flex'` toggles — `page-pmtool` never got that same treatment when it was built in §57, so it was the one page in the app still silently broken this way.
+
+- **Fix** — added `page-pmtool` to `go()`'s existing special-case list, alongside `impl`/`issues`: `pg.style.display='none'` when navigating away, `pg.style.display='flex'` when navigating to it.
+- Left the inline `style="display:none;"` on the div itself untouched, rather than deleting it — line 8172's auto-refresh check (`document.getElementById('page-pmtool').style.display!=='none'`, added in §68 to re-fetch events after a pull if the page happens to already be open) reads that same inline property directly, so removing the attribute instead of toggling it would have silently broken that check's default (empty-string) state.
+
+### Manual steps still required (not something code can do)
+1. Redeploy to Vercel — this repo isn't git-linked, so saving these file changes alone doesn't update the live site.
+2. After redeploying, click **PM Tool Data** in the sidebar and confirm the 281 previously-pulled records now display.
+
+### Not done yet
+- No audit of whether any other page in the app has this same inline-`display:none`-without-`go()`-toggle bug — `page-pmtool` was fixed because it's the one reported blank; `page-issues`/`page-impl` were already handled pre-existing, and the remaining `.page` elements (`dashboard`/`weekly`/`monthly`/`clients`/`vault`/`audit`) have no inline `display:none` at all, so they're not at risk of this specific bug.
+
+## 71. PM Tool Data — cleaner record summary + fixed auto-match on real payload shape (July 24, 2026)
+
+With the §70 blank-page bug fixed, the PM Tool Data table became visible again, surfacing two usability problems with the real pulled data (281 records, only `projectId`/`lastUpdated`/`title`/`projectStatus`/`clientStage`/`segment`/`productsAvailed`/`hasPayrollOutsourcing` populated per §68 — everything else `null`):
+
+1. **Raw JSON dump was unreadable.** Each row's Payload column showed a truncated `JSON.stringify` blob (`"mrr": null, "psi": null, "hrsi": null, "tasks": null, "title": "Renewplus..."` etc.) — every null field cluttered the preview and pushed the one thing worth scanning (the company name) out of view.
+2. **Auto-match silently failed on every row.** `pmtoolGuessClientNo()` (§57) only checked `client`/`clientName`/`client_name`/`company`/`companyName` for a name to match against existing clients — but this integration's real payload shape uses `title` for the company name (confirmed in §68's sample response), a field the matcher never looked at. So opening "Assign to client" on any of the 281 rows always came up with nothing preselected, even for exact-name matches, forcing a manual search through the client dropdown every time.
+
+- **Fix 1 (matching)** — added `title` as the first candidate in `pmtoolGuessClientNo()`'s name-fallback list, so exact matches against `title` now auto-preselect the client in the Assign modal same as `client`/`clientName` always did.
+- **Fix 2 (display)** — replaced the raw-JSON row preview with a new `pmtoolSummaryHtml(payload)`: pulls a primary name from the first populated field in `title`/`client`/`clientName`/`client_name`/`company`/`companyName` and shows it bold at the top of the cell, then renders every *other* non-null/non-empty field as a small "Label: value" tag (`pmtoolPrettyKey()` turns `projectStatus` → "Project Status", `hasPayrollOutsourcing` → "Has Payroll Outsourcing") — null/empty fields are skipped entirely rather than shown as clutter. The column header changed from "Payload" to "Summary" to match. "View full payload" is unchanged in behavior (still expands the full raw JSON via the same `<pre>`/toggle-button pattern) but is now always offered rather than gated behind a 140-character length check, since the summary is a rewrite rather than a truncation and the full JSON is still occasionally needed to see literal null fields.
+- This is a display-layer fix only — no `integration_events` schema or data changes, no changes to how `pull.js`/`webhook.js` store records.
+
+### Manual steps still required (not something code can do)
+1. Redeploy to Vercel — this repo isn't git-linked, so saving these file changes alone doesn't update the live site.
+2. After redeploying, open PM Tool Data and spot-check a few rows: the bold name at the top of each Summary cell should read the project title, and clicking "Assign to client" on a row whose title exactly matches an existing client name should now come up preselected.
+
+### Not done yet
+- `pmtoolChipsHtml()`'s per-field tags are unsorted (whatever order `Object.keys()` returns, which is JSON key order from the PM Tool's response) — no explicit "most important field first" ordering beyond pulling the name out to the top.
+- Matching is still exact-string-equality only (`title` lowercased/trimmed vs. client name lowercased/trimmed) — no fuzzy matching for near-miss names (e.g. "Corp." vs "Corporation").
+
+## 72. PM Tool Data — replaced the table with stat tiles + record cards (July 24, 2026)
+
+User provided a mockup (stat tiles row + one card per record, colored by segment, product chips, "Updated" date) and asked for something in that direction — "cleaner data, more organized and easier to assign" — after seeing §71's table-with-tags version still felt cluttered/hard to scan for this use case.
+
+- **Stat tiles** — new `#pmtool-stats` row above the list, rebuilt on every `renderPmTool()` call from the currently *filtered* set (reacts to the existing client/date/status filters, same as the list below it): "Total staged", "Unassigned" (orange), then one tile per distinct `segment` value present, in alphabetical order, count of records with that segment. Reuses the same visual language as the Dashboard's `.kpi` tiles (white card, colored top border, colored mono value) rather than inventing a new tile style.
+- **Segment → color mapping is fixed and shared**, not per-row/cycled: `pmtoolCatColor(segmentValue, sortedSegmentList)` assigns blue/violet/dark-green (the app's existing Blueberry/Ubas/Apple brand tokens — the same three already used for the PYO/HR/Gov chips on the Clients page) in alphabetical-segment order, so a given segment gets the same color on its stat tile and on every card with that segment, for the life of one render. A 4th+ segment value falls back to slate rather than inventing a new hue. This replaces the mockup's literal card colors, which cycled per-row (the same segment, MICRO, appeared as both green and purple cards) — judged that inconsistency to be an artifact of the mockup being AI-generated rough, not something worth reproducing, since color-per-entity (not per-row) is what makes the tiles and cards reinforce each other.
+- **Card layout** (replaces the `<table>` entirely) — each record is a `<div>` tinted with its segment's color: bold name at top (same name-field fallback chain as §71: `title`/`client`/`clientName`/`client_name`/`company`/`companyName`) with the status pill top-right (unassigned now renders orange/`--o` instead of the old gray, assigned green/`--g4`, dismissed gray — status color now actually distinguishes at a glance instead of two of three states looking the same gray); a "`Segment · Client Stage`" subtitle in the segment color; then either colored pills for each entry in `productsAvailed` (this integration's real shape) or, for any other payload shape lacking that field, a generic fallback of "Label: value" tags for whatever's populated (extracted from §71's `pmtoolSummaryHtml` into a reusable `pmtoolChipsHtml(payload, excludeKeys)` so both paths share one implementation); a divider; then "Updated {date}" (from `lastUpdated`, falling back to `received_at`) on the left and the Assign/Create/Dismiss/View-full-payload actions on the right, all reusing the exact same handlers the table's Actions column called.
+- **Removed**: the `Received`/`Integration` table columns aren't shown anywhere in the new layout (the mockup didn't have them either) — `received_at` is still used as the fallback date when `lastUpdated` is absent, so the underlying data isn't lost, just not surfaced as its own field.
+- **`pmtoolTogglePayload(rid)` simplified** — no longer needs a `pmtool-prev-<rid>` element to toggle against (that div doesn't exist in the card layout); now just flips `pmtool-full-<rid>`'s visibility and the button's own label.
+- Color check: couldn't run this repo's palette validator (`dataviz` skill's `scripts/validate_palette.js`) — this machine's shell has no Node.js installed. Not treating that as a pass; noting it as skipped. The four colors used (`--b #1679FA`, `--v #8139EE`, `--g4 #239A0D`, `--o #FF7F00`) are pre-existing, already in production use elsewhere in this same app for an equivalent categorical distinction (Clients page service chips), not a newly invented combination.
+
+### Manual steps still required (not something code can do)
+1. Redeploy to Vercel — this repo isn't git-linked, so saving these file changes alone doesn't update the live site.
+2. After redeploying, open PM Tool Data and confirm: stat tiles at top match the filtered list below them, each card's segment color matches its stat tile, and Assign/Create/Dismiss still work per-card.
+3. If Node.js is ever available in this environment, run `scripts/validate_palette.js "#1679FA,#8139EE,#239A0D,#FF7F00" --mode light` (and `--mode dark`) from the `dataviz` skill to get an actual pass/fail instead of the reasoning-based placeholder above.
+
+### Not done yet
+- No dark-mode variant considered — this app doesn't currently have a dark theme, so the "validate `--mode dark` too" step from the dataviz skill doesn't apply yet.
+- 4th+ segment values all collapse into the same slate fallback color with no way to distinguish them from each other except their label text — fine while segment cardinality is 2 (MICRO/SME), untested at higher cardinality.
+
+## 73. PM Tool Data — cards now cycle all 4 brand colors; status badges decoupled from card color (July 24, 2026)
+
+§72 shipped and confirmed working live (screenshot: 200 real records, ENT/MICRO/SME segments, stat tiles matching). But with per-segment coloring, long runs of the same segment (MICRO has 77 of the 200 records) rendered as a wall of same-colored cards — user said "i want this colorful," pointing at that screenshot. Asked which tradeoff they wanted (cycle per card vs. color a different field vs. keep segment-based with more hues); answer was "should be based on our branding colors," then a follow-up on the resulting conflict (cards cycling through all 4 brand hues means orange sometimes lands on a card, and orange was already the "Unassigned" status-badge fill) — resolved as "cycle all 4 colors on cards; restyle the status badge."
+
+- **Card background is now purely decorative cycling, not a data encoding.** New `PMTOOL_CARD_COLORS` (Green Apple/Blueberry/Carrot/Ubas, in that brand-doc order) is indexed by the card's position in the filtered list (`idx % 4`), replacing the §72 `pmtoolCatColor(seg,...)` lookup for card background/border/accent-text color. This is a deliberate exception to "color follows the entity": since the card color no longer means anything about the record (two cards for the same company on different renders/filters can differ), it isn't subject to the categorical-color rules that still govern real data encodings elsewhere on this page.
+- **Stat tiles are unaffected and still segment-colored** — `pmtoolCatColor()` (added in §72) is still used for the segment stat tiles only, since that's a real count-by-category and should stay consistent. So segment color truth now lives only in the stat tile row, not in the cards below it — this is intentional per the user's tradeoff choice, not an oversight.
+- **Status badges restyled to stop competing with card color**: `STATUS_STYLE` backgrounds changed from colored fills (`--o0`/`--g0`/`--s0`) to plain white with a neutral `--s2` border; the colored text (orange/green/slate) stayed, plus a new `PMTOOL_STATUS_ICON` map added a small inline-SVG icon per status (open circle = Unassigned, checkmark = Assigned, X = Dismissed) so status is still readable by icon+color+label even sitting on top of an unrelated-colored card, never by color alone.
+
+### Manual steps still required (not something code can do)
+1. Redeploy to Vercel — this repo isn't git-linked, so saving these file changes alone doesn't update the live site.
+2. After redeploying, open PM Tool Data and confirm cards visibly cycle through green/blue/orange/violet regardless of segment, and that the status badges (white pill + icon) read clearly against every card color, including the orange ones.
+
+### Not done yet
+- Still no Node.js in this environment to run the palette validator on the 4-color cycling set — same caveat as §72, not re-litigated here since the color values themselves didn't change, only where they're applied.
+- The status-badge icons have no `title`/tooltip text — icon meaning relies on shape recognition plus the adjacent label, untested with a screen reader.
+
+## 74. PM Tool Data — "View full payload" redesigned; fixed `productsAvailed` string-vs-array bug (July 24, 2026)
+
+User asked whether there's a better way to present the data and pointed at a "View full payload" expansion, which was still the literal `JSON.stringify(e.payload,null,2)` from before any of §71–73's cleanup — for this integration's real ~33-field schema (seen in full for the first time via this screenshot: `mrr`, `psi`, `hrsi`, `tasks`, `title`, `segment`, `industry`, `npnMonth`, `actualKom`, `churnDate`, `headcount`, `hubspotId`, `projectId`, `targetKom`, `milestones`, `onHoldDate`, `clientStage`, `csmAssigned`, `lastUpdated`, `clientStatus`, `payrollMaster`, `projectStatus`, `companyAddress`, `hubspotOwnerId`, `implemFeeAmount`, `implemFeeStatus`, `productsAvailed`, `projectHandover`, `reactivationDate`, `projectManagerName`, `softwareImplementers`, `hasPayrollOutsourcing`, `targetProjectHandover`), only 6–8 fields are ever non-null on any given record — expanding it meant scrolling past 25+ literal `"field": null,` lines.
+
+That same screenshot also exposed a real bug from §72/§73: `productsAvailed` isn't an array — it's a semicolon-delimited string (`"HR;Payroll;Payroll Outsourcing;Sprout Gov"`). The card code's `Array.isArray(p.productsAvailed)` check was always false against real data, so the colored per-product pills designed in §71 never actually rendered; every card silently fell back to the generic truncated-text chip (`Products Availed: HR;Payroll;Payroll Outsourcing;Sprout Go…`) instead.
+
+- **Fixed `productsAvailed` parsing** — now checks for a non-empty array (unchanged) OR a non-empty string, splitting the string on `;` and trimming each piece. Real records now render actual individual colored pills (`HR`, `Payroll`, `Payroll Outsourcing`, `Sprout Gov` as four separate pills) instead of one truncated fallback tag.
+- **New `pmtoolDetailRows(payload)`** — replaces the raw `<pre>` inside "View full payload" with a label/value grid of only the populated fields (nulls filtered out entirely), field names run through the existing `pmtoolPrettyKey()`, booleans shown as Yes/No, and any value that looks like an ISO date (`^\d{4}-\d{2}-\d{2}`) reformatted through `pmtoolFmtDate()`.
+- **Raw JSON demoted, not removed** — a new "Show raw JSON" button (`pmtoolToggleRawJson(rid)`) nested inside the expanded detail reveals the literal `JSON.stringify` output in a `<pre>`, for the rare case someone needs the exact wire format (e.g. debugging a field-mapping question with the PM Tool's developer). Default view is the clean rows; raw JSON is now two clicks away instead of one, on the reasoning that it's a debugging tool, not what someone opens the card to read.
+- `pmtoolTogglePayload(rid)` (the outer "View full payload"/"Hide full payload" toggle) is unchanged — it now shows/hides a `<div>` containing the rows + nested raw-JSON toggle, rather than a `<pre>` directly, but the toggle logic itself didn't need to change.
+
+### Manual steps still required (not something code can do)
+1. Redeploy to Vercel — this repo isn't git-linked, so saving these file changes alone doesn't update the live site.
+2. After redeploying, open a card's "View full payload" and confirm it shows a clean populated-fields list (not 25 lines of null), and that "Show raw JSON" still reveals the literal payload underneath.
+3. Spot-check that product chips on cards with `productsAvailed` data now render as separate colored pills (one per product) instead of one truncated generic tag.
+
+### Not done yet
+- `pmtoolDetailRows()`'s ISO-date detection is a regex guess (`^\d{4}-\d{2}-\d{2}`) — would misfire on any future field that happens to start with a date-shaped string but isn't actually a date; not an issue for the current known field set.
+- No copy-to-clipboard on either the clean rows or the raw JSON view — if someone needs to paste a record's data elsewhere, they're selecting text manually.
+
+## 75. Global scrollbar made more visible (July 24, 2026)
+
+While reviewing the redesigned PM Tool Data page (confirmed live and working via screenshot — colorful cards, per-product pills, clean detail rows), user asked for the vertical scrollbar to be more visible. It runs through `<main>`, which has no scrollbar rule of its own and so falls to the app's global default (§-level, predates this log) — 5px wide, thumb colored `--s2` (`#e2e8f0`, very pale slate), nearly invisible against the `--bg` cream page background.
+
+- Global `::-webkit-scrollbar` rule: width 5px → 8px, thumb color `--s2` → `--s4` (`#94a3b8`), hover `--s3` → `--s5` (`#64748b`) for a stronger response on hover.
+- Added the Firefox equivalent (`html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}`) alongside the existing webkit rule — previously only the sidebar (`nav`) had a Firefox-specific `scrollbar-width`/`scrollbar-color`; the rest of the app (including `main`) had no Firefox styling at all and would've shown the OS-default scrollbar there.
+- **Scoped correctly** — this only touches the *default*, unstyled scrollbar. The sidebar (`nav`) and the several `.impl-*`/`.impl-proj-list`/`.impl-attn-body`/`.impl-sel-scroll` panels all have their own more-specific `::-webkit-scrollbar` rules already, which still win over this global change and were left untouched.
+
+### Manual steps still required (not something code can do)
+1. Redeploy to Vercel — this repo isn't git-linked, so saving these file changes alone doesn't update the live site.
+2. After redeploying, confirm the `<main>` scrollbar (visible on any page with content taller than the viewport, e.g. PM Tool Data with many records) is now clearly visible against the cream background.
+
+### Not done yet
+- Didn't audit whether any other generic (non-`.impl-*`) scrollable container in the app besides `main` relies on this same global default — this fix should apply to all of them uniformly, but wasn't tested against every single one.
+
+## 76. PM Tool Data now pushes automatically into a new Clients "PM Tool Data" tab (July 24, 2026)
+
+User asked (pointing at the "Assign event to client" modal, screenshot 16) to have all the PM Tool's data auto-push into the Clients panel. Most fields in that modal (`title`, `segment`, `industry`, `mrr`, etc.) showed "— Skip —" and unchecked, not because of a bug, but because this integration's real field names have no counterpart in the existing client schema (`D`/`clients` table only tracks implementation-tracking fields — resource, dates, phases — not CRM fields like segment/industry/client stage). Only `churnDate` happened to auto-match an existing target (`milestones.churnDate`, from §-level `PMTOOL_SCHEMA`, predates this log).
+
+Clarified two decisions before building: (1) add new client-side fields for everything, not just the handful that already map, and (2) keep "Assign to client" as the human-confirmation step, but have it push everything with one click rather than requiring per-field selection.
+
+- **New generic mapping fallback in `pmtoolOpenAssign()`** — for any payload key with no curated `PMTOOL_SCHEMA` entry, the row's dropdown now gets an extra auto-generated option, `pmtool.<key>` (labeled via the existing `pmtoolPrettyKey()`), auto-selected and Apply-checked whenever the field is populated (skip stays default for null fields). This means **every** populated field pushes on one click of "Apply to client" — not just the fields anyone thought to name in advance. New fields the PM Tool starts sending in the future get picked up automatically too, no code change needed.
+- **`pmtoolSetField()`** gained a `target.indexOf('pmtool.')===0` branch (parallel to the existing `milestones.`/`addons.` prefix handling): stores the raw value as-is (preserving type — booleans/numbers aren't stringified) into a new `CL_PMTOOL[clientNo][fieldName]` object.
+- **`pmtoolTargetLabel()`** extended to prettify `pmtool.*` targets for the audit log (`logAudit` already called this for the "what changed" list) instead of showing the raw internal target string.
+- **New in-memory structure `CL_PMTOOL`** (`{clientNo: {fieldName: value}}`), following the exact same load/save pattern as the existing `CL_ADDONS`/`CL_MILESTONES`/`CL_AFTERHO`: loaded in `loadFromSupabase()` from a new `client_pmtool_data` table, persisted to `localStorage['pyo_pmtool']`, and flushed to Supabase in `_supaFlush()` (new `_snap.pmtool` change-tracking, mirroring the other three).
+- **New Supabase table `client_pmtool_data`** (`client_no` PK → `clients(no)`, single `data JSONB` column, RLS + authenticated-only policies matching `vault_items`'s pattern) — SQL in `Client_PMTool_Data_Table.sql`. Deliberately one JSONB blob per client rather than ~30 named columns: which fields are populated varies per record, and this way a new field the PM Tool starts sending later doesn't need a schema migration, just shows up in the JSON.
+- **New read-only "PM Tool Data" tab on the Clients page** — added to the existing tab bar/tab-body pattern (`ctab-pmtooldata`/`ctab-body-pmtooldata`, added to `switchClientTab()`'s tab list). Deliberately NOT added to `TAB_EDITABLE` for any role, so `tabCanEdit()` naturally keeps it view-only with zero extra code — this is pushed-in reference data, not something to hand-edit in the Hub. Renders one card per client reusing §74's `pmtoolDetailRows()` (the same clean populated-fields-only grid built for the PM Tool Data page's "View full payload"), rather than a fixed-column table — appropriate here too, since which fields are populated varies per client. Tab count (`ctc-pmtooldata`) shows how many clients currently have any pushed PM Tool data.
+- **Scope decision — `pmtoolCreateClient()` (the "Create new client" button) was NOT touched.** This feature only covers "Assign to client" (an existing client), matching what screenshot 16 showed and what was asked. Creating a brand-new client from an event still only prefills the Add Client form's existing fields (month/name/service/etc.) — the new generic PM-Tool-Data fields aren't captured at creation time. Noted below as a gap, not silently dropped.
+
+### Manual steps still required (not something code can do)
+1. **Run `Client_PMTool_Data_Table.sql` in Supabase → SQL Editor** — this is a genuine schema change, unlike most of this session's edits. Nothing will persist across reloads without this table existing first (the app will still work in-memory/localStorage for the session, but Supabase saves will fail silently with a console warning until the table exists).
+2. Redeploy `index.html` to Vercel — this repo isn't git-linked, so saving the file alone doesn't update the live site.
+3. After both: open PM Tool Data, click "Assign to client" on any record, confirm every populated field now shows pre-checked with a sensible destination, click "Apply to client," then check the Clients page's new "PM Tool Data" tab for that client and confirm the fields landed there.
+
+### Not done yet
+- `pmtoolCreateClient()` (create-new-client path) doesn't capture the generic PM-Tool-Data fields — only "Assign to client" (existing client) does. Extending create-new-client would need to stash the pending fields somewhere until the new client's `no` is assigned at creation time; deferred as out of scope for this request.
+- No UI to review/undo a field once pushed into `CL_PMTOOL` short of manually editing Supabase — there's no per-field "clear" affordance on the new Clients tab (it's read-only display).
+- No dedup/merge logic if the same client is assigned from two different PM Tool events — the second assignment's fields simply overwrite the first's for any overlapping keys (last-applied wins), same behavior as the pre-existing milestones/addons targets.
+
+## 77. PM Tool Data — Dismissed records hidden from the main list, moved to a "Dismissed" modal (July 25, 2026)
+
+User asked (referencing screenshot `01.jpg` under `Screenshots/07252026`) to have a dismissed record disappear from the main PM Tool Data list rather than stay inline with a grey "Dismissed" badge and "Restore" button, and to add a dedicated button for viewing all dismissed records instead.
+
+- **`pmtoolMatchesFilters()`** now unconditionally excludes `status==='dismissed'` records at the top of the function, before any of the existing client/date/status-dropdown checks — dismissing a record (`pmtoolDismiss()` → `pmtoolSetStatus()` → `renderPmTool()`) now removes it from the visible list on the same render, no separate step needed.
+- **Removed the "Dismissed" `<option>`** from the `#pmtool-filt-status` dropdown — with dismissed records unconditionally excluded from the main list, that option could never have surfaced a result, so it would have been dead/confusing.
+- **New "Dismissed (N)" button** in the filter bar (`#pmtool-dismissed-btn`, right-aligned via `margin-left:auto`), showing a live count badge (`#pmtool-dismissed-count`) of how many records currently have `status==='dismissed'`. Opens a new modal (`#pmtool-dismissed-modal`, same `.modal-ov`/`.modal-box` pattern as the existing "Assign to client" modal) listing every dismissed record — name, segment/stage subtitle, last-updated date, and a "Restore" button that calls the existing `pmtoolUndismiss()`.
+- **`pmtoolRenderDismissed()`** is the new render function for both the badge count and the modal body; it's called from inside `renderPmTool()` (right after the `#pmtool-body` null-check, before the empty-state early-returns) so the count and modal content — if the modal happens to be open — always stay in sync with any status change, filter change, or refresh, without a separate update path to remember.
+- Restoring a record from inside the modal (`pmtoolUndismiss()` → `pmtoolSetStatus()` → `renderPmTool()`) re-renders both the modal body and the main list in one pass, so the item reappears in the main list immediately and disappears from the modal without needing to close/reopen it.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel — this repo isn't git-linked, so saving the file alone doesn't update the live site.
+
+## 78. PM Tool Data — search box inside the "Dismissed projects" modal (July 25, 2026)
+
+User asked (referencing screenshot `02.jpg` under `Screenshots/07252026`, showing 173 dismissed records) for a search button in that modal — scrolling through 173+ dismissed records with no way to narrow the list wasn't usable.
+
+- **New `#pmtool-dismissed-search` text input**, added between the modal header and the scrollable list, same live-filter-on-type pattern as the main page's client-name filter (`oninput="pmtoolRenderDismissed()"`, no separate submit/search button — matches how every other filter in this app already behaves).
+- **`pmtoolRenderDismissed()`** now reads that input's value and filters the full dismissed list against `JSON.stringify(payload)` (same substring-match approach `pmtoolMatchesFilters()` already uses for the main list's client-name filter), so the search matches on any payload field, not just the display name.
+- Distinguished two empty states: no dismissed records at all (unchanged message) vs. records exist but none match the current search term (new message naming the search term, so it's clear it's a filter miss and not an empty list).
+- **`pmtoolOpenDismissed()`** clears the search box every time the modal is opened, so a stale search term from a previous visit doesn't silently hide records the next time it's opened.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel — this repo isn't git-linked, so saving the file alone doesn't update the live site.
+
+## 79. "Assign event to client" modal — every field now defaults selected + Apply-ticked, not just populated ones (July 25, 2026)
+
+User asked (referencing screenshots `03.jpg`–`05.jpg` under `Screenshots/07252026`, showing the field-mapping rows) for every row in the modal to come pre-selected in its dropdown and pre-ticked, not only the rows whose payload value happened to be non-null. Before this change, a row only auto-selected + ticked when either (a) it had a curated `PMTOOL_SCHEMA` match (regardless of null — e.g. `projectManagerName`/`softwareImplementers` in `05.jpg` were already null-but-ticked), or (b) it had no curated match but the value was populated (the §76 generic-fallback behavior). Fields with no curated match AND a null value (the majority of rows in `03.jpg`/`04.jpg` — `mrr`, `psi`, `tasks`, `headcount`, `targetKom`, `clientStatus`, etc.) still defaulted to "— Skip —", unchecked.
+
+- **`pmtoolOpenAssign()`** — removed the `populated` gate entirely. `useGeneric` is now simply `!match` (true whenever there's no curated schema target, regardless of the payload value), and `checked` is unconditionally `true` for every row. The generic `pmtool.<key>` dropdown option is now always rendered as the `selected` one when there's no curated match, instead of only when populated.
+- Net effect: every row in the modal — curated-matched or generic-fallback, populated or null — now opens pre-selected to a real target with Apply pre-ticked. A user who wants a specific field left out still manually flips its dropdown to "— Skip —" or unchecks Apply; nothing became mandatory, just the default flipped from "only act on what's populated" to "act on everything unless told otherwise."
+- Null-valued fields pushed this way land as an empty string in `CL_PMTOOL[clientNo][field]` (via the existing `pmtoolSetField()` `pmtool.` branch, which already coerced `null`/`undefined` to `''`) or as empty/false in whatever curated target they map to — no new null-handling code was needed, this was already in place.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel — this repo isn't git-linked, so saving the file alone doesn't update the live site.
+
+## 80. "Assign event to client" modal — added missing CSM target (July 25, 2026)
+
+User asked (referencing screenshots `06.jpg`/`07.jpg` under `Screenshots/07252026`, the After Hand Over tab's CSM column) why the payload's `csmAssigned` field had no way to map onto a client's actual CSM. Root cause: `PMTOOL_SCHEMA` (the curated dropdown-target list in `pmtoolOpenAssign()`) never had an entry for it, even though the real field already exists — `CL_AFTERHO[clientNo].csm`, rendered in the After Hand Over tab and editable there via `ahInp('csm',...)`. Without a schema entry, `csmAssigned` fell through to the generic `pmtool.csmAssigned` bucket (a free-floating "PM Tool Data" value) instead of landing on the client's actual CSM assignment.
+
+- **New `PMTOOL_SCHEMA` entry** — `{key:'csmAssigned',label:'CSM',target:'afterho.csm'}`, next to the other implementer/role assignment entries (Project Manager, HR-I, Sprout Gov Implementer, etc.).
+- **New `afterho.` branch in `pmtoolSetField()`** — parallel to the existing `milestones.`/`addons.`/`pmtool.` prefix handling: writes into `CL_AFTERHO[clientNo][field]` (creating the record if it doesn't exist yet), coercing `null`/`undefined` to `''`.
+- No changes needed to `_supaFlush()`'s existing `CL_AFTERHO` change-detection (`_snap.afterho` diffing, already in place for the manual After Hand Over tab edits) or to `pmtoolTargetLabel()` (already resolves any `PMTOOL_SCHEMA` target generically) — both already worked against the live `CL_AFTERHO` object regardless of how it was mutated.
+- Per §79 (every field now defaults selected + Apply-ticked), `csmAssigned` will now default straight to the CSM target and get applied automatically along with everything else, rather than requiring a manual dropdown change.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel — this repo isn't git-linked, so saving the file alone doesn't update the live site.
+
+## 81. Clients — new MRR field on the After Hand Over tab (July 25, 2026)
+
+User asked (referencing screenshot `08.jpg` under `Screenshots/07252026`, highlighting the "Turned Over" and "Remarks" columns) for a new MRR column inserted between the two. No such field existed anywhere on the client record before this — it's new, not a rename or relocation of something existing.
+
+- **New free-text `MRR` column** in the After Hand Over tab, positioned between "Turned Over" and "Remarks" (`#ctab-body-afterho` header + row template in `renderClients()`'s `CL_TAB==='afterho'` branch) — same inline-editable pattern as CSM/Processor (`ahInp('mrr',a.mrr)`, saved via the existing `ahUpdateField()`, which gained an `mrr:'MRR'` entry in its audit-log label map). Left as free text (not a parsed number) so it can hold "50,000", "₱50,000", or any format someone's already using, matching how CSM/Processor are handled — no currency formatting utility existed in the app to justify inventing one for just this field.
+- **Storage**: added to the existing `CL_AFTERHO[clientNo]` object (alongside `csm`/`processor`/`turnedOver`) — no new top-level state structure. Persisted the same way: `loadFromSupabase()`'s `client_afterho` read and `_supaFlush()`'s upsert both extended to read/write `mrr`; change-detection (`_snap.afterho` diffing) needed no changes since it already diffs the whole `CL_AFTERHO[k]` object generically.
+- **New Supabase migration `AfterHO_MRR_Column.sql`** — `ALTER TABLE client_afterho ADD COLUMN IF NOT EXISTS mrr TEXT DEFAULT ''`, mirroring the pattern of `PD_Implementer_Column.sql`.
+- **Also extended**: the client detail/summary panel (After Hand Over section, alongside CSM/Processor), the "Download all data" Excel export's After Hand Over sheet (new MRR column + header), and the bulk-import template/parser (`PS_Data_Template.xlsx`'s After Hand Over sheet + `stHandleFile()`'s parser) — all follow the exact same csm/processor pattern, so a client's MRR round-trips through every existing import/export path the other After Hand Over fields already use.
+- **Also added a `PMTOOL_SCHEMA` entry** (`{key:'mrr',label:'MRR',target:'afterho.mrr'}`) so the PM Tool payload's existing (previously unused) `mrr` field now maps straight onto this new target in the "Assign event to client" modal, the same gap just fixed for CSM in §80 — otherwise this would've been the very next "why isn't X in the dropdown" question. `pmtoolSetField()`'s `afterho.` branch (added in §80) already handles it generically, no further code needed.
+
+### Manual steps still required
+1. **Run `AfterHO_MRR_Column.sql` in Supabase → SQL Editor** — a genuine schema change; without it, MRR will work in-memory/localStorage for the session but Supabase saves will fail silently with a console warning.
+2. Redeploy `index.html` to Vercel — this repo isn't git-linked, so saving the file alone doesn't update the live site.
+
+## 82. Integrations — "Remove Key" was wiping the PM Tool's Pull Settings, not just the key (August 19, 2026)
+
+User reported (referencing screenshot `01.jpg` under `Screenshots/08192026`, showing the Pull settings block filled in with the PM Tool's real base URL/endpoint/auth) that the Base URL, Endpoint path, Auth type, and Header name fields on the live site had gone blank, and separately that PM Tool data had stopped updating. Root cause traced to `api/integrations/remove.js`: the "Remove Key" button issued a full `DELETE` on the `integrations` row, but that same row is also where §67/§68's pull-config columns (`base_url`, `endpoint_path`, `auth_type`, `auth_header_name`) live — there was never a separate "pull config" table. Whenever the key was rotated (Remove Key, then paste a new key via Connect), the row was deleted and `api/integrations/save.js`'s subsequent upsert only sends the key/status fields, so the pull-config columns came back `NULL` on the recreated row. This also explains the stopped-updating symptom: `pull.js` refuses to fetch when `base_url`/`endpoint_path` are empty (its "must be saved first" check), so a key rotation silently broke the fetch until someone re-entered the pull settings.
+
+- **`api/integrations/remove.js`** — changed from `DELETE /integrations?id=eq.<id>` to a `PATCH` that only nulls `api_key`, `key_last4`, `status` (→ `'not_configured'`), `configured_by`, `configured_at`. `base_url`/`endpoint_path`/`auth_type`/`auth_header_name` are no longer touched, so they survive a key removal/rotation and reappear automatically (via `status.js` → `intgSetUI()`) once a new key is connected.
+- No frontend changes needed — `intgSetUI()` already hides the pull-settings row whenever `status !== 'configured'` and repopulates it from `state.baseUrl/endpointPath/authType/headerName` whenever it is, regardless of whether the row was freshly inserted or already existed.
+- This only prevents the wipe going forward. The already-blanked live row still needs its values re-entered once (see manual steps).
+
+### Manual steps still required
+1. Redeploy `index.html`/`api/integrations/remove.js` to Vercel.
+2. In Settings → Integrations → PM Tool, re-paste the API key and click Connect, then re-fill Base URL, Endpoint path, Auth type (Custom header), and Header name (`X-Api-Key`) from the last known-good values and click **Save Pull Settings**, then **Fetch Now** to confirm pulling resumes.
