@@ -3248,3 +3248,15 @@ User reported (referencing screenshot `01.jpg` under `Screenshots/08192026`, sho
 ### Manual steps still required
 1. Redeploy `index.html`/`api/integrations/remove.js` to Vercel.
 2. In Settings → Integrations → PM Tool, re-paste the API key and click Connect, then re-fill Base URL, Endpoint path, Auth type (Custom header), and Header name (`X-Api-Key`) from the last known-good values and click **Save Pull Settings**, then **Fetch Now** to confirm pulling resumes.
+
+## 83. Implementer dashboard showed 0 clients for Gov Resource assignees signed in via Google (August 28, 2026)
+
+User reported (referencing screenshots `07.jpg`/`08.jpg` under `Screenshots/08272026`) that "Ma. Alvadai Bariuan" and "Marixela Montales" — both assigned as **GOV RESOURCE** on real PYO clients (confirmed via screenshots `05.jpg`/`06.jpg` showing them as "Alva"/"Marix" in the Resource Team tab) — saw **0 clients** on every tab of their own "My Clients" dashboard. Root cause: `implOwnsClient()` correctly matches against both the `resource` and `gov` columns, but those columns only ever store short nicknames ("Alva", "Marix"), while `IMPL_USER` (the value compared against them) was being set from the raw Google account name whenever the signed-in email wasn't in the pre-registered `USERS`/`USERS_DEFAULT` list — `handleGoogleCredential()`'s and `onAuthSuccess()`'s `!found` branches both did `IMPL_USER=displayName` using Google's `full_name`/`name` payload verbatim (e.g. "Ma. Alvadai Bariuan"), which never equals "alva".
+
+- **New `resolveImplNickname(displayName)` helper** (next to `implOwnsClient()`) — looks up `TEAM_CONFIG.implementers` (the combined PYO/Gov/HR/OTK/PD/POD/FPOD roster) for any nickname that appears as a substring of the lowercased Google display name, and returns that nickname if found (e.g. "ma. alvadai bariuan" → contains "alva" → "Alva"; "marixela montales" → contains "marix" → "Marix"). Falls back to the raw display name unchanged when no roster nickname matches, preserving prior behavior for genuinely new hires who aren't in the roster yet.
+- Both unregistered-Google-login fallback branches (`handleGoogleCredential()` and `onAuthSuccess()`) now set `IMPL_USER=resolveImplNickname(displayName)` instead of the raw name. `CURRENT_NAME` is left as the full display name (used for the header greeting/avatar and audit-trail attribution), so this only changes the value used for client-ownership matching.
+- No changes needed for pre-registered users (Leslee, Denise, Armie, Pau, Mhae) — their `username` already is the nickname, so `found.username` was already correct.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Longer-term fix: register Alva and Marixela in `USERS_DEFAULT` with `username` set to their nickname and their real `@sprout.ph` email, same as the other implementers — the substring match is a safety net, not a replacement for proper registration (a nickname that isn't a substring of someone's legal name, or two people sharing a roster nickname, wouldn't resolve correctly).

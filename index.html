@@ -2406,7 +2406,20 @@ function implOwnsClient(d,user){
   var gov=(d.gov||'').trim().toLowerCase()===u;
   return res||gov;
 }
- 
+// Some implementers sign in via Google without a pre-registered account; Google supplies their
+// full legal name (e.g. "Ma. Alvadai Bariuan"), but client assignments store short nicknames
+// (e.g. "Alva"). Without this, their dashboard would show 0 clients despite being assigned.
+function resolveImplNickname(displayName){
+  var dn=(displayName||'').trim().toLowerCase();
+  if(!dn)return displayName;
+  var roster=(TEAM_CONFIG&&TEAM_CONFIG.implementers)||[];
+  var match=roster.find(function(n){
+    var nn=(n||'').trim().toLowerCase();
+    return nn&&dn.indexOf(nn)>=0;
+  });
+  return match||displayName;
+}
+
 var TEAM_CONFIG = (function(){
   try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);t._fromLocalStorage=true;return t;}}catch(e){}
   return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implPD:[],implPOD:[],implFPOD:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
@@ -8622,7 +8635,7 @@ function handleGoogleCredential(response){
     if(!user){
       if(!email.endsWith('@sprout.ph')){showLoginError('Your account ('+email+') is not authorized. Contact your administrator.');return;}
       var displayName=payload.name||payload.given_name||email.split('@')[0];
-      CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=displayName;
+      CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=resolveImplNickname(displayName);
       startApp();return;
     }
     CURRENT_ROLE=user.role||'implementer';
@@ -8799,7 +8812,7 @@ function onAuthSuccess(user){
     }
     var meta=user.user_metadata||{};
     var displayName=meta.full_name||meta.name||email.split('@')[0];
-    CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=displayName;
+    CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=resolveImplNickname(displayName);
     loadFromSupabase().then(function(){startApp();}).catch(function(){startApp();});
     return;
   }
