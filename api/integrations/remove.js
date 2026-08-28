@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
       method: 'PATCH',
       headers: { Prefer: 'return=minimal' },
       body: JSON.stringify({
-        api_key: null,
+        api_key: '',
         key_last4: null,
         status: 'not_configured',
         configured_by: null,

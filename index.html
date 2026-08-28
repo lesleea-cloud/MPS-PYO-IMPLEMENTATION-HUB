@@ -8415,11 +8415,17 @@ function intgSavePullConfig(id){
   var authType=(document.getElementById('intg-'+id+'-authtype').value||'').trim();
   var headerName=(document.getElementById('intg-'+id+'-headername').value||'').trim();
   if(authType==='custom_header'&&!headerName){showImportToast('error','Enter the header name for custom header auth.');return;}
+  var basePath='';try{basePath=new URL(baseUrl).pathname.replace(/\/$/,'');}catch(e){}
+  var endpointPathOnly=endpointPath.split('?')[0].replace(/\/$/,'');
+  if(basePath&&endpointPathOnly&&endpointPathOnly.indexOf(basePath)===0){
+    showImportToast('error','Base URL already ends with "'+basePath+'" and Endpoint path repeats it — remove "'+basePath+'" from one of the two fields.');
+    return;
+  }
   fetch('/api/integrations/save-pull-config',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({id:id,baseUrl:baseUrl,endpointPath:endpointPath,authType:authType,headerName:headerName})
   })
-    .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
+    .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Server error '+r.status);return d;});})
     .then(function(){showImportToast('success','Pull settings saved.');})
     .catch(function(e){showImportToast('error','Could not save pull settings: '+e.message);});
 }
@@ -8468,7 +8474,7 @@ function intgRemove(id){
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({id:id})
   })
-    .then(function(r){if(!r.ok)throw new Error('Server error '+r.status);return r.json();})
+    .then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Server error '+r.status);return d;});})
     .then(function(state){intgSetUI(id,state);showImportToast('success','Integration removed.');})
     .catch(function(e){showImportToast('error','Could not remove key: '+e.message);});
 }

@@ -8,6 +8,10 @@ const { restFetch } = require('../_lib/supabaseAdmin');
 
 const VALID_AUTH_TYPES = ['bearer', 'custom_header', 'basic', 'query_param'];
 
+function pathnameOf(url) {
+  try { return new URL(url).pathname.replace(/\/$/, ''); } catch (e) { return ''; }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -32,6 +36,15 @@ module.exports = async function handler(req, res) {
   }
   if (authType === 'custom_header' && !headerName) {
     res.status(400).json({ error: 'headerName is required for custom_header auth' });
+    return;
+  }
+  const basePath = pathnameOf(baseUrl);
+  const endpointPathOnly = endpointPath.split('?')[0].replace(/\/$/, '');
+  if (basePath && endpointPathOnly && endpointPathOnly.indexOf(basePath) === 0) {
+    res.status(400).json({
+      error: 'Base URL already ends with "' + basePath + '" and Endpoint path starts with it again — ' +
+        'the request would hit "' + basePath + endpointPathOnly + '". Remove "' + basePath + '" from one of the two fields.',
+    });
     return;
   }
   try {
