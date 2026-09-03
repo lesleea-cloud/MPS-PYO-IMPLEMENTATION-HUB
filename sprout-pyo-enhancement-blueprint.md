@@ -3264,15 +3264,15 @@ User reported (referencing screenshots `07.jpg`/`08.jpg` under `Screenshots/0827
 1. Redeploy `index.html` to Vercel.
 2. Longer-term fix: register Alva and Marixela in `USERS_DEFAULT` with `username` set to their nickname and their real `@sprout.ph` email, same as the other implementers — the substring match is a safety net, not a replacement for proper registration (a nickname that isn't a substring of someone's legal name, or two people sharing a roster nickname, wouldn't resolve correctly).
 
-## 84. "Add new client" modal — Implementer no longer mandatory for standalone Sprout Gov / Statutory Disbursement / Payroll Disbursement (September 3, 2026)
+## 84. "Add new client" modal — Project Manager / HR-I / Implementer hidden entirely for standalone Sprout Gov / Statutory Disbursement / Payroll Disbursement (September 3, 2026)
 
-User reported (referencing screenshot `01.png` under `Screenshots/09032026`) that when the **Availed Service** is Sprout Gov, Statutory Disbursement, or Payroll Disbursement on their own (i.e. the client isn't a PYO client with one of these as an add-on), the generic **Implementer** field shouldn't be mandatory — HR-I was already optional. These three standalone services already have their own dedicated implementer picker (the "Sprout Gov Implementer" / "PD Implementer" row) that appears once the relevant add-on checkbox is ticked, so forcing the generic Implementer field for a standalone gov/disbursement-only client added no value.
+User reported (referencing screenshot `01.png` under `Screenshots/09032026`) that when the **Availed Service** is Sprout Gov, Statutory Disbursement, or Payroll Disbursement on their own (i.e. the client isn't a PYO client with one of these as an add-on), the **Implementer** field shouldn't be mandatory. First pass just dropped the red asterisk and the required-field check for Implementer, but a follow-up (screenshot `02.png` under the same folder) clarified the actual ask: for these three standalone services, **Project Manager, HR-I, and Implementer aren't relevant fields at all** and should disappear from the form, not just become optional — these clients don't get the standard PM/HR-I/Implementer assignment workflow that PYO clients do.
 
 - New `acmIsStandaloneSvc()` helper (`index.html`) — returns true when `acm-service` is exactly `Sprout Gov`, `Statutory Disbursement`, or `Payroll Disbursement`.
-- `acmCheckGov()` (already wired to the service `onchange`) now also toggles the red `*` next to the Implementer label (`#acm-impl-req`) — hidden for the three standalone services, shown otherwise.
-- `submitAddClient()`'s required-field check now skips `Implementer` from the `missing` list when `acmIsStandaloneSvc()` is true.
-- `openAddClientModal()` resets the asterisk back to visible on open, since the service field itself resets to blank.
-- No change to HR-I — it was never in the required-field list or marked with an asterisk, for any service.
+- The Project Manager, HR-I, and Implementer form fields were each wrapped in a container (`#acm-pm-wrap`, `#acm-hri-wrap`, `#acm-impl-wrap`).
+- `acmCheckGov()` (already wired to the service `onchange`) now hides all three wrapper containers — and clears their underlying select values — whenever `acmIsStandaloneSvc()` is true; shows them otherwise. It also still toggles the red `*` next to the Implementer label (`#acm-impl-req`) as a secondary safeguard.
+- `submitAddClient()`'s required-field check now skips both `Implementer` and `Project Manager` from the `missing` list when `acmIsStandaloneSvc()` is true. HR-I was already never in that list.
+- `openAddClientModal()` resets all three wrappers back to visible on open, since the service field itself resets to blank (not standalone) each time the modal opens.
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.

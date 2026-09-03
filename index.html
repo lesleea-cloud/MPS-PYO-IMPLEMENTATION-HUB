@@ -1068,11 +1068,11 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
             <option>October</option><option>November</option><option>December</option>
           </select>
         </div>
-        <div>
+        <div id="acm-pm-wrap">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Project Manager <span style="color:var(--r)">*</span></div>
           <select id="acm-pm" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select PM —</option></select>
         </div>
-        <div>
+        <div id="acm-hri-wrap">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">HR-I</div>
           <select id="acm-hri" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
         </div>
@@ -1090,7 +1090,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
             <option>PYO + HR + Sprout Gov</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option><option>Special Projects</option>
           </select>
         </div>
-        <div>
+        <div id="acm-impl-wrap">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Implementer <span id="acm-impl-req" style="color:var(--r)">*</span></div>
           <select id="acm-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select implementer —</option>
@@ -4331,6 +4331,7 @@ function openAddClientModal(){
   document.getElementById('acm-pod-row').style.display='none';
   document.getElementById('acm-fpod-row').style.display='none';
   var acmImplReqEl=document.getElementById('acm-impl-req');if(acmImplReqEl)acmImplReqEl.style.display='';
+  ['acm-pm-wrap','acm-hri-wrap','acm-impl-wrap'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='';});
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
   ['acm-sg','acm-ba','acm-std','acm-otk','acm-pd','acm-pod','acm-fpod'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
@@ -4363,6 +4364,14 @@ function acmCheckGov(){
   document.getElementById('acm-gov-row').style.display=show?'':'none';
   var reqEl=document.getElementById('acm-impl-req');
   if(reqEl)reqEl.style.display=acmIsStandaloneSvc()?'none':'';
+  var standalone=acmIsStandaloneSvc();
+  ['acm-pm-wrap','acm-hri-wrap','acm-impl-wrap'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.style.display=standalone?'none':'';
+  });
+  if(standalone){
+    ['acm-pm','acm-hri','acm-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  }
 }
 function acmCheckOtk(){
   var show=document.getElementById('acm-otk').checked;
@@ -4399,7 +4408,7 @@ function submitAddClient(){
   if(!name)   missing.push('Company Name');
   if(!service)missing.push('Availed Service');
   if(!impl&&!acmIsStandaloneSvc())missing.push('Implementer');
-  if(!pm)     missing.push('Project Manager');
+  if(!pm&&!acmIsStandaloneSvc())missing.push('Project Manager');
   if(missing.length){
     err.textContent='Please fill in: '+missing.join(', ')+'.';
     err.style.display='block';
