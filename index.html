@@ -3554,8 +3554,12 @@ function renderWeekly(){
   } else {
     var _loginUsers={};
     USERS.forEach(function(u){if(u&&u.username)_loginUsers[u.username.trim().toLowerCase()]=true;});
+    (TEAM_CONFIG.implGov||[]).forEach(function(n){if(n&&n.trim())_loginUsers[n.trim().toLowerCase()]=true;});
     var _seen={};
-    D.forEach(function(d){if(d.resource&&d.resource.trim())_seen[d.resource.trim()]=true;});
+    D.forEach(function(d){
+      if(d.resource&&d.resource.trim())_seen[d.resource.trim()]=true;
+      if(d.gov&&d.gov.trim())_seen[d.gov.trim()]=true;
+    });
     rl=Object.keys(_seen).filter(function(n){return _loginUsers[n.toLowerCase()];}).sort();
     if(!rl.length)rl=USERS.filter(function(u){return u.role==='implementer';}).map(function(u){return u.username;});
   }
@@ -3585,14 +3589,14 @@ function renderWeekly(){
       {lbl:'Assigned clients For Pending Turnover PYO',    fn:function(d){return isPYO(d)&&d.remarks==='Live'&&notTurnedOver(d);}},
       {lbl:'Assigned clients For Pending Turnover Starter',fn:function(d){return isStar(d)&&d.remarks==='Live'&&notTurnedOver(d);}},
     ]},
-    {lbl:'Gov',rows:[
+    {lbl:'Gov',matchKey:'gov',rows:[
       {lbl:'Sprout Gov (with PYO) under Implem', fn:function(d){return isPYO(d)&&addon(d,'sg')&&isActive(d);}},
       {lbl:'Sprout Gov stand alone under Implem', fn:function(d){return /sprout gov/i.test(d.service||'')&&!isPYO(d)&&isActive(d);}},
     ]},
-    {lbl:'BenAd',rows:[
+    {lbl:'BenAd',matchKey:'gov',rows:[
       {lbl:'BenAd Under Implem',fn:function(d){return !!addon(d,'ba')&&isActive(d);}},
     ]},
-    {lbl:'Disbursement',rows:[
+    {lbl:'Disbursement',matchKey:'gov',rows:[
       {lbl:'Disbursement under Implem',fn:function(d){var a=CL_ADDONS[d.no]||{};return !!a.std&&isActive(d);}},
     ]},
     {lbl:'OTK',rows:[
@@ -3645,7 +3649,8 @@ function renderWeekly(){
           h+='<tr>';
           h+='<td style="'+TD+'padding-left:24px;">'+row.lbl+'</td>';
           rl.forEach(function(impl){
-            var cnt=D.filter(function(d){return d.resource===impl&&row.fn(d);}).length;
+            var mk=sec.matchKey||'resource';
+            var cnt=D.filter(function(d){return (d[mk]||'').trim()===impl&&row.fn(d);}).length;
             var style=TDN+'color:'+(cnt>0?'#15803d':'#94a3b8')+';';
             h+='<td style="'+style+'">'+(cnt>0?cnt:'—')+'</td>';
           });

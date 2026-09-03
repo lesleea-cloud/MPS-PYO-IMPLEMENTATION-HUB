@@ -3288,3 +3288,24 @@ User reported (referencing screenshot `03.png` under `Screenshots/09032026`, hig
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Clean up `TEAM_CONFIG.implPYO`'s placeholder names (`Ana`, `Bea`, `Carl`, `Dana`, `Eli`) if they're not meant to represent real staff — they still appear in the Add-on/implementer picker dropdowns elsewhere in the app; this fix only removed them from the Weekly Report columns.
+
+## 86. Weekly Implementation Meeting Report — Gov Resource implementers (Alva, Marix, etc.) restored to the report (September 3, 2026)
+
+User reported (referencing screenshots `04.png`/`05.png` under `Screenshots/09032026`, highlighting the "GOV RESOURCE" column in the Resource Team tab) that people assigned only as **Gov Resource** — e.g. "Alva" and "Marix", the two Google-login-only Gov implementers from §83 — should appear in the Weekly Report table, since they are real people who log into the tool. §85's fix (restricting report columns to `USERS`) had over-corrected: it excluded Gov Resource people entirely, because they don't have a pre-registered `USERS` account — they only exist via the unregistered-Google-login + `resolveImplNickname()` fallback, resolved against `TEAM_CONFIG.implGov`.
+
+Two separate bugs were involved:
+1. **Column list didn't scan the Gov field at all.** The candidate-name scan in `renderWeekly()` only read `d.resource` (the main PYO/Starter implementer field), never `d.gov` (the dedicated Sprout Gov / BenAd / Statutory-Disbursement-addon implementer field) — so a Gov-only name could never become a column candidate in the first place, independent of the login-registration filter.
+2. **Login-registration filter didn't recognize the Gov roster.** `_loginUsers` was built solely from `USERS`; Gov Resource people who sign in via the Google fallback path were never added there.
+3. **Per-cell counts only ever checked `d.resource`.** Even if a Gov name became a column, every cell in the Gov/BenAd/Disbursement sections was computed as `d.resource===impl`, but those clients store their assigned person in `d.gov`, not `d.resource` — so the cells would always read 0/`—` for a Gov person regardless of the column-list fix.
+
+Fix (`index.html`, `renderWeekly()`):
+- `_loginUsers` now also includes every name in `TEAM_CONFIG.implGov`, in addition to `USERS` usernames.
+- The candidate-name scan (`_seen`) now reads both `d.resource` and `d.gov` across all clients.
+- `SECTIONS` entries for **Gov**, **BenAd**, and **Disbursement** now carry `matchKey:'gov'`; the per-cell count loop reads `sec.matchKey||'resource'` to decide whether to compare against `d.resource` or `d.gov` for that section. This also fixes a latent double-counting risk: a PYO client with a Sprout Gov add-on has a *different* person in `d.resource` (the main PYO implementer) than in `d.gov` (the Gov add-on implementer) — a Gov-section row must attribute to the Gov person only, not both.
+- Starter/PYO/For Turnover/OTK sections are unchanged (still match on `d.resource`, as before).
+
+### Known related gap (not fixed here, flagged for follow-up)
+`implOwnsClient()` — the function that powers an implementer's own "My Clients" dashboard — only checks `d.resource` and `d.gov`. The dedicated per-add-on implementer fields for **OTK, PD, POD, and FPOD** (`otkImpl`, `pdImpl`, `podImpl`, `fpodImpl`) aren't checked at all. Any Google-login-only implementer assigned solely via one of those four fields would likely see the same "0 clients" symptom §83 fixed for Gov. Not touched in this fix since it wasn't reported — flag if OTK/PD/POD/FPOD implementers report missing clients.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
