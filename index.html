@@ -1091,7 +1091,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
           </select>
         </div>
         <div>
-          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Implementer <span style="color:var(--r)">*</span></div>
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Implementer <span id="acm-impl-req" style="color:var(--r)">*</span></div>
           <select id="acm-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select implementer —</option>
           </select>
@@ -4330,6 +4330,7 @@ function openAddClientModal(){
   document.getElementById('acm-pd-row').style.display='none';
   document.getElementById('acm-pod-row').style.display='none';
   document.getElementById('acm-fpod-row').style.display='none';
+  var acmImplReqEl=document.getElementById('acm-impl-req');if(acmImplReqEl)acmImplReqEl.style.display='';
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
   var ni=document.getElementById('acm-name');if(ni)ni.value='';
   ['acm-sg','acm-ba','acm-std','acm-otk','acm-pd','acm-pod','acm-fpod'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
@@ -4349,6 +4350,10 @@ function closeAddClientModal(){
   PMTOOL_PENDING_EVENT_ID=null;
 }
 
+function acmIsStandaloneSvc(){
+  var svc=(document.getElementById('acm-service').value||'').trim();
+  return svc==='Sprout Gov'||svc==='Statutory Disbursement'||svc==='Payroll Disbursement';
+}
 function acmCheckGov(){
   var svc=(document.getElementById('acm-service').value||'').toLowerCase();
   var sgTicked=document.getElementById('acm-sg').checked;
@@ -4356,6 +4361,8 @@ function acmCheckGov(){
   var stdTicked=document.getElementById('acm-std').checked;
   var show=svc.indexOf('gov')>=0||sgTicked||baTicked||stdTicked;
   document.getElementById('acm-gov-row').style.display=show?'':'none';
+  var reqEl=document.getElementById('acm-impl-req');
+  if(reqEl)reqEl.style.display=acmIsStandaloneSvc()?'none':'';
 }
 function acmCheckOtk(){
   var show=document.getElementById('acm-otk').checked;
@@ -4391,7 +4398,7 @@ function submitAddClient(){
   if(!month)  missing.push('Month');
   if(!name)   missing.push('Company Name');
   if(!service)missing.push('Availed Service');
-  if(!impl)   missing.push('Implementer');
+  if(!impl&&!acmIsStandaloneSvc())missing.push('Implementer');
   if(!pm)     missing.push('Project Manager');
   if(missing.length){
     err.textContent='Please fill in: '+missing.join(', ')+'.';
