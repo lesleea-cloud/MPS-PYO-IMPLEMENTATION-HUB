@@ -3552,10 +3552,12 @@ function renderWeekly(){
   if(isImpl){
     rl=[IMPL_USER];
   } else {
+    var _loginUsers={};
+    USERS.forEach(function(u){if(u&&u.username)_loginUsers[u.username.trim().toLowerCase()]=true;});
     var _seen={};
     D.forEach(function(d){if(d.resource&&d.resource.trim())_seen[d.resource.trim()]=true;});
-    rl=Object.keys(_seen).sort();
-    if(!rl.length)rl=(TEAM_CONFIG.implementers||[]).filter(Boolean);
+    rl=Object.keys(_seen).filter(function(n){return _loginUsers[n.toLowerCase()];}).sort();
+    if(!rl.length)rl=USERS.filter(function(u){return u.role==='implementer';}).map(function(u){return u.username;});
   }
 
   /* shared helpers */

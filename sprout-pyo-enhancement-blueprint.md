@@ -3276,3 +3276,15 @@ User reported (referencing screenshot `01.png` under `Screenshots/09032026`) tha
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
+
+## 85. Weekly Implementation Meeting Report — columns restricted to actual login users (September 3, 2026)
+
+User reported (referencing screenshot `03.png` under `Screenshots/09032026`, highlighting an "Ana" column) that the Weekly Report tab's per-implementer table showed a column for "Ana" — one of the placeholder names baked into `TEAM_CONFIG`'s default seed data (`implPYO:['Ana','Bea','Carl','Dana','Eli']`), not a real person with a login account. Root cause: `renderWeekly()`'s non-implementer branch built its column list (`rl`) from every distinct `d.resource` value found across all client records in `D`, with no check that the name corresponded to an actual registered user — so any stale/placeholder/imported name ever entered into a client's Resource field became a permanent column.
+
+- `renderWeekly()` (`index.html`) now builds a lowercase lookup of real login usernames from `USERS` (`_loginUsers`), and filters the distinct-resource column list down to names that match one of those usernames before sorting.
+- The empty-state fallback (used when no client yet has a resource matching a login user) changed from `TEAM_CONFIG.implementers` (the placeholder roster) to `USERS.filter(u => u.role==='implementer').map(u => u.username)` — the actual registered implementer accounts.
+- Scope: this only changes the Weekly Report tab's table columns. The separate Overview-dashboard "Resource Workload" / "Avg Progress" widgets have their own, unrelated `rl` built from `TEAM_CONFIG.implementers` and were left untouched, since the user's screenshot was specifically the Weekly Report table.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Clean up `TEAM_CONFIG.implPYO`'s placeholder names (`Ana`, `Bea`, `Carl`, `Dana`, `Eli`) if they're not meant to represent real staff — they still appear in the Add-on/implementer picker dropdowns elsewhere in the app; this fix only removed them from the Weekly Report columns.
