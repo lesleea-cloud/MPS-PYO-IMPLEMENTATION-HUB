@@ -3307,5 +3307,24 @@ Fix (`index.html`, `renderWeekly()`):
 ### Known related gap (not fixed here, flagged for follow-up)
 `implOwnsClient()` — the function that powers an implementer's own "My Clients" dashboard — only checks `d.resource` and `d.gov`. The dedicated per-add-on implementer fields for **OTK, PD, POD, and FPOD** (`otkImpl`, `pdImpl`, `podImpl`, `fpodImpl`) aren't checked at all. Any Google-login-only implementer assigned solely via one of those four fields would likely see the same "0 clients" symptom §83 fixed for Gov. Not touched in this fix since it wasn't reported — flag if OTK/PD/POD/FPOD implementers report missing clients.
 
+**Update (§87, September 3, 2026): the OTK part of this gap is now fixed** — `implOwnsClient()` checks `d.otkImpl` as of §87, prompted by Outsourced Timekeeping becoming a standalone service. PD/POD/FPOD remain unfixed and still add-on-only.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+
+## 87. "Outsourced Timekeeping" added as a standalone Availed Service; PM/HR-I/Implementer auto-hide for it (September 3, 2026)
+
+User reported (referencing screenshot `06.png` under `Screenshots/09032026`) that **Outsourced Timekeeping** was missing from the "Add new client" modal's **Availed Service** dropdown — it previously only existed as an add-on checkbox (for a PYO client that also gets OTK support), not as something a client could be signed up for on its own. User also asked that, like the three standalone services fixed in §84, selecting Outsourced Timekeeping as the primary service should auto-hide Project Manager, HR-I, and Implementer.
+
+- `index.html`: added `<option>Outsourced Timekeeping</option>` to the `acm-service` dropdown, and to `CL_SERVICES` (the array that drives the inline service-edit dropdown in the Overview tab) and the "All services" filter checklist — all three needed it to stay consistent with the other standalone services.
+- `acmIsStandaloneSvc()` now also returns true for `Outsourced Timekeeping`, so it automatically gets the §84 behavior: Project Manager, HR-I, and Implementer wrappers hide and their values clear.
+- `acm-service`'s `onchange` now also calls `acmCheckOtk()` (previously only wired to the OTK add-on checkbox). `acmCheckOtk()` now shows the "OTK Implementer" row when the primary service is Outsourced Timekeeping, not just when the add-on checkbox is ticked — otherwise there would be no way to record who's implementing a standalone OTK client, once the generic Implementer field hides.
+- **Client-type sidebar filter** (`renderClients()`): the `CL_TYPE==='otk'` bucket previously matched only `CL_ADDONS[d.no].otk` (the add-on flag). It now also matches `d.service==='Outsourced Timekeeping'`, and the generic "pyo" bucket's exclusion list now also excludes `Outsourced Timekeeping` — otherwise a standalone OTK client would've wrongly landed in the general PYO sidebar section instead of the dedicated OTK one.
+- **Weekly Implementation Meeting Report** (`renderWeekly()`), same class of bug §86 fixed for Gov: since Implementer/PM/HR-I are hidden for a standalone OTK client, `d.resource` is blank and the client's only implementer record is `d.otkImpl`. Without a fix, standalone OTK clients would've been invisible in the report. Fixed by:
+  - `_loginUsers` now also includes `TEAM_CONFIG.implOTK` names (Google-login-only OTK implementers, same reasoning as Gov in §86).
+  - The candidate-name scan (`_seen`) now also reads `d.otkImpl`.
+  - The `OTK` section now carries `matchKey:'otkImpl'`, and its two row functions (`OTK Under Implem`, `OTK Under Live`) now also match `d.service==='Outsourced Timekeeping'`, not just the add-on flag.
+- **`implOwnsClient()`** (used for an implementer's own "My Clients" dashboard) now also checks `d.otkImpl` — without this, a person assigned only via the OTK Implementer field (very plausible now that OTK is a real standalone service) would see 0 clients on their own dashboard, the same bug §83 fixed for Gov. PD/POD/FPOD implementer fields remain unchecked there — still add-on-only, not standalone, so left as the previously-flagged known gap.
+
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.

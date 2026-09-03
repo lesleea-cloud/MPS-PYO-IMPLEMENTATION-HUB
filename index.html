@@ -1084,9 +1084,9 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Availed Service <span style="color:var(--r)">*</span></div>
-          <select id="acm-service" onchange="acmCheckGov()" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          <select id="acm-service" onchange="acmCheckGov();acmCheckOtk();" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select service —</option>
-            <option>Final Pay on Demand</option><option>Payroll Disbursement</option><option>Payroll on Demand</option><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
+            <option>Final Pay on Demand</option><option>Outsourced Timekeeping</option><option>Payroll Disbursement</option><option>Payroll on Demand</option><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
             <option>PYO + HR + Sprout Gov</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option><option>Special Projects</option>
           </select>
         </div>
@@ -1565,6 +1565,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
               Clear selection
             </div>
             <label class="svc-ms-opt"><input type="checkbox" value="Final Pay on Demand" onchange="updateSvcMs()"> Final Pay on Demand</label>
+            <label class="svc-ms-opt"><input type="checkbox" value="Outsourced Timekeeping" onchange="updateSvcMs()"> Outsourced Timekeeping</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Payroll Disbursement" onchange="updateSvcMs()"> Payroll Disbursement</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Payroll on Demand" onchange="updateSvcMs()"> Payroll on Demand</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Payroll Starter" onchange="updateSvcMs()"> Payroll Starter</label>
@@ -2404,7 +2405,8 @@ function implOwnsClient(d,user){
   if(!u)return false;
   var res=(d.resource||'').toLowerCase().split('/').some(function(p){return p.trim()===u;});
   var gov=(d.gov||'').trim().toLowerCase()===u;
-  return res||gov;
+  var otk=(d.otkImpl||'').trim().toLowerCase()===u;
+  return res||gov||otk;
 }
 // Some implementers sign in via Google without a pre-registered account; Google supplies their
 // full legal name (e.g. "Ma. Alvadai Bariuan"), but client assignments store short nicknames
@@ -3555,10 +3557,12 @@ function renderWeekly(){
     var _loginUsers={};
     USERS.forEach(function(u){if(u&&u.username)_loginUsers[u.username.trim().toLowerCase()]=true;});
     (TEAM_CONFIG.implGov||[]).forEach(function(n){if(n&&n.trim())_loginUsers[n.trim().toLowerCase()]=true;});
+    (TEAM_CONFIG.implOTK||[]).forEach(function(n){if(n&&n.trim())_loginUsers[n.trim().toLowerCase()]=true;});
     var _seen={};
     D.forEach(function(d){
       if(d.resource&&d.resource.trim())_seen[d.resource.trim()]=true;
       if(d.gov&&d.gov.trim())_seen[d.gov.trim()]=true;
+      if(d.otkImpl&&d.otkImpl.trim())_seen[d.otkImpl.trim()]=true;
     });
     rl=Object.keys(_seen).filter(function(n){return _loginUsers[n.toLowerCase()];}).sort();
     if(!rl.length)rl=USERS.filter(function(u){return u.role==='implementer';}).map(function(u){return u.username;});
@@ -3599,9 +3603,9 @@ function renderWeekly(){
     {lbl:'Disbursement',matchKey:'gov',rows:[
       {lbl:'Disbursement under Implem',fn:function(d){var a=CL_ADDONS[d.no]||{};return !!a.std&&isActive(d);}},
     ]},
-    {lbl:'OTK',rows:[
-      {lbl:'OTK Under Implem',fn:function(d){return !!addon(d,'otk')&&isActive(d);}},
-      {lbl:'OTK Under Live',   fn:function(d){return !!addon(d,'otk')&&d.remarks==='Live';}},
+    {lbl:'OTK',matchKey:'otkImpl',rows:[
+      {lbl:'OTK Under Implem',fn:function(d){return (!!addon(d,'otk')||d.service==='Outsourced Timekeeping')&&isActive(d);}},
+      {lbl:'OTK Under Live',   fn:function(d){return (!!addon(d,'otk')||d.service==='Outsourced Timekeeping')&&d.remarks==='Live';}},
     ]},
   ];
 
@@ -4078,7 +4082,7 @@ var CL_TAB='overview';
 var ML_SORT_COL=null,ML_SORT_DIR='asc';
 var CL_TYPE='pyo'; // 'pyo' or 'ps' (payroll starter)
 var CL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var CL_SERVICES=['Final Pay on Demand','Payroll Disbursement','Payroll on Demand','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement','Special Projects'];
+var CL_SERVICES=['Final Pay on Demand','Outsourced Timekeeping','Payroll Disbursement','Payroll on Demand','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement','Special Projects'];
 var MON_SELECTED=[];  // multi-select state for month filter
 var SVC_SELECTED=[];  // multi-select state for service filter
 // Extended data for add-on services and after handover (keyed by client no)
@@ -4360,7 +4364,7 @@ function closeAddClientModal(){
 
 function acmIsStandaloneSvc(){
   var svc=(document.getElementById('acm-service').value||'').trim();
-  return svc==='Sprout Gov'||svc==='Statutory Disbursement'||svc==='Payroll Disbursement';
+  return svc==='Sprout Gov'||svc==='Statutory Disbursement'||svc==='Payroll Disbursement'||svc==='Outsourced Timekeeping';
 }
 function acmCheckGov(){
   var svc=(document.getElementById('acm-service').value||'').toLowerCase();
@@ -4381,7 +4385,8 @@ function acmCheckGov(){
   }
 }
 function acmCheckOtk(){
-  var show=document.getElementById('acm-otk').checked;
+  var svc=(document.getElementById('acm-service').value||'').toLowerCase();
+  var show=document.getElementById('acm-otk').checked||svc.indexOf('outsourced timekeeping')>=0;
   document.getElementById('acm-otk-row').style.display=show?'':'none';
 }
 function acmCheckPd(){
@@ -4999,9 +5004,9 @@ function renderClients(){
     if(CL_TYPE==='pd')      return d.service==='Payroll Disbursement';
     if(CL_TYPE==='special') return d.service==='Special Projects'||d.service==='Payroll on Demand'||d.service==='Final Pay on Demand';
     if(CL_TYPE==='addons')  return !!(CL_ADDONS[d.no]&&(CL_ADDONS[d.no].ba||CL_ADDONS[d.no].std));
-    if(CL_TYPE==='otk')     return !!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].otk);
-    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement, standalone Payroll Disbursement, standalone Payroll on Demand, standalone Final Pay on Demand, Special Projects
-    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement'&&d.service!=='Payroll Disbursement'&&d.service!=='Payroll on Demand'&&d.service!=='Final Pay on Demand'&&d.service!=='Special Projects';
+    if(CL_TYPE==='otk')     return d.service==='Outsourced Timekeeping'||!!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].otk);
+    // pyo: everything except PS, standalone Sprout Gov, standalone Statutory Disbursement, standalone Payroll Disbursement, standalone Outsourced Timekeeping, standalone Payroll on Demand, standalone Final Pay on Demand, Special Projects
+    return d.service!=='Payroll Starter'&&d.service!=='Sprout Gov'&&d.service!=='Statutory Disbursement'&&d.service!=='Payroll Disbursement'&&d.service!=='Outsourced Timekeeping'&&d.service!=='Payroll on Demand'&&d.service!=='Final Pay on Demand'&&d.service!=='Special Projects';
   });
   // Update toggle count label
   var pyoCnt=D.filter(function(d){return d.service!=='Payroll Starter';}).length;
