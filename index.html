@@ -7907,6 +7907,7 @@ function mfInjectRows(sheetXml,rows,cols,colMap){
     return parseInt(n)>=5?'':m;
   });
   var newRows='';
+  var lastRow=4;
   rows.forEach(function(rowData,ri){
     var rn=ri+5;
     var cells='';
@@ -7921,7 +7922,16 @@ function mfInjectRows(sheetXml,rows,cols,colMap){
       if(v===undefined||v===null||v==='')return;
       cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
     });
-    if(cells)newRows+='<row r="'+rn+'">'+cells+'</row>';
+    if(cells){newRows+='<row r="'+rn+'">'+cells+'</row>';lastRow=rn;}
+  });
+  // The template's <dimension> still declares its original (blank) row range — extend it to
+  // cover the injected rows, or strict parsers (e.g. Google Sheets) clip/hide rows outside it.
+  clean=clean.replace(/<((?:[a-zA-Z]*:)?dimension)\b([^>]*)\/>/,function(m,tag,attrs){
+    var refMatch=attrs.match(/ref="([A-Z]+)(\d+):([A-Z]+)(\d+)"/);
+    if(!refMatch)return m;
+    var newLast=Math.max(parseInt(refMatch[4],10),lastRow);
+    var newRef='ref="'+refMatch[1]+refMatch[2]+':'+refMatch[3]+newLast+'"';
+    return '<'+tag+' '+attrs.replace(/ref="[^"]*"/,newRef).trim()+'/>';
   });
   // Replace closing sheetData tag — handles namespace prefixes like </x:sheetData>
   var sdClose=clean.match(/<\/[a-zA-Z]*:?sheetData>/);

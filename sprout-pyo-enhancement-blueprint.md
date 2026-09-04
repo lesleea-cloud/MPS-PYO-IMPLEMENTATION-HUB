@@ -3340,3 +3340,16 @@ Verified against the reference file: with these two fixes, all 6 employee rows a
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
+
+## 89. Masterfile Creator — downloaded file appeared blank past row 4 (September 4, 2026)
+
+User reported (referencing screenshot `01.png` under `Screenshots\09042026`, opened in Google Sheets) that after §88's fix the downloaded masterfile still showed no employee rows — only the `SAMPLE DATA` row (row 4) was visible, with every row beneath it blank, despite the tool reporting a successful mapping.
+
+Root cause: `mfInjectRows()` (`index.html`) strips the template's placeholder rows (`r >= 5`) and writes fresh `<row>` XML directly into `<sheetData>`, but it never touched the sheet's `<dimension ref="A1:AV4"/>` element — inherited as-is from the blank output template, which only ever had 4 rows of content. The new employee rows were genuinely present in the file's XML, but still declared themselves outside the sheet's stated used-range. SheetJS (used internally by the tool to preview/re-read files) recomputes the actual range from the cells and doesn't care about a stale `<dimension>` tag, so the in-app preview looked fine — but stricter consumers (confirmed with Google Sheets in the reported screenshot) trust the declared dimension and clip/hide any rows outside it, making the download look empty past the sample row.
+
+Confirmed by comparing the reference `Generated Output_5.xlsx` and the original `..._Sample Output.xlsx` — both carry `<dimension ref="A1:AV10"/>` (4 template rows + 6 employees), while the blank upload template (`Panasonicp_PayrollPieEmployeeTemplate_ADD_071426_123156.xlsx`) still had `<dimension ref="A1:AV4"/>`.
+
+Fix (`mfInjectRows()`, `index.html`): after building the injected `<row>` elements, the function now also rewrites the sheet's `<dimension>` tag, extending its end-row to the last injected row number (namespace-prefix-safe, same pattern as the existing row-stripping/`sheetData`-closing regexes). Verified the rewritten tag matches the reference files' `<dimension ref="A1:AV10"/>` exactly for this 6-employee case.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
