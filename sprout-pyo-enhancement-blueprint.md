@@ -3328,3 +3328,15 @@ User reported (referencing screenshot `06.png` under `Screenshots/09032026`) tha
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
+
+## 88. Masterfile Creator — output no longer matches the PayrollPie ADD template on Status and Basic Salary (September 4, 2026)
+
+User referenced `Generated Output_5.xlsx` (under `Templates for upload\Masterfile`) as the correct expected output of the Masterfile Creator tool, generated from the two upload files `Panasonic Projector & Display Asia Pacific PTE. LTD._Masterfile.xlsx` (source) and `Panasonicp_PayrollPieEmployeeTemplate_ADD_071426_123156.xlsx` (output template). Comparing that reference file cell-by-cell against `mfGenerate()`'s mapping logic (`index.html`) across all 48 output columns and all 6 sample employees surfaced two mismatches; every other column (dates, Gender/Civil Status normalization, Pay Group derivation, bank fields, government IDs, etc.) already matched exactly.
+
+1. **`Status` column was hardcoded to `'ADD'`.** The reference output leaves this column blank for every mapped employee row (only the original template's `SAMPLE DATA` row keeps a literal value in that column). Fixed by setting `mapped['Status']=''` instead.
+2. **`Basic Salary*` fell through to blank when the source had no salary value.** `mfNum()` correctly returns `''` for a blank input, but this is a required (`*`) field and the reference output defaults it to `0` — the same "default when missing" pattern the tool already applied correctly to `Work Days Per Year*` (→ 313) via `mfNormWorkDays()`. Added a matching `mfNormBasicSalary()` helper (defaults to `0` when `mfNum()` returns `''`) and switched the Basic Salary mapping to use it.
+
+Verified against the reference file: with these two fixes, all 6 employee rows across all 48 columns match `Generated Output_5.xlsx` exactly, and the other sheets (`Dependents`, `Sheet2`, `Sheet3`) were already confirmed to be untouched copies of the uploaded output template (the tool only rewrites `sheet1.xml`).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.

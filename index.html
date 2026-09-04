@@ -7617,6 +7617,10 @@ function mfNormWorkDays(v){
   var n=parseFloat(String(v||''));
   return isNaN(n)?313:n;
 }
+function mfNormBasicSalary(v){
+  var n=mfNum(v);
+  return n===''?0:n;
+}
 function mfNormMWE(v){
   var s=String(v||'').trim().toLowerCase();
   if(s==='yes'||s==='y')return 'Yes';
@@ -7719,8 +7723,8 @@ async function mfGenerate(){
       // Build the mapped output object keyed by exact output column name
       var mapped={};
 
-      // Status — always ADD for new employees
-      mapped['Status']='ADD';
+      // Status — left blank for new-hire ADD rows (template default)
+      mapped['Status']='';
  
       // Employee ID
       var eid=String(g(row,srcHeaders,['Employee ID','Emp ID','Employee No','Employee No.'])||'').trim();
@@ -7770,7 +7774,7 @@ async function mfGenerate(){
       // Salary / compensation
       mapped['Minimum Wage Earner (Yes/No)']=mfNormMWE(g(row,srcHeaders,['Minimum Wage Earner','MWE']));
       var basicSal=g(row,srcHeaders,['Basic Salary','Basic Pay','Salary']);
-      mapped['Basic Salary*']=mfNum(basicSal);
+      mapped['Basic Salary*']=mfNormBasicSalary(basicSal);
       mapped['De Minimis']=mfNum(g(row,srcHeaders,['De Minimis','DeMinimis']))||'';
       mapped['Daily Allowance']='';
       var wh=parseFloat(String(g(row,srcHeaders,['Work Hours Per Day','Work Hours per Day','Hours Per Day'])||''));
