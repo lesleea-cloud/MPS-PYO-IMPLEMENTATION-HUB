@@ -3353,3 +3353,33 @@ Fix (`mfInjectRows()`, `index.html`): after building the injected `<row>` elemen
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
+
+## 90. Masterfile Creator — rows were being injected into the wrong (hidden) worksheet entirely (September 4, 2026)
+
+User reported (referencing screenshot `02.png` under `Screenshots\09042026`, opened in real Excel — not Google Sheets, ruling out §89's dimension-clipping explanation) that the downloaded file was *still* blank past row 4 after redeploying §88/§89's fixes to Vercel and retesting live.
+
+Root cause, found in `mfDownload()` (`index.html`): to locate the raw `sheetN.xml` to inject rows into, the code searched `xl/_rels/workbook.xml.rels` for the first `Relationship` whose `Type` ends in `/worksheet"`, using a single non-global regex `.match()`. But relationship entries in a `.rels` file are not necessarily written in sheet order — in the actual PayrollPie template, the raw XML order was `rId8 (customXml), rId3 → sheet3.xml, rId9 (sharedStrings), rId2 → sheet2.xml, rId1 → sheet1.xml, ...`. The regex matched **`rId3 → worksheets/sheet3.xml` first** — a hidden lookup/reference sheet — even though the visible "Employee" sheet is `rId1 → sheet1.xml`. Every previous run of the tool had therefore been silently writing the mapped employee rows into the hidden `Sheet3`, while the visible "Employee" tab (and its `<dimension>`, per §89) was never touched at all — explaining why the download always looked empty regardless of §88/§89, in both Google Sheets and real Excel.
+
+This went unnoticed by the tool's own in-app preview because that preview is rendered directly from the JS `allRows` array (`renderMfPreview()`), never from the actual written XML — so the preview always looked correct even while the file being downloaded was broken.
+
+Fix (`mfDownload()`, `index.html`): sheet resolution now finds the **first `<sheet>` element in `xl/workbook.xml`** (matching the same `xlWb.SheetNames[0]` sheet that SheetJS/`colMap` already correctly used), reads its `r:id`, and looks up that specific `Id` in `workbook.xml.rels` to get the right `Target`. The old "first worksheet-type relationship in the file" logic is kept only as a last-resort fallback if the r:id lookup fails for any reason. Verified against the real template: now resolves to `xl/worksheets/sheet1.xml` as expected, instead of `sheet3.xml`.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-test the Masterfile Creator end-to-end (upload the same two files, generate, download, open in Excel) to confirm the Employee tab now actually shows the 6 mapped rows.
+
+## 91. Masterfile Creator — five field mappings didn't match the finalized reference output (September 16, 2026)
+
+User provided a new, finalized reference pair under `Templates for upload\Masterfile\Final`: `01_Panasonic Projector & Display Asia Pacific PTE. LTD._Masterfile.xlsx` (source) and `02_Panasonicp_PayrollPieEmployeeTemplate_ADD_Sample Output.xlsx` (confirmed by the user to be the correct/desired output, superseding the `Generated Output_5.xlsx` reference used in §88). Comparing this file cell-by-cell (all 48 output columns, all 6 employees) against `mfGenerate()` surfaced five mismatches — everything else (TIN, bank fields, Civil Status, Employment Status, Basic Salary, Date of Birth, etc.) already matched exactly.
+
+1. **`Gender*` was forced to `MALE`/`FEMALE` (all caps).** The reference output uses Title Case (`Male`/`Female`). Fixed `mfNormGender()` to return `'Male'`/`'Female'` instead.
+2. **`Hire Date (mm/dd/yyyy)*` and `Status Date (mm/dd/yyyy)*` were run through `mfFmtDate()`.** The reference output carries the raw literal source value unconverted (e.g. the Excel serial `45170`, not a formatted date string). Both fields now use the trimmed raw source value (`hireVal`) directly instead of `mfFmtDate(hireRaw)`.
+3. **`ROHQ (Yes/No)` was hardcoded to `'No'`.** The source file has its own `ROHQ` column, blank for every sample employee, and the reference output is blank to match — not `'No'`. Now reads the source `ROHQ` column through the existing `mfNormMWE()` Yes/No normalizer (blank stays blank) instead of a hardcoded default.
+4. **`Work Days Per Year*` defaulted to `313` when the source was blank.** The reference output leaves it blank in that case. Removed the default from `mfNormWorkDays()` — blank/unparseable source now maps to `''`, not `313`.
+5. **`Pay Group*` was derived from `Employee Type` via `mfNormPayGroup()`** (`'Officer'` / `'Rank and File'` fallback). The reference output instead copies the employee's **Job Title** verbatim into `Pay Group*` (e.g. `Manager`, `Sales Support Executive`, `Engineer`, blank when Job Title is blank) — confirmed across all 6 rows including the 3 with blank Job Title/Pay Group. Replaced the `Pay Group*` mapping with `mapped['Job Title']` directly; `mfNormPayGroup()` is now unused and was removed.
+
+Verified against the reference file: with these five fixes, all 6 employee rows across all 48 columns match `02_Panasonicp_PayrollPieEmployeeTemplate_ADD_Sample Output.xlsx` exactly (aside from one cosmetic, non-load-bearing difference: the reference has a trailing space on one Last Name, `"Balentoza "`, which the tool correctly trims — not changed).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-test the Masterfile Creator end-to-end with the `Final` reference files to confirm all 6 rows match on Gender, Hire/Status Date, ROHQ, Work Days Per Year, and Pay Group.

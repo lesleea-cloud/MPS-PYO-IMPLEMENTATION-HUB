@@ -7581,8 +7581,8 @@ function mfNum(v){
 }
 function mfNormGender(v){
   var s=String(v||'').trim().toLowerCase();
-  if(s==='f'||s==='female')return 'FEMALE';
-  if(s==='m'||s==='male')return 'MALE';
+  if(s==='f'||s==='female')return 'Female';
+  if(s==='m'||s==='male')return 'Male';
   return String(v||'').trim();
 }
 function mfNormCivil(v){
@@ -7602,20 +7602,16 @@ function mfNormStatus(v){
   if(s==='terminated'||s==='resigned')return 'Inactive';
   return String(v||'').trim();
 }
-function mfNormPayGroup(v,empType){
-  if(v&&String(v).trim())return String(v).trim();
-  var t=String(empType||'').toLowerCase();
-  if(t.includes('officer'))return 'Officer';
-  return 'Rank and File';
-}
 function mfNormOT(v){
   var s=String(v||'').trim();
   if(s)return s;
   return 'OT Table 1';
 }
 function mfNormWorkDays(v){
-  var n=parseFloat(String(v||''));
-  return isNaN(n)?313:n;
+  var s=String(v||'').trim();
+  if(!s)return '';
+  var n=parseFloat(s);
+  return isNaN(n)?'':n;
 }
 function mfNormBasicSalary(v){
   var n=mfNum(v);
@@ -7718,7 +7714,7 @@ async function mfGenerate(){
  
       var g=mfGet;
       var hireRaw=g(row,srcHeaders,['Hire Date','Date Hired','Start Date']);
-      var hireFmt=mfFmtDate(hireRaw);
+      var hireVal=String(hireRaw||'').trim();
 
       // Build the mapped output object keyed by exact output column name
       var mapped={};
@@ -7750,11 +7746,11 @@ async function mfGenerate(){
       mapped['Cost Center']=String(g(row,srcHeaders,['Cost Center','Cost Centre'])||'').trim();
  
       // Employment
-      mapped['Hire Date (mm/dd/yyyy)*']=hireFmt;
+      mapped['Hire Date (mm/dd/yyyy)*']=hireVal;
       var rawStatus=g(row,srcHeaders,['Employment Status','Emp Status']);
       mapped['Employment Status*']=mfNormStatus(rawStatus);
-      mapped['Status Date (mm/dd/yyyy)*']=hireFmt;
-      mapped['ROHQ (Yes/No)']='No';
+      mapped['Status Date (mm/dd/yyyy)*']=hireVal;
+      mapped['ROHQ (Yes/No)']=mfNormMWE(g(row,srcHeaders,['ROHQ']));
  
       // Government IDs
       mapped['TIN*']=mfStrip(g(row,srcHeaders,['TIN','Tax ID','Tax Identification Number']));
@@ -7791,14 +7787,13 @@ async function mfGenerate(){
       mapped['Previous Employer Monetized Leave']='';
  
       // Payroll settings
-      var empType=g(row,srcHeaders,['Employee Type','Emp Type']);
       mapped['OT Computation Table*']=mfNormOT(g(row,srcHeaders,['OT Computation Table','OT Table']));
       mapped['Work Days Per Year*']=mfNormWorkDays(g(row,srcHeaders,['Work Days Per Year','Work Days/Year']));
       mapped['SSS Contribution (Leave blank to let the system decide)']='';
       mapped['PhilHealth Contribution (Leave blank to let the system decide)']='';
       mapped['HDMF Contribution (Leave blank to let the system decide)']='';
       mapped['Additional HDMF Contribution']='';
-      mapped['Pay Group*']=mfNormPayGroup(g(row,srcHeaders,['Pay Group','PayGroup','Payroll Group']),empType);
+      mapped['Pay Group*']=mapped['Job Title'];
       mapped['Payroll ID']='';
  
       // Now project onto exact outCols order
@@ -7876,10 +7871,27 @@ async function mfDownload(){
     }
     var zip=await JSZip.loadAsync(buf);
     var sheetXmlPath='xl/worksheets/sheet1.xml';
+    var workbookXmlFile=zip.file('xl/workbook.xml');
     var relsFile=zip.file('xl/_rels/workbook.xml.rels');
-    if(relsFile){
+    if(workbookXmlFile&&relsFile){
+      // Resolve the XML path for the sheet we actually edited (xlWb.SheetNames[0], i.e. the
+      // first <sheet> in workbook.xml) via its r:id — NOT just the first worksheet-type
+      // relationship found in the .rels file, since relationship entries aren't written in
+      // sheet order and picking the wrong one silently injects rows into a different sheet.
+      var workbookXml=await workbookXmlFile.async('string');
+      var sheetTags=workbookXml.match(/<sheet\b[^>]*\/>/g)||[];
+      var targetTag=sheetTags[0];
+      var ridMatch=targetTag&&targetTag.match(/r:id="([^"]+)"/);
       var relsXml=await relsFile.async('string');
-      var rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
+      var rm=null;
+      if(ridMatch){
+        var relTagMatch=relsXml.match(new RegExp('<Relationship\\b[^>]*\\bId="'+ridMatch[1]+'"[^>]*/>'));
+        if(relTagMatch){
+          var targetMatch=relTagMatch[0].match(/Target="([^"]+)"/);
+          if(targetMatch)rm=[null,targetMatch[1]];
+        }
+      }
+      if(!rm)rm=relsXml.match(/Type="[^"]*\/worksheet"[^>]*Target="([^"]+)"/);
       if(!rm)rm=relsXml.match(/Target="(worksheets\/[^"]+)"/);
       if(rm)sheetXmlPath='xl/'+(rm[1].replace(/^\//,''));
     }
