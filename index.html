@@ -7875,7 +7875,9 @@ async function mfDownload(){
     // Strip any embedded date-like token (e.g. a version/date stamp carried over from the
     // uploaded file's own name, like "..._09-11-2026") — the filename already appends the
     // actual generation date below, so a leftover date from the source filename is just noise.
-    cn=cn.replace(/[_\-\s]*\b\d{1,2}[\-\/]\d{1,2}[\-\/]\d{2,4}\b[_\-\s]*/g,' ').trim().replace(/\s+/g,' ');
+    // No \b before the digits here: "_" counts as a word character in regex, so "_09" has no
+    // word boundary between them and \b would silently never match.
+    cn=cn.replace(/[_\-\s]*\d{1,2}[\-\/]\d{1,2}[\-\/]\d{2,4}[_\-\s]*/g,' ').trim().replace(/\s+/g,' ');
     var now=new Date();
     var dateStr=(now.getMonth()+1+'').padStart(2,'0')+'-'+(now.getDate()+'').padStart(2,'0')+'-'+now.getFullYear();
     var timeStr=(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');

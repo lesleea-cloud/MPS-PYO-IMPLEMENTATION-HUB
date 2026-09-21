@@ -3538,3 +3538,8 @@ After sanitizing `cn` (the company-name portion of the filename), strip any embe
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Generate a Masterfile output without typing a Company Name (letting it fall back to a source filename that contains a date) and confirm the date does not appear in the downloaded filename.
+
+### Bug in the fix itself, found after redeploy (same day)
+After pushing §98 live (confirmed via direct fetch of the deployed `index.html` — byte-identical to local, fix code present) the date still wasn't stripped in testing (`Pierian- EmployeeTemplate_09-11-2026 1_PayrollPie_ADD_...`). Root cause: the regex used `\b` immediately before the digits (`\b\d{1,2}...`), but `_` counts as a **word character** in regex, so `_09` has no word boundary between `_` and `0` — the `\b` assertion silently never matched, and the whole replace was a no-op. This wasn't a deployment/caching problem at all (that was ruled out by fetching the live site directly and diffing byte size against local).
+
+**Fix:** removed both `\b` assertions — the surrounding `[_\-\s]*` classes already properly delimit the date token, so the boundary check was both wrong and unnecessary. Verified via a standalone regex test (PowerShell `.NET` regex, equivalent semantics to JS here) against the exact reported string: `Pierian- EmployeeTemplate_09-11-2026 1` → `Pierian- EmployeeTemplate 1`.
