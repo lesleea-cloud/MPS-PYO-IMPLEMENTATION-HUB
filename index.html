@@ -3368,7 +3368,7 @@ async function _supaDelete(table,col,val){
   catch(e){console.warn(table+' error:',e);}
 }
 function _ilSupaUpsert(issue){
-  _supaUpsert('client_issues',{id:issue.id,client_no:issue.clientNo,client_name:issue.clientName,date:issue.date,description:issue.description,priority:issue.priority,status:issue.status,resolution:issue.resolution||'',created_by:issue.createdBy||''},'id');
+  _supaUpsert('client_issues',{id:issue.id,client_no:issue.clientNo,client_name:issue.clientName,date:issue.date,description:issue.description,priority:issue.priority,status:issue.status,status_date:issue.statusDate||'',resolution:issue.resolution||'',created_by:issue.createdBy||''},'id');
 }
 function _cpSupaSave(clientNo){
   _supaUpsert('client_pending',{client_no:clientNo,items:CLIENT_PENDING[clientNo]||[]},'client_no');
@@ -5291,6 +5291,7 @@ function renderIssueLog(rows){
           +'<option value="resolved"'+(i.status==='resolved'?' selected':'')+'>Resolved</option>'
         +'</select>'
         :'<span class="il-status '+stCls+'" style="cursor:default;">'+stLbl+'</span>';
+      var statusDateHtml=i.statusDate?'<div style="font-size:9.5px;color:var(--s4);margin-top:3px;">as of '+i.statusDate+'</div>':'';
       var priCell=canEdit
         ?'<select class="il-pri il-pri-sel '+priCls+'" onchange="ilUpdatePriority(\''+i.id+'\',this.value)">'
           +['high','medium','low'].map(function(p){return '<option value="'+p+'"'+(i.priority===p?' selected':'')+'>'+p.charAt(0).toUpperCase()+p.slice(1)+'</option>';}).join('')
@@ -5305,7 +5306,7 @@ function renderIssueLog(rows){
         +'<span style="font-size:11px;color:var(--s4);">'+i.date+'</span>'
         +'<span>'+priCell+'</span>'
         +'<span style="font-size:12px;color:var(--s7);">'+descCell+resRow+'</span>'
-        +'<span>'+statusCell+'</span>'
+        +'<span>'+statusCell+statusDateHtml+'</span>'
         +'<span>'+(canEdit?'<button class="il-del-btn" onclick="ilDelete(\''+i.id+'\')" title="Delete">✕</button>':'')+'</span>'
         +'</div>';
     }).join('');
@@ -5327,7 +5328,8 @@ function ilSave(){
   if(!desc){alert('Please enter a description.');return;}
   var clientRow=D.find(function(d){return d.no===no;});
   var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');
-  var issue={id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:_m+'/'+_d+'/'+today.getFullYear(),description:desc,priority:pri,status:'open',resolution:'',createdBy:IMPL_USER||CURRENT_NAME};
+  var todayStr=_m+'/'+_d+'/'+today.getFullYear();
+  var issue={id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:todayStr,description:desc,priority:pri,status:'open',statusDate:todayStr,resolution:'',createdBy:IMPL_USER||CURRENT_NAME};
   CL_ISSUES.push(issue);
   ilSaveToStorage();
   _ilSupaUpsert(issue);
@@ -5340,6 +5342,8 @@ function ilUpdateStatus(id,val){
   var issue=CL_ISSUES.find(function(i){return i.id===id;});
   if(!issue)return;
   issue.status=val;
+  var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');
+  issue.statusDate=_m+'/'+_d+'/'+today.getFullYear();
   ilSaveToStorage();
   _ilSupaUpsert(issue);
   renderIssuesPage();
@@ -8786,7 +8790,7 @@ async function loadFromSupabase(){
     // Load issue log
     var ris=await _supa.from('client_issues').select('*').order('date',{ascending:false});
     if(!ris.error&&ris.data&&ris.data.length){
-      CL_ISSUES=ris.data.map(function(r){return{id:r.id,clientNo:r.client_no,clientName:r.client_name||'',date:r.date||'',description:r.description||'',priority:r.priority||'medium',status:r.status||'open',resolution:r.resolution||'',createdBy:r.created_by||''};});
+      CL_ISSUES=ris.data.map(function(r){return{id:r.id,clientNo:r.client_no,clientName:r.client_name||'',date:r.date||'',description:r.description||'',priority:r.priority||'medium',status:r.status||'open',statusDate:r.status_date||r.date||'',resolution:r.resolution||'',createdBy:r.created_by||''};});
       try{localStorage.setItem('pyo_issues',JSON.stringify(CL_ISSUES));}catch(e){}
     }
     // Load audit log

@@ -3569,3 +3569,29 @@ Screenshot `06.png` (Issue Log page) showed Status as a plain "Resolved" badge w
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. On the Issue Log page, confirm Status shows as a dropdown with 3 options, and that editing Description or Priority inline saves and persists after a page reload.
+
+---
+
+## 100. Issue Log — status changes now get a date stamp ("as of MM/DD/YYYY") (September 21, 2026)
+
+### What changed
+Added a `statusDate` field to each issue, separate from the original `date` (when the issue was logged). It's stamped with today's date every time the Status dropdown (§99) is changed, and shown as a small "as of MM/DD/YYYY" line under the Status cell — so the Issue Log shows progress over time (when it moved to In Progress, when it was Resolved), not just when it was first opened.
+
+### Changes made
+- `ilSave()`: new issues get `statusDate` initialized to the same value as the creation `date`.
+- `ilUpdateStatus(id,val)`: now also stamps `issue.statusDate` with today's date on every status change (Open → In Progress → Resolved, in any direction).
+- `renderIssueLog()`: renders `statusDateHtml` ("as of ...") under the Status cell, right below the dropdown/badge.
+- `_ilSupaUpsert()`: now sends `status_date` alongside the other issue fields.
+- Supabase load mapping: reads `status_date` back into `statusDate`, falling back to the issue's original `date` for any pre-existing issues that predate this column (so old issues don't show a blank date stamp).
+
+### Supabase change required
+New file **`Issue_Status_Date_Column.sql`** (repo root, same convention as `PD_Implementer_Column.sql` etc.):
+```sql
+ALTER TABLE client_issues ADD COLUMN IF NOT EXISTS status_date TEXT DEFAULT '';
+```
+**Run this in Supabase → SQL Editor before/with this deploy** — unlike §99, this one does need a schema change (`client_issues` had no per-status-change date field before).
+
+### Manual steps still required
+1. Run `Issue_Status_Date_Column.sql` in Supabase SQL Editor.
+2. Redeploy `index.html` to Vercel.
+3. Change an issue's status and confirm the "as of" date appears and updates on each change.
