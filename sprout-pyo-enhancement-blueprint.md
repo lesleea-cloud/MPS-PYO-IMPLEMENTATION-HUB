@@ -3731,3 +3731,22 @@ New shared helper `clClientLinkHtml(d)`, used everywhere a row renders the Clien
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Mark a client Churned, then check its name appears in red on Overview and all 5 other tabs (Resource Team, Implementation Phases, Add On Services, Milestone Dates, After Hand Over).
+
+---
+
+## 107. Churned client marking made more obvious — badge chip + tinted row (September 21, 2026)
+
+### What changed
+User felt §106's red font color alone wasn't obvious enough. Escalated to a 3-layer treatment, all still keyed off the same `d.remarks==='Churned'` check:
+1. Red client name (kept from §106)
+2. **New**: a small red "Churned" chip badge right next to the name
+3. **New**: the entire row gets a persistent light-red tint (`#fef2f2`), not just the name — visible even at a glance without reading text
+
+### Fix (`index.html`)
+- `clClientLinkHtml(d)` (§106) now also appends a small uppercase "Churned" pill (`#fecaca` bg / `#991b1b` text, matching the badge colors already used for the Churned status elsewhere) right after the client name when churned.
+- New `clRowOpenTag(d)`: builds each row's opening `<tr>` tag. Churned rows get `background:#fef2f2` persistently; hovering switches to a slightly deeper red (`#fee2e2`) instead of the usual green hover, and un-hovering restores the red tint instead of clearing to blank — so the tint doesn't disappear or flash green on interaction. Non-churned rows behave exactly as before (blank background, green hover).
+- Replaced the inline `<tr onmouseover=...>` markup with `clRowOpenTag(d)` in all 6 tabs (Overview, Resource Team, Implementation Phases, Add On Services, After Hand Over — previously duplicated inline in each — **and Milestone Dates**, which previously had no hover state at all (`<tr>` with nothing); it now gets the same hover/churned-tint treatment as every other tab for consistency.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Mark a client Churned and confirm on every tab: red name + "Churned" chip + light-red row background that persists on hover (shifts to a deeper red, doesn't disappear).

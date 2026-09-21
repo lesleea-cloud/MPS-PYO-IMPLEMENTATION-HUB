@@ -5030,10 +5030,20 @@ function setClType(type){
    because a client's Phases/Milestone cells render twice at once (once in
    their own tab, once in Overview) — same DOM ids would collide otherwise. */
 function clClientLinkHtml(d){
-  // Churned clients get their name shown in red everywhere — so a stray Hand Over/Live
-  // Run date etc. on another tab isn't mistaken for an active client at a glance.
+  // Churned clients get their name shown in red + a "Churned" chip everywhere — so a stray
+  // Hand Over/Live Run date etc. on another tab isn't mistaken for an active client.
   var churned=d.remarks==='Churned';
-  return '<span class="cl-link"'+(churned?' style="color:#dc2626;"':'')+'>'+d.client+'</span>';
+  var html='<span class="cl-link"'+(churned?' style="color:#dc2626;"':'')+'>'+d.client+'</span>';
+  if(churned)html+=' <span style="display:inline-block;padding:1px 6px;border-radius:5px;background:#fecaca;color:#991b1b;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;vertical-align:middle;">Churned</span>';
+  return html;
+}
+function clRowOpenTag(d){
+  // Persistent light-red row tint for churned clients (not just the name) — hover still
+  // works, it just stays on-theme (red, not the usual green) instead of masking the tint.
+  var churned=d&&d.remarks==='Churned';
+  var bg=churned?'#fef2f2':'';
+  var hoverBg=churned?'#fee2e2':'var(--g0)';
+  return '<tr style="background:'+bg+'" onmouseover="this.style.background=\''+hoverBg+'\'" onmouseout="this.style.background=\''+bg+'\'">';
 }
 function clResourceCellsHtml(d,rtRO){
   var a=CL_ADDONS[d.no]||{};
@@ -5246,7 +5256,7 @@ function renderClients(){
       var svcOpts=CL_SERVICES.map(function(s){return '<option'+(d.service===s?' selected':'')+'>'+s+'</option>';}).join('');
       var statuses=['Live','Ongoing','Not yet started','Churned','On-Hold Back to Sales'];
       var stOpts=statuses.map(function(s){return '<option'+(d.remarks===s?' selected':'')+' value="'+s+'">'+s+'</option>';}).join('');
-      return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
+      return clRowOpenTag(d)+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>'+
         '<td class="ctd" style="min-width:180px;">'+clClientLinkHtml(d)+'</td>'+
@@ -5264,7 +5274,7 @@ function renderClients(){
     }).join('');
   } else if(CL_TAB==='resource'){
     document.getElementById('cl-body-resource').innerHTML=slice.map(function(d,i){
-      return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
+      return clRowOpenTag(d)+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd" style="min-width:180px;">'+clClientLinkHtml(d)+'</td>'+
         clResourceCellsHtml(d,false)+
@@ -5293,7 +5303,7 @@ function renderClients(){
       if(th) th.className='cth'+(k===activePhase?' col-active-hdr':'');
     });
     document.getElementById('cl-body-phases').innerHTML=slice.map(function(d,i){
-      return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
+      return clRowOpenTag(d)+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clPhaseCellsHtml(d,activePhase,phaseKeys)+
@@ -5301,7 +5311,7 @@ function renderClients(){
     }).join('');
   } else if(CL_TAB==='addons'){
     document.getElementById('cl-body-addons').innerHTML=slice.map(function(d,i){
-      return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
+      return clRowOpenTag(d)+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clAddonCellsHtml(d)+
@@ -5314,7 +5324,7 @@ function renderClients(){
       if(ind)ind.textContent=ML_SORT_COL===c?(ML_SORT_DIR==='asc'?' ▲':' ▼'):'';
     });
     document.getElementById('cl-body-milestones').innerHTML=slice.map(function(d,i){
-      return '<tr>'+
+      return clRowOpenTag(d)+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clMilestoneCellsHtml(d,mlCanEditDates)+
@@ -5323,7 +5333,7 @@ function renderClients(){
   } else if(CL_TAB==='afterho'){
     var ahCanEdit=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god');
     document.getElementById('cl-body-afterho').innerHTML=slice.map(function(d,i){
-      return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
+      return clRowOpenTag(d)+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clAfterHoCellsHtml(d,ahCanEdit)+
