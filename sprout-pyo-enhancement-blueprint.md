@@ -3665,3 +3665,34 @@ Run in Supabase → SQL Editor before/with this deploy.
 1. Run `Vault_Proposal_Type_Column.sql` in Supabase SQL Editor.
 2. Redeploy `index.html` to Vercel.
 3. Add a Proposals-category file with Type = Work Order, then drill into that client's Proposals and confirm it appears under a separate "Work Order" subheader, badged "Work Order" instead of "Proposals".
+
+---
+
+## 104. My Clients — Overview tab merged with Resource Team → After Hand Over (September 21, 2026)
+
+### What changed
+Screenshot `16.png`: request to make the Overview tab a combination of Resource Team, Implementation Phases, Add On Services Availed, Milestone Dates, and After Hand Over. Confirmed via clarifying questions: **keep all 5 tabs as separate views too** (nothing removed), and use horizontal scroll rather than collapsible column groups for the now much-wider Overview table.
+
+### Refactor first, then merge (`index.html`)
+Before merging, extracted the per-tab column-rendering logic (previously duplicated inline inside each `CL_TAB==='...'` branch of `renderClients()`) into five reusable functions, placed just above `renderClients()`:
+- `clResourceCellsHtml(d, rtRO)` — Resource, Gov Resource, HR-I, OTK Implementer, PD Implementer, Project Manager
+- `clPhaseCellsHtml(d, activePhase, phaseKeys, idPrefix)` — KOM, Simulation, Parallel Run/Project Checklist, Live Run (active-column highlight logic included)
+- `clAddonCellsHtml(d)` — the 7 add-on service checkboxes
+- `clMilestoneCellsHtml(d, mlCanEditDates, idPrefix)` — KOM/Hand Over/Live Run/Churn dates, Month Completed, Billing Month
+- `clAfterHoCellsHtml(d, ahCanEdit)` — CSM, Post Live, Turned Over, MRR, Remarks
+
+The Resource Team, Implementation Phases, Add On Services, Milestone Dates, and After Hand Over tab branches were rewritten to call these instead of duplicating the markup inline — same behavior, less code, and guarantees the merged Overview can never drift out of sync with what each dedicated tab shows, since both read from the same function.
+
+**Why `idPrefix`:** `clPhaseCellsHtml`/`clMilestoneCellsHtml` build elements with DOM `id`s (for the click-to-edit date fields). Since a client's Phases/Milestone cells now render **twice at once** — once in their own tab, once in Overview — reusing the same ids would collide (`getElementById` only finds the first match, silently breaking whichever copy isn't first in the DOM). `clPhaseBox()`, `phDateEdit()`, and `phDateSave()` all gained an optional `idPrefix` parameter (defaults to `''`, fully backward compatible) so Overview's copies use `ov-phd-...`/`ov-ms-...` ids instead of colliding with the dedicated tabs' `phd-...`/`ms-...` ids. Checkbox-only cells (Resource selects, Add-on checkboxes, After Hand Over's CSM/MRR text inputs, Post Live checkbox) have no `id`-based lookups at all, so they were safe to duplicate as-is.
+
+### Overview tab now has all ~36 columns
+`#, Month, Client Name, Status, Service, Days, Progress, [delete] | Resource, Gov Resource, HR-I, OTK Implementer, PD Implementer, Project Manager | KOM, Simulation, Parallel Run/Project Checklist, Live Run | S. Gov, Benefits, Statutory, Timekeep., Pay. Disb., Pay. Demand, Final Demand | KOM Date, Hand Over Date, Live Run Date, Churn Date, Month Completed, Billing Month | CSM, Post Live, Turned Over, MRR, Remarks`. Header (`#cl-head`) and body (`#cl-body`) are both built dynamically in JS same as before, just extended. The table already sits inside the page's existing `overflow-x:auto` wrapper (same mechanism the Phases/Add-On tabs already relied on for their own width), so horizontal scroll works with no new CSS.
+
+### Not changed
+- Resource Team, Implementation Phases, Add On Services Availed, Milestone Dates, and After Hand Over remain fully intact as separate tabs — same columns, same editing behavior, same role gating (`clResourceCellsHtml`/etc. just moved their existing logic into a shared function, nothing about *what* renders or *who* can edit it changed).
+- The Milestone Dates tab's date-range filter bar and sortable column headers, and the Phases tab's active-column header highlight (`col-active-hdr` on `#ph-th-*`), stay exclusive to those dedicated tabs — not replicated in the merged Overview view.
+- `TAB_EDITABLE` (the Edit/Lock/Save toolbar) unchanged — Overview was never in that list before and still isn't; its fields were always directly editable without a separate unlock step, same as Resource Team and After Hand Over.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open My Clients → Overview and confirm all columns appear and scroll horizontally; edit a few fields (e.g. a phase checkbox, a milestone date, CSM) directly from Overview, then switch to that field's dedicated tab and confirm the edit shows up there too.
