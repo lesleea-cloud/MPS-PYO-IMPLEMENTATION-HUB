@@ -7858,6 +7858,18 @@ async function mfDownload(){
     var sheetXml=await zip.file(sheetXmlPath).async('string');
     var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
     zip.file(sheetXmlPath,newSheetXml);
+    // Refresh document metadata — the output template's docProps/core.xml still carries its
+    // original authoring date (seen as old as 2011 on Sprout's blank template), which Excel
+    // shows as this file's "Date created" even though it was just generated. Stamp it with the
+    // actual generation time instead of leaving the template's stale date on every download.
+    var corePropsFile=zip.file('docProps/core.xml');
+    if(corePropsFile){
+      var coreXml=await corePropsFile.async('string');
+      var nowIso=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+      coreXml=coreXml.replace(/<dcterms:created([^>]*)>[^<]*<\/dcterms:created>/,'<dcterms:created$1>'+nowIso+'</dcterms:created>');
+      coreXml=coreXml.replace(/<dcterms:modified([^>]*)>[^<]*<\/dcterms:modified>/,'<dcterms:modified$1>'+nowIso+'</dcterms:modified>');
+      zip.file('docProps/core.xml',coreXml);
+    }
     var cnSrc=(MF.companyName||'').trim()||(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'');
     var cn=cnSrc.replace(/[^a-zA-Z0-9_\- ]/g,'').trim().replace(/\s+/g,' ');
     var now=new Date();

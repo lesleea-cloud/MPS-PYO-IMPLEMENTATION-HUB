@@ -3510,3 +3510,17 @@ Requested format: `Company Name_PayrollPie_ADD_Date_Time`. Previously the filena
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Open the Masterfile Creator, type a Company Name, generate, and confirm the downloaded filename matches `Company Name_PayrollPie_ADD_MM-DD-YYYY_HHMMSS.xlsx`.
+
+---
+
+## 97. Masterfile Creator — downloaded file no longer carries the template's stale "Date created" metadata (September 21, 2026)
+
+### What changed
+Opening a generated output file's Properties in Excel showed a "Date created" of **2011-02-11** — the original authoring date baked into `docProps/core.xml` of Sprout's blank PayrollPie output template — even though the file had just been generated. Since `mfDownload()` builds the output by re-zipping the uploaded template with the employee rows injected, every other part of the template (including this untouched document metadata) was carried through unchanged.
+
+### Fix (`index.html`, `mfDownload()`)
+Right after injecting the employee rows into `sheet1.xml`, the code now also rewrites `docProps/core.xml`'s `<dcterms:created>` and `<dcterms:modified>` values to the actual generation timestamp (ISO 8601, matching the existing format/`xsi:type` attribute) before the zip is finalized and downloaded. `dc:creator` (`Leslee Arididon`) and `cp:lastModifiedBy` (`Sprout PS`) were left as-is — only asked to fix the date.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Generate a Masterfile output, then check File → Info (or right-click → Properties → Details) in Excel and confirm "Date created" / "Date last saved" now show today's date instead of 2011.
