@@ -3840,3 +3840,31 @@ User's Mancom (management committee) reporting used to VLOOKUP straight off the 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Open **Client Status Report**, confirm it defaults to the current month, switch months and confirm counts update, click a count to confirm it expands to the client list and collapses again on a second click, and check the Year-to-Date row reflects totals across all months.
+
+---
+
+## 113. Login page fixes — unwanted auto sign-in, flaky first click, no feedback during the post-login delay (September 21, 2026)
+
+### What was reported
+- Sitting on the login screen (not having clicked "Sign in with Google"), switching browser tabs away and back would land the user already signed into the Hub — no click required.
+- The **first** click on "Sign in with Google" often did nothing; a second click was needed.
+- After sign-in actually kicks off, there's a real delay before the dashboard appears, with no feedback that anything is happening — it looks frozen/broken.
+
+### Root cause found — unwanted auto sign-in (`doSignOut()`)
+`_supa.auth.signOut()` was called **without awaiting it**, and `_authHandled=false` (the flag that re-arms the login page's auth listener) was reset *before* that sign-out actually finished clearing the session from Supabase/localStorage. That leaves a race window where a still-valid stale session can be picked back up by `getSession()`/`onAuthStateChange` — e.g. when the tab regains focus/reloads — and silently complete a login the user never asked for.
+
+**Fix:** `doSignOut()` now `await`s `_supa.auth.signOut()` and only resets `_authHandled` (and shows the login screen) once the session is actually cleared. Order of operations fixed, not just an await added — this closes the exact window the bug lived in.
+
+### First-click reliability + stuck-button recovery (`doGoogleLogin()`)
+Couldn't reproduce the exact "first click does nothing" mechanism from code alone (the Supabase client `_supa` is initialized from a blocking `<script>` tag that loads before the button is even rendered, so it should already be ready by the time it's clickable) — but the stale-session race above is a plausible contributor, and two defensive fixes were added regardless:
+- If `_supa` isn't ready yet when clicked, it now waits 400ms and retries automatically once instead of just failing and requiring a manual re-click.
+- If the redirect to Google never actually happens within 6 seconds (popup/tracking-prevention blocking it, a silent failure that doesn't reject the promise, etc.), the button now automatically re-enables itself with an error message — previously it could stay stuck on "Redirecting..." indefinitely, requiring a page refresh.
+
+### Loading feedback during the post-login delay
+`onAuthSuccess()` calls `loadFromSupabase()` (clients, addons, milestones, after-hand-over, vault, team config, etc. — a real amount of data) before `startApp()` can run, and previously gave no visual feedback during that wait. The login card now swaps to a spinner + "Signing you in…" message the moment auth succeeds, instead of appearing to hang. This doesn't make the load faster, but it should stop it from looking broken — if this section still feels too slow after the deploy, we can look at parallelizing/reducing what loads before first paint.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Sign out, then switch tabs away and back — confirm the login screen stays put and does **not** auto-sign back in.
+3. Test "Sign in with Google" from a clean state and see if the first click now works reliably; report back if it's still flaky so we can dig further (this fix targets the most likely cause but wasn't independently reproducible from code alone).
+4. Confirm the spinner/"Signing you in…" message appears right after Google auth succeeds, for the duration of the dashboard load.
