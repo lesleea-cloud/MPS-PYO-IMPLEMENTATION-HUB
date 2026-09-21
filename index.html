@@ -5029,6 +5029,12 @@ function setClType(type){
    so behavior/permissions never drift between the two. idPrefix params exist
    because a client's Phases/Milestone cells render twice at once (once in
    their own tab, once in Overview) — same DOM ids would collide otherwise. */
+function clClientLinkHtml(d){
+  // Churned clients get their name shown in red everywhere — so a stray Hand Over/Live
+  // Run date etc. on another tab isn't mistaken for an active client at a glance.
+  var churned=d.remarks==='Churned';
+  return '<span class="cl-link"'+(churned?' style="color:#dc2626;"':'')+'>'+d.client+'</span>';
+}
 function clResourceCellsHtml(d,rtRO){
   var a=CL_ADDONS[d.no]||{};
   var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
@@ -5243,7 +5249,7 @@ function renderClients(){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
         '<td class="ctd"><select class="cl-mon-sel" onchange="clUpdateMonth('+d.no+',this.value)">'+monOpts+'</select></td>'+
-        '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
+        '<td class="ctd" style="min-width:180px;">'+clClientLinkHtml(d)+'</td>'+
         '<td class="ctd"><select class="cl-st-sel" onchange="clUpdateStatus('+d.no+',this.value)">'+stOpts+'</select></td>'+
         '<td class="ctd" style="white-space:nowrap;"><div id="sc-'+d.no+'" class="svc-chips-wrap" onclick="svcEditStart('+d.no+')" title="Click to change" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'">'+svcChips(d.service)+'</div><select id="ss-'+d.no+'" class="cl-svc-sel" style="display:none;padding:3px 6px;border-radius:6px;border:1px solid var(--g);font-size:11px;font-family:var(--font);outline:none;background:#fff;" onchange="clUpdateSvc('+d.no+',this.value)" onblur="svcEditEnd('+d.no+')">'+svcOpts+'</select></td>'+
         (function(){var daysOpts=[0,15,30,60,90,120,150];var canEditDays=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god');if(!canEditDays){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+(d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+
@@ -5260,7 +5266,7 @@ function renderClients(){
     document.getElementById('cl-body-resource').innerHTML=slice.map(function(d,i){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        '<td class="ctd" style="min-width:180px;"><span class="cl-link">'+d.client+'</span></td>'+
+        '<td class="ctd" style="min-width:180px;">'+clClientLinkHtml(d)+'</td>'+
         clResourceCellsHtml(d,false)+
       '</tr>';
     }).join('');
@@ -5289,7 +5295,7 @@ function renderClients(){
     document.getElementById('cl-body-phases').innerHTML=slice.map(function(d,i){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
+        '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clPhaseCellsHtml(d,activePhase,phaseKeys)+
       '</tr>';
     }).join('');
@@ -5297,7 +5303,7 @@ function renderClients(){
     document.getElementById('cl-body-addons').innerHTML=slice.map(function(d,i){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
+        '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clAddonCellsHtml(d)+
       '</tr>';
     }).join('');
@@ -5310,7 +5316,7 @@ function renderClients(){
     document.getElementById('cl-body-milestones').innerHTML=slice.map(function(d,i){
       return '<tr>'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
+        '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clMilestoneCellsHtml(d,mlCanEditDates)+
       '</tr>';
     }).join('');
@@ -5319,7 +5325,7 @@ function renderClients(){
     document.getElementById('cl-body-afterho').innerHTML=slice.map(function(d,i){
       return '<tr onmouseover="this.style.background=\'var(--g0)\'" onmouseout="this.style.background=\'\'">'+
         '<td class="ctd" style="color:var(--s4);font-family:var(--mono)">'+((clPg-1)*PS+i+1)+'</td>'+
-        '<td class="ctd"><span class="cl-link">'+d.client+'</span></td>'+
+        '<td class="ctd">'+clClientLinkHtml(d)+'</td>'+
         clAfterHoCellsHtml(d,ahCanEdit)+
       '</tr>';
     }).join('');

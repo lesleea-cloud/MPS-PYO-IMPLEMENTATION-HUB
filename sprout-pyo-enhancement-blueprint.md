@@ -3717,3 +3717,17 @@ Screenshot `17.png`: the Decks "Add File" form only had one Deck Type + one URL 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Open Add File → Category: Decks, add 2-3 deck rows with different types/URLs, Save, and confirm all of them appear as separate vault entries for that client.
+
+---
+
+## 106. My Clients — churned clients' names shown in red on every tab (September 21, 2026)
+
+### What changed
+Request: when a client is tagged Churned, make that visible everywhere (not just the Overview/status column), so seeing e.g. a Hand Over or Live Run date on the Milestone Dates tab doesn't get mistaken for an active client — no need to cross-check the Overview tab's status first. User's own preferred fix (font color) over the fallback option (a status badge on every tab).
+
+### Fix (`index.html`)
+New shared helper `clClientLinkHtml(d)`, used everywhere a row renders the Client Name cell (Overview, Resource Team, Implementation Phases, Add On Services, Milestone Dates, After Hand Over — all 6 places that previously wrote `<span class="cl-link">`+d.client+`</span>` inline): when `d.remarks==='Churned'`, the name renders in `#dc2626` — the same red already used everywhere else in the app for the Churned status (dashboard donut/bar chart, status badges), so this isn't a new color, just applying the existing one to the client name text itself. Non-churned clients are unaffected (default `.cl-link` green, unchanged).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Mark a client Churned, then check its name appears in red on Overview and all 5 other tabs (Resource Team, Implementation Phases, Add On Services, Milestone Dates, After Hand Over).
