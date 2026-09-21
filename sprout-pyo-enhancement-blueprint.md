@@ -3383,3 +3383,39 @@ Verified against the reference file: with these five fixes, all 6 employee rows 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Re-test the Masterfile Creator end-to-end with the `Final` reference files to confirm all 6 rows match on Gender, Hire/Status Date, ROHQ, Work Days Per Year, and Pay Group.
+
+## 92. Manager and Admin roles granted full God Mode access (September 21, 2026)
+
+User requested that the `manager` and `admin` login roles get the same unrestricted "God Mode" access currently hardcoded to the `god` role (which is auto-assigned only to `lesleea@sprout.ph`). Confirmed scope with user: **full** god mode — every nav page visible, full edit rights on client data everywhere, and full access to the sensitive Settings sub-panels (Team Configuration, Backup/Restore, GitHub, PM Tool Integrations incl. API keys, External API) — not just client-data edit rights.
+
+### Changes made (`index.html`)
+
+**Nav visibility**
+- `ROLE_CONFIG.manager.hideNav` and `ROLE_CONFIG.admin.hideNav` changed from restrictive lists (e.g. manager previously hid `impl`, `my-clients`, `settings`) to `[]` — same as `god`. Manager and Admin now see every nav page (Implementer Dashboard, My Clients, Settings, etc.). Role pill, avatar color, and default landing page are unchanged (Manager still gets the orange "Manager" pill, Admin the blue "Admin" pill — only their access expanded, their identity didn't change).
+- `startApp()` and `godSwitch()`: `#nav-admin-section` (Administration Tool) and `#nav-integration-section` visibility now also include `admin`/`manager` (previously `nav-admin-section` was implementer/god only; `nav-integration-section` was admin/god only).
+
+**Implementation Vault**
+- `vaultShowForm()`: removed the `if(CURRENT_ROLE==='manager')return;` block that silently no-op'd the "+ Add File" button for managers.
+- `renderVault()`: removed the forced `vaultHideForm()` call for managers; `canAdd` now includes `manager`.
+- Vault item/MOM delete permission (`canDelete`/`canDel`, 3 call sites) now includes `manager` alongside `admin`/`god`.
+
+**My Clients — all tabs**
+- Overview tab: `ovRO` (read-only flag) hardcoded to `false` — Month/Status/Service/Gov dropdowns are now always editable for every non-implementer role. `canAddDel` (Add Client / Import buttons) hardcoded to `true` for admin/manager/god.
+- Resource tab: `rtRO` (read-only flag) hardcoded to `false` — Resource/Gov/HR-I/PM dropdowns always editable.
+- Days field: `canEditDays` now includes `manager` (previously admin/god only).
+- Milestone Dates tab: `mlCanEditDates` now includes `admin` and `manager` (previously implementer/god only — this was the biggest gap; Admin couldn't edit KOM/Hand Over/Live Run/Churn dates or Month Completed before this fix).
+- After Hand Over tab: `ahCanEdit` now includes `admin` and `manager` (previously implementer/god only — Admin/Manager couldn't edit CSM/Post Live/Turned Over before this fix).
+- Issue Log: `canEdit` now includes `manager` (previously implementer/admin/god).
+- `TAB_EDITABLE` (the Edit/Lock/Save toolbar shown above Phases/Add-Ons/Milestones tables): `manager`, `admin`, and `god` now all map to `['phases','addons','milestones']`, matching `implementer`. Previously `manager` had no entries (toolbar never appeared) and `admin` had only `['addons']`; `god` had no entry at all (bug — the toolbar never showed for the real god user either).
+
+**Settings page (`renderSettings()`)**
+- New `fullAccess = isAdmin||isMgr||isGod` flag. All previously admin-only panel visibility checks (`st-panel-team`, `st-panel-backup`, `st-panel-github`, `st-panel-integrations`, `st-panel-extapi`) and the admin-or-implementer checks (`st-panel-data`, `st-panel-addclient`, `st-panel-timeline`) now key off `fullAccess` instead of `isAdmin` alone. The `tcRenderTeam()` call and GitHub/PM-Tool-integration/External-API config loading (previously gated on `isAdmin`) now run for `fullAccess` too.
+- Note: this also fixes a pre-existing gap where the real `god` user saw **zero** Settings panels (the old code only checked `isAdmin`/`isImpl`, never `CURRENT_ROLE==='god'`).
+
+### Not changed
+- `implementer` role scope is unchanged — still sees only their own assigned clients (`implOwnsClient`), Vault delete still restricted to their own uploads.
+- Role identity (pill color/label, avatar color, default landing page) is unchanged for Manager and Admin — only their access expanded to match God Mode; they were not converted into the literal `god` role.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-test as a Manager and Admin login: confirm My Clients (all 5 tabs) is fully editable, Vault add/delete works, and Settings shows Team Config / Backup / GitHub / Integrations / External API panels.

@@ -3003,7 +3003,6 @@ function _tileInitials(name){var p=name.trim().split(/\s+/);return p.length>=2?(
 function vaultDrillIn(cn){VAULT_DRILL_CLIENT=cn;renderVault();}
 function vaultDrillBack(){VAULT_DRILL_CLIENT=null;renderVault();}
 function vaultShowForm(){
-  if(CURRENT_ROLE==='manager')return;
   document.getElementById('vault-form').style.display='block';
   var catSel=document.getElementById('vf-cat');
   if(catSel&&VAULT_FILTER&&VAULT_FILTER!=='all'){catSel.value=VAULT_FILTER;vaultCatChange(catSel.value);}
@@ -3086,7 +3085,7 @@ function _vaultToday(){
 function vaultDelete(id){
   var item=VAULT_ITEMS.find(function(v){return v.id===id;});
   if(!item)return;
-  var canDelete=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&item.uploadedBy===CURRENT_NAME);
+  var canDelete=CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&item.uploadedBy===CURRENT_NAME);
   if(!canDelete)return;
   if(!confirm('Delete "'+item.name+'"?'))return;
   var filePath=item.filePath||null;
@@ -3139,8 +3138,7 @@ function vaultSearch(val){
 }
 function renderVault(){
   vaultSyncNav();
-  if(CURRENT_ROLE==='manager')vaultHideForm();
-  var canAdd=CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god';
+  var canAdd=CURRENT_ROLE==='admin'||CURRENT_ROLE==='implementer'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god';
   var addBtn=document.getElementById('vault-add-btn');
   var refreshBtn=document.getElementById('vault-refresh-btn');
   var isMOMs=VAULT_FILTER==='MOMs';
@@ -3170,7 +3168,7 @@ function renderVault(){
       h+='<div style="font-size:10px;font-weight:800;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;padding:8px 2px 5px;border-bottom:1px solid var(--s1);margin-bottom:8px;">Manual Entries ('+manualMOMs.length+')</div>';
       h+='<div class="vault-grid">';
       manualMOMs.forEach(function(m){
-        var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&m.uploadedBy===CURRENT_NAME);
+        var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&m.uploadedBy===CURRENT_NAME);
         var momTypeLbl=m.momType||'MOM';
         var _dp=(m.momDate||'').split('-');
         var momDateFmt=_dp.length===3?(_dp[1]+'/'+_dp[2]+'/'+_dp[0]):m.momDate||m.uploadedAt||'';
@@ -3257,7 +3255,7 @@ function renderVault(){
 
   function _vaultEntryRow(v){
     var cfg=VAULT_CAT[v.category]||VAULT_CAT['Other'];
-    var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&v.uploadedBy===CURRENT_NAME);
+    var canDel=CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god'||(CURRENT_ROLE==='implementer'&&v.uploadedBy===CURRENT_NAME);
     var openHref=v.type==='link'?v.url:'javascript:vaultOpenFile(\''+v.id+'\')';
     var openTarget=v.type==='link'?' target="_blank" rel="noopener"':'';
     var r='<div class="vault-entry-row">';
@@ -3871,13 +3869,12 @@ var TAB_EDIT_MODE = false;
 var TAB_SNAPSHOT  = null;   // deep copy of D + CL_ADDONS + CL_MILESTONES before edit
 
 // Which tabs show edit controls per role
-// manager:     no edit access
-// manager:     no edit access (fully read-only)
-// admin:       addons only (milestones: billing month editable via role check inline)
+// manager, admin, god: full god-mode access — same as implementer
 // implementer: phases, addons, milestones (own rows only)
 var TAB_EDITABLE = {
-  manager:     [],
-  admin:       ['addons'],
+  manager:     ['phases','addons','milestones'],
+  admin:       ['phases','addons','milestones'],
+  god:         ['phases','addons','milestones'],
   implementer: ['phases','addons','milestones']
 };
 
@@ -5027,7 +5024,7 @@ function renderClients(){
     document.getElementById('cl-page-title').textContent=typeLabel+' Clients — 2026';
     document.getElementById('cl-page-sub').textContent=CL_TYPE==='ps'?'Payroll Starter implementation projects':'PYO and complex implementation projects';
     document.getElementById('cr').style.display='';
-    var canAddDel=(CURRENT_ROLE!=='manager');
+    var canAddDel=true;
     if(addBtn)addBtn.style.display=canAddDel?'flex':'none';
     if(impGrp)impGrp.style.display=canAddDel?'flex':'none';
   }
@@ -5074,7 +5071,7 @@ function renderClients(){
   if(CL_TAB==='overview'){
     var thStyle='padding:8px 12px;text-align:left;font-weight:700;font-size:10px;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--s2);white-space:nowrap;';
     document.getElementById('cl-head').innerHTML='<tr style="background:var(--s0)"><th style="'+thStyle+'">#</th><th style="'+thStyle+'">Month</th><th style="'+thStyle+';min-width:180px;">Client Name</th><th style="'+thStyle+'">Status</th><th style="'+thStyle+';min-width:140px;">Service</th><th style="'+thStyle+'">Days</th><th style="'+thStyle+'">Progress</th><th style="'+thStyle+'"></th></tr>';
-    var ovRO=(CURRENT_ROLE==='manager');
+    var ovRO=false;
     var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
     document.getElementById('cl-body').innerHTML=slice.map(function(d,i){
       var p=pct(d);
@@ -5098,7 +5095,7 @@ function renderClients(){
             ?'<div>'+svcChips(d.service)+'</div>'
             :'<div id="sc-'+d.no+'" class="svc-chips-wrap" onclick="svcEditStart('+d.no+')" title="Click to change" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'">'+svcChips(d.service)+'</div><select id="ss-'+d.no+'" class="cl-svc-sel" style="display:none;padding:3px 6px;border-radius:6px;border:1px solid var(--g);font-size:11px;font-family:var(--font);outline:none;background:#fff;" onchange="clUpdateSvc('+d.no+',this.value)" onblur="svcEditEnd('+d.no+')">'+svcOpts+'</select>')+
         '</td>'+
-        (function(){var daysOpts=[0,15,30,60,90,120,150];var canEditDays=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='god');if(!canEditDays){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+(d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+
+        (function(){var daysOpts=[0,15,30,60,90,120,150];var canEditDays=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god');if(!canEditDays){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+(d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+
         '<td class="ctd">'+pbar(p)+'</td>'+
         (ovRO?'<td class="ctd"></td>':'<td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow('+d.no+')" title="Remove">✕</span></td>')+
       '</tr>';
@@ -5112,7 +5109,7 @@ function renderClients(){
       var isPod=a.pod===1;
       var isFpod=a.fpod===1;
       var hasHR=d.service&&d.service.indexOf('HR')>=0;
-      var rtRO=(CURRENT_ROLE==='manager');
+      var rtRO=false;
       var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
       var govCell=isGov
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.gov||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateGov('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implGov||[]).map(function(n){return '<option value="'+n+'"'+(n===d.gov?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
@@ -5203,7 +5200,7 @@ function renderClients(){
     }).join('');
   } else if(CL_TAB==='milestones'){
     var ML_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-    var mlCanEditDates=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
+    var mlCanEditDates=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god');
     ['komDate','handOver','liveRun','churnDate'].forEach(function(c){
       var ind=document.getElementById('ml-sort-'+c);
       if(ind)ind.textContent=ML_SORT_COL===c?(ML_SORT_DIR==='asc'?' ▲':' ▼'):'';
@@ -5245,7 +5242,7 @@ function renderClients(){
       '</tr>';
     }).join('');
   } else if(CL_TAB==='afterho'){
-    var ahCanEdit=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god');
+    var ahCanEdit=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god');
     var svgChkAH='<svg width="9" height="9" viewBox="0 0 9 9" fill="none"><polyline points="1.5,4.5 3.5,6.5 7.5,2" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     function ahReadCb(val){return '<div class="ph-cell"><div class="cl-cb'+(val?' chk':'')+'" style="cursor:default;">'+(val?svgChkAH:'')+'</div></div>';}
     document.getElementById('cl-body-afterho').innerHTML=slice.map(function(d,i){
@@ -5302,7 +5299,7 @@ function renderIssuesPage(){
 }
 
 function renderIssueLog(rows){
-  var canEdit=CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='god';
+  var canEdit=CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god';
   var clientNos=rows.map(function(d){return d.no;});
   var issues=CL_ISSUES.filter(function(i){return clientNos.indexOf(i.clientNo)>=0;});
   issues.sort(function(a,b){
@@ -7963,8 +7960,8 @@ function mfEscXml(s){
 
 // ══════════════ LOGIN ══════════════
 var ROLE_CONFIG={
-  manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:['impl','my-clients','settings']},
-  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'dashboard',hideNav:['impl','my-clients']},
+  manager:{pill:'rp-mgr',pillText:'Manager',avatarBg:'#ea580c',defaultPage:'dashboard',hideNav:[]},
+  admin:{pill:'rp-adm',pillText:'Admin',avatarBg:'#2563eb',defaultPage:'dashboard',hideNav:[]},
   implementer:{pill:'rp-imp',pillText:'Implementer',avatarBg:'#16a34a',defaultPage:'impl',hideNav:['dashboard','clients']},
   god:{pill:'rp-god',pillText:'God Mode',avatarBg:'#7c3aed',defaultPage:'dashboard',hideNav:[]}
 };
@@ -8004,18 +8001,21 @@ function renderSettings(){
   var isAdmin=CURRENT_ROLE==='admin';
   var isImpl=CURRENT_ROLE==='implementer';
   var isMgr=CURRENT_ROLE==='manager';
+  var isGod=CURRENT_ROLE==='god';
+  // Manager and Admin have full god-mode access to Settings, same as god
+  var fullAccess=isAdmin||isMgr||isGod;
 
   // Show/hide panels by role
-  document.getElementById('st-panel-data').style.display=(isAdmin||isImpl)?'':'none';
-  document.getElementById('st-panel-addclient').style.display=(isAdmin||isImpl)?'':'none';
-  document.getElementById('st-panel-team').style.display=isAdmin?'':'none';
-  document.getElementById('st-panel-backup').style.display=isAdmin?'':'none';
-  document.getElementById('st-panel-github').style.display=isAdmin?'':'none';
-  document.getElementById('st-panel-integrations').style.display=isAdmin?'':'none';
-  document.getElementById('st-panel-extapi').style.display=isAdmin?'':'none';
-  document.getElementById('st-panel-timeline').style.display=(isAdmin||isImpl)?'':'none';
+  document.getElementById('st-panel-data').style.display=(fullAccess||isImpl)?'':'none';
+  document.getElementById('st-panel-addclient').style.display=(fullAccess||isImpl)?'':'none';
+  document.getElementById('st-panel-team').style.display=fullAccess?'':'none';
+  document.getElementById('st-panel-backup').style.display=fullAccess?'':'none';
+  document.getElementById('st-panel-github').style.display=fullAccess?'':'none';
+  document.getElementById('st-panel-integrations').style.display=fullAccess?'':'none';
+  document.getElementById('st-panel-extapi').style.display=fullAccess?'':'none';
+  document.getElementById('st-panel-timeline').style.display=(fullAccess||isImpl)?'':'none';
 
-  if(isAdmin||isImpl){
+  if(fullAccess||isImpl){
     var months=[];
     D.forEach(function(d){if(months.indexOf(d.month)<0)months.push(d.month);});
     document.getElementById('st-data-summary').textContent=D.length+' record'+(D.length!==1?'s':'')+' across '+months.length+' month'+(months.length!==1?'s':'');
@@ -8025,9 +8025,9 @@ function renderSettings(){
     document.getElementById('st-file-input').value='';
   }
 
-  if(isAdmin) tcRenderTeam();
+  if(fullAccess) tcRenderTeam();
 
-  if(isAdmin){
+  if(fullAccess){
     var ghCfg=getGitHubConfig();
     if(ghCfg){
       var el;
@@ -8984,13 +8984,13 @@ function startApp(){
   var luEl=document.getElementById('last-updated');if(luEl)luEl.textContent='As of '+_ds;
   ['dashboard','weekly','monthly','impl','vault','settings'].forEach(function(p){var el=document.getElementById('nav-'+p);if(!el)return;el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';});
   var adminNavSec=document.getElementById('nav-admin-section');
-  if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='god')?'flex':'none';
+  if(adminNavSec)adminNavSec.style.display=(CURRENT_ROLE==='implementer'||CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
   var clIssuesBtn=document.getElementById('nav-cl-issues');
   if(clIssuesBtn)clIssuesBtn.style.display='flex';
   var clAuditNavBtn=document.getElementById('nav-cl-audit');
   if(clAuditNavBtn)clAuditNavBtn.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
   var integrationSec=document.getElementById('nav-integration-section');
-  if(integrationSec)integrationSec.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='god')?'flex':'none';
+  if(integrationSec)integrationSec.style.display=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god')?'flex':'none';
   var godSwitchEl=document.getElementById('god-switch');
   if(godSwitchEl)godSwitchEl.className='god-switch'+(_IS_GOD?' visible':'');
   _syncTeamDropdowns();
@@ -9027,11 +9027,11 @@ function godSwitch(role){
     el.style.display=cfg.hideNav.indexOf(p)>=0?'none':'flex';
   });
   var adminNavSec=document.getElementById('nav-admin-section');
-  if(adminNavSec)adminNavSec.style.display=(role==='implementer'||role==='god')?'flex':'none';
+  if(adminNavSec)adminNavSec.style.display=(role==='implementer'||role==='admin'||role==='manager'||role==='god')?'flex':'none';
   var clIssuesBtn=document.getElementById('nav-cl-issues');
   if(clIssuesBtn)clIssuesBtn.style.display='flex';
   var integrationSec=document.getElementById('nav-integration-section');
-  if(integrationSec)integrationSec.style.display=(role==='admin'||role==='god')?'flex':'none';
+  if(integrationSec)integrationSec.style.display=(role==='admin'||role==='manager'||role==='god')?'flex':'none';
   document.querySelectorAll('.god-sw-btn').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-role')===role);});
   go(cfg.defaultPage);
 }
