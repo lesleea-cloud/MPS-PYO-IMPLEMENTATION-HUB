@@ -2499,6 +2499,7 @@ async function fetchPmToolEvents(){
     var data=r.ok?await r.json():{events:[]};
     PMTOOL_EVENTS=data.events||[];
   }catch(e){PMTOOL_EVENTS=[];}
+  await pmtoolAutoProcessEvents();
 }
 async function refreshPmToolEvents(){
   var btn=document.getElementById('pmtool-refresh-btn');
@@ -2913,6 +2914,64 @@ function pmtoolApplyAssign(){
   pmtoolSetStatus(ev.id,'assigned',clientNo);
   pmtoolCloseAssign();
   renderClients();
+}
+async function pmtoolAutoProcessEvents(){
+  // Fully automatic ingestion: every unassigned PM Tool event with a plain-object payload
+  // gets pushed straight into a client record — matched to an existing client if we can
+  // guess one (pmtoolGuessClientNo), otherwise a brand-new client is created — so nobody
+  // has to manually click "Assign to client" / "Create new client" per event. Each field
+  // still goes through the same PMTOOL_SCHEMA mapping (or the generic CL_PMTOOL bucket for
+  // anything unrecognized) that the manual flow already used, so behavior stays identical,
+  // just without the human click. Non-object payloads and anything that fails to auto-match
+  // are left alone for the manual "Assign to client"/"Create new client" buttons.
+  var pending=PMTOOL_EVENTS.filter(function(e){return (e.status||'unassigned')==='unassigned';});
+  if(!pending.length)return;
+  var createdCount=0,updatedCount=0;
+  pending.forEach(function(ev){
+    var p=ev.payload;
+    if(!p||typeof p!=='object'||Array.isArray(p))return;
+    var clientNo=pmtoolGuessClientNo(p);
+    var rec,isNew=false;
+    if(clientNo){
+      rec=D.find(function(x){return x.no===clientNo;});
+    } else {
+      var maxNo=D.reduce(function(m,d){return Math.max(m,d.no);},0);
+      var newNo=maxNo+1;
+      var nameKey=PMTOOL_NAME_KEYS.find(function(k){return p[k]!=null&&String(p[k]).trim()!=='';});
+      var clientName=nameKey?String(p[nameKey]).trim():('PM Tool Import #'+ev.id);
+      rec={no:newNo,month:'',client:clientName,resource:'',pm:'',hri:'',gov:'',otkImpl:'',pdImpl:'',remarks:'Not yet started',service:'PYO',days:0,komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,checklist:0,par:0,live:0,post:0};
+      D.push(rec);
+      clientNo=newNo;
+      isNew=true;
+    }
+    if(!rec)return;
+    var changed=[];
+    Object.keys(p).forEach(function(k){
+      var norm=k.toLowerCase().replace(/[^a-z0-9]/g,'');
+      var match=PMTOOL_SCHEMA.find(function(s){return s.key.toLowerCase().replace(/[^a-z0-9]/g,'')===norm;});
+      var target=match?match.target:'pmtool.'+k;
+      pmtoolSetField(rec,target,p[k]);
+      changed.push(match?match.label:pmtoolPrettyKey(k));
+    });
+    if(isNew){
+      createdCount++;
+      logAudit(clientNo,'Overview','client','Client Added','—',rec.client+' (auto-created from PM Tool event #'+ev.id+')');
+    } else {
+      updatedCount++;
+    }
+    logAudit(clientNo,'PM Tool Data','integration','Auto-Applied from PM Tool',isNew?'New client':'Existing client',(changed.join(', ')||'no fields')+' (event #'+ev.id+')');
+    ev.status='assigned';
+    ev.applied_to_client=clientNo;
+    fetch('/api/integrations/events-status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:ev.id,status:'assigned',clientNo:clientNo})}).catch(function(){});
+  });
+  if(createdCount||updatedCount){
+    autoSave();
+    _supaFlush();
+    var parts=[];
+    if(createdCount)parts.push(createdCount+' new client'+(createdCount!==1?'s':'')+' created');
+    if(updatedCount)parts.push(updatedCount+' existing client'+(updatedCount!==1?'s':'')+' updated');
+    showImportToast('success','PM Tool auto-sync: '+parts.join(', ')+'.');
+  }
 }
 function pmtoolCreateClient(rid){
   var ev=pmtoolFindEvent(rid);

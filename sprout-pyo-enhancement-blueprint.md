@@ -3781,3 +3781,25 @@ Added a single `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,.
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Hard-refresh the live site and confirm the browser tab shows the green Sprout icon instead of a blank page icon (browsers can cache the old blank favicon — a hard refresh or new tab may be needed to see it).
+
+---
+
+## 110. PM Tool Data now auto-populates PYO/Payroll Starter clients — no manual "Assign"/"Create" click needed (September 21, 2026)
+
+### What changed
+Previously, every PM Tool event sat as "unassigned" until an admin manually opened it and clicked either **Assign to client** (picking an existing client, then confirming the per-field mapping) or **Create new client** (which opened the Add Client modal pre-filled, still requiring a manual Save). Request: all PM Tool data should land directly in the PYO/Payroll Starter client records with **no manual client-creation step** at all.
+
+### Fix (`index.html`)
+New `pmtoolAutoProcessEvents()`, called automatically at the end of `fetchPmToolEvents()` — so it runs both on page load (`goPmTool()`) and on every manual refresh (`refreshPmToolEvents()`), no separate button to click. For every event still `unassigned` with a plain-object payload:
+1. **Match or create**: `pmtoolGuessClientNo()` (pre-existing helper, already used by the manual "Assign to client" modal to pre-select a likely client) tries to find an existing client by `clientNo`/`client_no`/`no` or by exact client-name match. If none found, a brand-new client record is created (same shape `submitAddClient()` already builds — same defaults, `service` defaults to `'PYO'` unless the payload itself specifies one via the `service` field).
+2. **Map every field**: reuses the exact same per-key logic the manual Assign modal already had — a curated `PMTOOL_SCHEMA` match (covers every real client field: Resource, PM, all phase dates/checkboxes, all add-on flags, After Hand Over CSM/MRR, milestone dates, `service` for PYO vs Payroll Starter classification, etc.) or, for anything unrecognized, the generic `CL_PMTOOL` "PM Tool Data" tab bucket — via the pre-existing `pmtoolSetField()`, unchanged.
+3. Logs two audit entries per processed event (Client Added, for new clients; and an "Auto-Applied from PM Tool" entry listing every field that changed) and marks the event `assigned` (both locally and via the same `/api/integrations/events-status` call the manual flow uses), then a single `autoSave()`/`_supaFlush()`/`renderClients()`/toast summarizing how many clients were created vs. updated (e.g. "PM Tool auto-sync: 2 new clients created, 3 existing clients updated.").
+
+### Not changed / still manual
+- **Non-object payloads** (arrays, primitives) can't be auto-mapped — left `unassigned` for the existing manual buttons, same as before.
+- **Dismiss** still exists and still works manually — but since auto-processing runs immediately on every fetch/refresh, an event only stays available to manually Dismiss if it *couldn't* be auto-matched/created (i.e. non-object payload). A genuinely bad/test event with a normal-looking payload will get auto-turned into a client before anyone has a chance to dismiss it first — recoverable via the normal client delete (✕) button plus the audit trail, but worth knowing.
+- The manual "Assign to client" / "Create new client" modals themselves are untouched — still available as a fallback/override for whatever doesn't get auto-processed.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open the PM Tool Data page (or click Refresh) with at least one unassigned event queued up, and confirm it disappears from "unassigned" and shows up as a real client (new or updated) with a toast summary and an Audit Trail entry.
