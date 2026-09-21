@@ -3467,3 +3467,29 @@ User requested (screenshot `02.png` under `Screenshots\09212026`, highlighting t
 1. Redeploy `index.html` to Vercel.
 2. As Admin, open Settings → Team Configuration and click "Save Team Configuration" once to clear the now-unused `impl_pod`/`impl_fpod` columns in Supabase.
 3. Confirm the Resource Team tab no longer shows POD/FPOD Implementer columns, and that adding a new client with "Payroll on Demand"/"Final Pay on Demand" checked still saves correctly (just without an implementer assignment).
+
+## 95. Masterfile Creator — three data-correctness bugs found by studying a real generated output (September 21, 2026)
+
+User provided a real generated output (`Generated Output_1_0921.xlsx`, under `Templates for upload\Masterfile\Final\Revisions`) with problem cells highlighted red in Excel, and asked to study it before fixing. Unzipped the `.xlsx` and cross-referenced the red-fill style IDs in `xl/styles.xml` (fill index 8, `FFFF0000`, used by `cellXfs` 40-44) against `xl/worksheets/sheet1.xml` to find every red cell, then traced each back to the `mfGenerate()`/`mfInjectRows()` code in `index.html`. Found three distinct bugs, all confirmed against the actual file content (15 real employees, Pierian Services):
+
+### a. Source format-hint row misdetected as a real employee (landed as output row 5)
+The hint-row-skip heuristic right after header detection only skipped a row if **every** non-blank cell started with "format"/"select"/"accepts". The source file's genuine format-hint row (cells like "Accepts alphanumeric characters...", "Select from list below", "Format: MM/DD/YYYY") also contained a few plain example values that don't match those prefixes (a bare `"0"`, `"Zip Code"`, `"Savings"`), so `hasData` tripped true and the row was kept as if it were employee #1 — landing in the output with the literal hint text visible in nearly every column.
+
+**Fix:** replaced the "all cells must match" check with a ratio-based one — a row now counts as a hint row if 2+ non-empty cells match the instructional-text pattern, or hint-matching cells are the majority of non-empty cells. Verified against the actual row: 17 of ~20 non-empty cells matched, comfortably clearing the new threshold, while a real employee row (at most 0-1 such cells) never will.
+
+### b. Internal "DO NOT DELETE" placeholder row leaked through as an employee (landed as output row 6)
+Right after the hint row, the source file had a row with Employee ID "1", Last Name/First Name "admin", email `rpalco@sprout.ph` (an internal `@sprout.ph` address), and Department "DO NOT DELETE" — clearly a marker/reference row a Sprout staffer left in the client's source file, not a real employee. Nothing in `mfGenerate()` checked for this.
+
+**Fix:** added a check (alongside the existing `SAMPLE DATA`/`STATUS AFTER UPLOAD` sentinel skip) that excludes any source row containing the literal text "DO NOT DELETE" in any column, case-insensitively.
+
+### c. Pay Group* column (AU) duplicated Job Title for every employee
+`mapped['Pay Group*']=mapped['Job Title'];` (added in §91, generalized from one reference file where the two coincidentally matched) meant every real employee's Pay Group showed their job title verbatim ("Transition Manager", "Director", "Loan Analyst", etc.) instead of a payroll classification like "Rank and File" — confirmed by cross-checking column AU against column M for all 15 employees: 100% identical, proving the bug rather than a coincidence.
+
+**Fix:** now reads a `Pay Group` / `Employee Type` / `Classification` / `Rank` column from the source file (first match wins, case-insensitive alias list same style as every other mapped field), defaulting to `'Rank and File'` when the source has no such column or the cell is blank for that row — matching the output template's own default hint value (row 4, `AU4`).
+
+### Not yet verified
+No source Masterfile for this specific run was available on disk to confirm the exact column name Pierian Services' source file used (if any) for Pay Group — the alias list is a best-effort guess (`Pay Group`, `Employee Type`, `Classification`, `Rank`). If their source uses a different header, add it to the alias list at `index.html` (search `mapped['Pay Group*']`).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-run the Masterfile Creator on the same Pierian Services source file and confirm: output starts at row 5 with a real employee (no hint-text row, no "admin"/DO NOT DELETE row), 15 employee rows total (dimension `A1:AV19`), and column AU (Pay Group) no longer duplicates Job Title.

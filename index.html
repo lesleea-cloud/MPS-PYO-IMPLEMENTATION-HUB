@@ -7631,15 +7631,23 @@ async function mfGenerate(){
  
     // Skip hint rows after header
     var dataStart=hdrIdx+1;
-    // Skip rows that look like format hints (all short strings, no real data)
+    // Skip rows that look like format-hint/instruction rows. A hint row can still contain a
+    // few plain example values (e.g. a bare "0", "Zip Code", "Savings") that don't start with
+    // "format"/"select"/"accepts", so requiring EVERY cell to match that prefix (old logic)
+    // let such rows slip through as if they were a real employee. Instead, flag the row as a
+    // hint row when multiple cells match the instructional-text pattern — a real employee row
+    // never has more than one such cell.
     while(dataStart<srcRaw.length){
       var nextR=srcRaw[dataStart];
-      var hasData=nextR.some(function(c){
-        var s=String(c).trim();
-        return s.length>0&&!s.toLowerCase().startsWith('format')&&
-          !s.toLowerCase().startsWith('select')&&!s.toLowerCase().startsWith('accepts');
-      });
-      if(hasData)break;
+      var nonEmpty=[];
+      nextR.forEach(function(c){var s=String(c).trim();if(s)nonEmpty.push(s);});
+      var hintCount=nonEmpty.filter(function(s){
+        var sl=s.toLowerCase();
+        return sl.startsWith('format')||sl.startsWith('select')||sl.startsWith('accepts')||
+          sl.indexOf('mandatory field')>=0||sl.indexOf('leave blank')>=0;
+      }).length;
+      var isHintRow=nonEmpty.length>0&&(hintCount>=2||hintCount>nonEmpty.length/2);
+      if(!isHintRow)break;
       dataStart++;
     }
  
@@ -7653,6 +7661,9 @@ async function mfGenerate(){
       // Skip completely empty rows and the SAMPLE DATA row
       var firstCell=String(row[0]||'').trim().toUpperCase();
       if(firstCell==='SAMPLE DATA'||firstCell==='STATUS AFTER UPLOAD')continue;
+      // Skip internal marker/placeholder rows (e.g. a "DO NOT DELETE" reference row left in the
+      // source file by Sprout staff) — never a real employee, regardless of which column it's in.
+      if(row.some(function(c){return String(c).trim().toUpperCase()==='DO NOT DELETE';}))continue;
       var ln=String(mfGet(row,srcHeaders,['Last Name','Surname','Family Name'])||'').trim();
       if(!ln)continue;
  
@@ -7737,7 +7748,7 @@ async function mfGenerate(){
       mapped['PhilHealth Contribution (Leave blank to let the system decide)']='';
       mapped['HDMF Contribution (Leave blank to let the system decide)']='';
       mapped['Additional HDMF Contribution']='';
-      mapped['Pay Group*']=mapped['Job Title'];
+      mapped['Pay Group*']=String(g(row,srcHeaders,['Pay Group','Employee Type','Classification','Rank'])||'').trim()||'Rank and File';
       mapped['Payroll ID']='';
  
       // Now project onto exact outCols order
