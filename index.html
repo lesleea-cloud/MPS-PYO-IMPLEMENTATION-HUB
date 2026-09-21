@@ -127,7 +127,10 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .il-row:last-child{border-bottom:none;}
 .il-row:hover{background:var(--g0);}
 .il-row-hdr{font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;padding:.4rem .5rem;border-bottom:1px solid var(--s2);display:grid;grid-template-columns:140px 80px 70px 1fr 90px 28px;gap:8px;}
-.il-res-inp{font-size:11px;color:var(--s5);border:none;border-bottom:1px dashed var(--s2);background:transparent;font-family:var(--font);outline:none;width:100%;}
+.il-update-inp{font-size:11px;color:var(--s7);border:1px solid var(--s2);border-radius:6px;padding:3px 7px;background:#fff;font-family:var(--font);outline:none;flex:1;min-width:0;}
+.il-update-inp:focus{border-color:var(--g);}
+.il-update-btn{font-size:10.5px;font-weight:600;color:var(--g4);background:var(--g0);border:1px solid var(--g2);border-radius:6px;padding:3px 10px;cursor:pointer;font-family:var(--font);flex-shrink:0;}
+.il-update-btn:hover{background:var(--g1);}
 .il-del-btn{color:var(--s3);background:none;border:none;cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;}
 .il-del-btn:hover{background:#fee2e2;color:#dc2626;}
 /* ══ PENDING ITEMS BANK ══ */
@@ -3368,7 +3371,7 @@ async function _supaDelete(table,col,val){
   catch(e){console.warn(table+' error:',e);}
 }
 function _ilSupaUpsert(issue){
-  _supaUpsert('client_issues',{id:issue.id,client_no:issue.clientNo,client_name:issue.clientName,date:issue.date,description:issue.description,priority:issue.priority,status:issue.status,status_date:issue.statusDate||'',resolution:issue.resolution||'',created_by:issue.createdBy||''},'id');
+  _supaUpsert('client_issues',{id:issue.id,client_no:issue.clientNo,client_name:issue.clientName,date:issue.date,description:issue.description,priority:issue.priority,status:issue.status,status_date:issue.statusDate||'',resolution:issue.resolution||'',updates:issue.updates||[],created_by:issue.createdBy||''},'id');
 }
 function _cpSupaSave(clientNo){
   _supaUpsert('client_pending',{client_no:clientNo,items:CLIENT_PENDING[clientNo]||[]},'client_no');
@@ -5259,6 +5262,13 @@ function renderIssueLog(rows){
     if(b.status==='resolved'&&a.status!=='resolved')return -1;
     return (po[a.priority]||1)-(po[b.priority]||1);
   });
+  // One-time upgrade: fold the old single "resolution notes" field into the new
+  // multi-entry updates[] log so nothing already written is lost.
+  issues.forEach(function(i){
+    if((!i.updates||!i.updates.length)&&i.resolution){
+      i.updates=[{date:i.statusDate||i.date,text:i.resolution}];
+    }
+  });
   var clientOpts=rows.map(function(d){return '<option value="'+d.no+'">'+d.client+'</option>';}).join('');
   var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');var todayStr=_m+'/'+_d+'/'+today.getFullYear();
   var html='<div class="il-wrap">'
@@ -5282,8 +5292,17 @@ function renderIssueLog(rows){
       var priCls='il-pri-'+i.priority;
       var stCls=i.status==='open'?'il-open':(i.status==='in_progress'?'il-inprogress':'il-resolved');
       var stLbl=i.status==='open'?'Open':(i.status==='in_progress'?'In Progress':'Resolved');
-      var safeRes=(i.resolution||'').replace(/"/g,'&quot;');
-      var resRow=canEdit&&i.status!=='open'?'<div><input class="il-res-inp" placeholder="Resolution notes…" value="'+safeRes+'" onblur="ilUpdateRes(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/></div>':(i.resolution?'<div style="font-size:11px;color:var(--s5);margin-top:3px;">'+safeRes+'</div>':'');
+      var updatesList=(i.updates||[]).map(function(u){
+        var safeU=(u.text||'').replace(/"/g,'&quot;');
+        return '<div style="font-size:11px;color:var(--s5);margin-top:3px;">• '+safeU+' <span style="color:var(--s4);">— '+u.date+'</span></div>';
+      }).join('');
+      var addUpdateRow=canEdit
+        ?'<div style="display:flex;gap:5px;margin-top:4px;align-items:center;">'
+          +'<input class="il-update-inp" id="il-upd-'+i.id+'" placeholder="Add a progress update…" onkeydown="if(event.key===\'Enter\'){ilAddUpdate(\''+i.id+'\');event.preventDefault();}"/>'
+          +'<button class="il-update-btn" onclick="ilAddUpdate(\''+i.id+'\')">Add</button>'
+        +'</div>'
+        :'';
+      var resRow=updatesList+addUpdateRow;
       var statusCell=canEdit
         ?'<select class="il-status '+stCls+'" onchange="ilUpdateStatus(\''+i.id+'\',this.value)">'
           +'<option value="open"'+(i.status==='open'?' selected':'')+'>Open</option>'
@@ -5329,7 +5348,7 @@ function ilSave(){
   var clientRow=D.find(function(d){return d.no===no;});
   var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');
   var todayStr=_m+'/'+_d+'/'+today.getFullYear();
-  var issue={id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:todayStr,description:desc,priority:pri,status:'open',statusDate:todayStr,resolution:'',createdBy:IMPL_USER||CURRENT_NAME};
+  var issue={id:'il_'+Date.now(),clientNo:no,clientName:clientRow?clientRow.client:'',date:todayStr,description:desc,priority:pri,status:'open',statusDate:todayStr,resolution:'',updates:[],createdBy:IMPL_USER||CURRENT_NAME};
   CL_ISSUES.push(issue);
   ilSaveToStorage();
   _ilSupaUpsert(issue);
@@ -5369,9 +5388,19 @@ function ilUpdateDesc(id,val){
   if(typeof implRenderAttention==='function')implRenderAttention();
 }
 
-function ilUpdateRes(id,val){
+function ilAddUpdate(id){
   var issue=CL_ISSUES.find(function(i){return i.id===id;});
-  if(issue){issue.resolution=val;ilSaveToStorage();_ilSupaUpsert(issue);}
+  if(!issue)return;
+  var inp=document.getElementById('il-upd-'+id);
+  var val=(inp&&inp.value||'').trim();
+  if(!val)return;
+  var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');
+  if(!issue.updates)issue.updates=[];
+  issue.updates.push({date:_m+'/'+_d+'/'+today.getFullYear(),text:val});
+  ilSaveToStorage();
+  _ilSupaUpsert(issue);
+  renderIssuesPage();
+  if(typeof implRenderAttention==='function')implRenderAttention();
 }
 
 function ilDelete(id){
@@ -8790,7 +8819,7 @@ async function loadFromSupabase(){
     // Load issue log
     var ris=await _supa.from('client_issues').select('*').order('date',{ascending:false});
     if(!ris.error&&ris.data&&ris.data.length){
-      CL_ISSUES=ris.data.map(function(r){return{id:r.id,clientNo:r.client_no,clientName:r.client_name||'',date:r.date||'',description:r.description||'',priority:r.priority||'medium',status:r.status||'open',statusDate:r.status_date||r.date||'',resolution:r.resolution||'',createdBy:r.created_by||''};});
+      CL_ISSUES=ris.data.map(function(r){return{id:r.id,clientNo:r.client_no,clientName:r.client_name||'',date:r.date||'',description:r.description||'',priority:r.priority||'medium',status:r.status||'open',statusDate:r.status_date||r.date||'',resolution:r.resolution||'',updates:r.updates||[],createdBy:r.created_by||''};});
       try{localStorage.setItem('pyo_issues',JSON.stringify(CL_ISSUES));}catch(e){}
     }
     // Load audit log

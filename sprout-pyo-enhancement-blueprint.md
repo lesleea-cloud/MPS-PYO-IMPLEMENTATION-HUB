@@ -3595,3 +3595,30 @@ ALTER TABLE client_issues ADD COLUMN IF NOT EXISTS status_date TEXT DEFAULT '';
 1. Run `Issue_Status_Date_Column.sql` in Supabase SQL Editor.
 2. Redeploy `index.html` to Vercel.
 3. Change an issue's status and confirm the "as of" date appears and updates on each change.
+
+---
+
+## 101. Issue Log — multiple dated progress updates per issue (September 21, 2026)
+
+### What changed
+The single "Resolution notes…" field (one line, overwritten every edit) is replaced with a running, dated log of progress updates per issue — screenshot `09.png` showed only one note slot ("Currently on going on the recommendation"); the ask was to support adding several updates over time, not just one.
+
+### Changes made (`index.html`)
+- New per-issue field `updates`: an array of `{date, text}` entries.
+- `renderIssueLog()`: for each issue, renders every entry in `updates[]` as `• <text> — <date>`, followed by (for editable roles) a small input + **Add** button (`ilAddUpdate(id)`) to append a new dated entry — Enter key or clicking Add both work.
+- New function `ilAddUpdate(id)`: reads the per-issue input, stamps it with today's date, pushes `{date, text}` onto `issue.updates`, saves, and re-renders.
+- **One-time migration, no data lost**: when the Issue Log renders, any issue that has old-style `resolution` text but no `updates` yet gets that text folded in as the first `updates[]` entry (dated with its `statusDate`/`date`). The legacy `resolution` field and `ilUpdateRes()` are no longer written to going forward — `ilUpdateRes()` was removed since `ilAddUpdate()` supersedes it — but the old field/column is left in place in Supabase so nothing is destroyed.
+- `_ilSupaUpsert()` now sends `updates` (as a plain array — the Supabase JS client serializes it to JSONB); Supabase load mapping reads `updates` back (`r.updates||[]`).
+- New CSS: `.il-update-inp` / `.il-update-btn` (replacing the now-unused `.il-res-inp`).
+
+### Supabase change required
+New file **`Issue_Updates_Column.sql`** (repo root):
+```sql
+ALTER TABLE client_issues ADD COLUMN IF NOT EXISTS updates JSONB DEFAULT '[]'::jsonb;
+```
+**Run this in Supabase → SQL Editor** — same pattern as §100's `status_date` column, just JSONB instead of TEXT since this one holds a list, not a single value.
+
+### Manual steps still required
+1. Run `Issue_Updates_Column.sql` in Supabase SQL Editor (in addition to `Issue_Status_Date_Column.sql` from §100 if not already run).
+2. Redeploy `index.html` to Vercel.
+3. Open an existing issue that has old resolution-notes text and confirm it now shows as the first dated update; add a second update and confirm both persist after a page reload.
