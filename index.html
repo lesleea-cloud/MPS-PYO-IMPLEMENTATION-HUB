@@ -6312,7 +6312,7 @@ var MF_COLUMNS=[
   'Additional HDMF Contribution','Pay Group*','Payroll ID'
 ];
  
-var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
+var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:''};
  
 function toggleAdminSection(){
   var body=document.getElementById('nav-admin-body');
@@ -6388,7 +6388,7 @@ function openTool(val){
   document.getElementById('tool-modal-title').textContent=t.name;
   if(val==='masterfile'){
     document.getElementById('tool-modal-box').style.maxWidth='720px';
-    MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
+    MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:''};
     renderMasterfileUI();
   } else if(val==='variance'){
     document.getElementById('tool-modal-box').style.maxWidth='900px';
@@ -6659,7 +6659,7 @@ function pibAddSelected(){
 
 function closeTool(){
   document.getElementById('tool-modal').classList.remove('open');
-  MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null};
+  MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:''};
   MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:''};
   PP_STATE={pdfFile:null,pdfB64:null,apiKey:'',extracted:null};
   vaReset();
@@ -7379,6 +7379,11 @@ function renderMasterfileUI(){
         +'<div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;"><button onclick="adminDownloadSampleSourceFile()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Sample source file (.xlsx)</button><button onclick="adminDownloadSampleOutputTemplate()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:6px;border:1px solid #ddd6fe;background:#f5f3ff;color:#6d28d9;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">📥 Sample output template (.xlsx)</button></div>'
       +'</div>'
     +'</div>'
+    // Company Name (used to build the downloaded filename)
+    +'<div style="margin-bottom:1rem;">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Company Name <span style="color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(used in the downloaded filename)</span></div>'
+      +'<input type="text" id="mf-company-name" value="'+escHtml(MF.companyName||'')+'" oninput="MF.companyName=this.value" placeholder="e.g. Acme Corporation" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"/>'
+    +'</div>'
     // Two upload cards
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem;">'
       +mfUploadCard('ref','📂','Source File <span style=\'color:#dc2626\'>*</span>','Sprout HR bulk upload format<br>(.xlsx or .csv)','#2563eb')
@@ -7853,11 +7858,12 @@ async function mfDownload(){
     var sheetXml=await zip.file(sheetXmlPath).async('string');
     var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
     zip.file(sheetXmlPath,newSheetXml);
-    var cn=(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'').replace(/[^a-zA-Z0-9_\-]/g,'_');
+    var cnSrc=(MF.companyName||'').trim()||(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'');
+    var cn=cnSrc.replace(/[^a-zA-Z0-9_\- ]/g,'').trim().replace(/\s+/g,' ');
     var now=new Date();
-    var ts=(now.getMonth()+1+'').padStart(2,'0')+(now.getDate()+'').padStart(2,'0')+(now.getFullYear()+'').slice(2)
-         +'_'+(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');
-    var filename=cn+'_PayrollPie_ADD_'+ts+'.xlsx';
+    var dateStr=(now.getMonth()+1+'').padStart(2,'0')+'-'+(now.getDate()+'').padStart(2,'0')+'-'+now.getFullYear();
+    var timeStr=(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');
+    var filename=cn+'_PayrollPie_ADD_'+dateStr+'_'+timeStr+'.xlsx';
     var out=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
     var blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     var url=URL.createObjectURL(blob);

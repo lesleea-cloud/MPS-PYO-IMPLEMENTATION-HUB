@@ -3493,3 +3493,20 @@ No source Masterfile for this specific run was available on disk to confirm the 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Re-run the Masterfile Creator on the same Pierian Services source file and confirm: output starts at row 5 with a real employee (no hint-text row, no "admin"/DO NOT DELETE row), 15 employee rows total (dimension `A1:AV19`), and column AU (Pay Group) no longer duplicates Job Title.
+
+---
+
+## 96. Masterfile Creator — output filename now uses an explicit Company Name field (September 21, 2026)
+
+### What changed
+Requested format: `Company Name_PayrollPie_ADD_Date_Time`. Previously the filename's company portion (`cn`) came from `MF.refName` — the raw uploaded **Source File**'s filename (e.g. `01_Panasonic Projector & Display Asia Pacific PTE. LTD._Masterfile.xlsx`), stripped of its extension and with every non-alphanumeric character (including spaces) replaced by `_` — producing ugly, inaccurate names like `01_Panasonic_Projector___Display_Asia_Pacific_PTE__LTD__Masterfile_PayrollPie_ADD_...` that carried over numbering prefixes and `_Masterfile` suffixes from whatever the uploader happened to name their file.
+
+### Fix (`index.html`)
+- Added a **Company Name** text input (`#mf-company-name`) to the Masterfile Creator modal (`renderMasterfileUI()`), placed between the info banner and the Source File/Output Template upload cards. Typing into it sets `MF.companyName` directly (`oninput`).
+- `MF` object literal (3 reset sites: initial declaration, `openTool()`'s masterfile branch, `closeTool()`) now includes `companyName:''`.
+- `mfDownload()`'s filename builder: `cn` now comes from `MF.companyName` (trimmed) first, falling back to the old derived-from-source-filename behavior only if the field was left blank — so existing usage without typing a company name still works, just with the old messy fallback. Sanitization now keeps spaces (`[^a-zA-Z0-9_\- ]` stripped, not spaces) since "Company Name" is meant to read naturally, e.g. `Acme Corporation_PayrollPie_ADD_09-21-2025_143205.xlsx`.
+- Date/time formatting changed from `MMDDYY_HHMMSS` to `MM-DD-YYYY_HHMMSS` (hyphens instead of no separator, 4-digit year) — still filename-safe (no `/`), more directly readable as "Date_Time".
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open the Masterfile Creator, type a Company Name, generate, and confirm the downloaded filename matches `Company Name_PayrollPie_ADD_MM-DD-YYYY_HHMMSS.xlsx`.
