@@ -2423,7 +2423,7 @@ function resolveImplNickname(displayName){
 }
 
 var TEAM_CONFIG = (function(){
-  try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]);t._fromLocalStorage=true;return t;}}catch(e){}
+  try{var s=localStorage.getItem('pyo_team');if(s){var t=JSON.parse(s);t.implementers=(t.implPYO||[]).concat(t.implGov||[]).concat(t.implHR||[]).concat(t.implOTK||[]).filter(function(v,i,a){return v&&a.indexOf(v)===i;});t._fromLocalStorage=true;return t;}}catch(e){}
   return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implPD:[],implPOD:[],implFPOD:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
 })();
 var ST_PREVIEW = null;
@@ -8367,7 +8367,7 @@ function stSaveTeam(){
   TEAM_CONFIG.implPOD =collect('pod');
   TEAM_CONFIG.implFPOD=collect('fpod');
   TEAM_CONFIG.pms    =collect('pm');
-  TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD).concat(TEAM_CONFIG.implPOD).concat(TEAM_CONFIG.implFPOD);
+  TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD).concat(TEAM_CONFIG.implPOD).concat(TEAM_CONFIG.implFPOD).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
   try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD,implPOD:TEAM_CONFIG.implPOD,implFPOD:TEAM_CONFIG.implFPOD,pms:TEAM_CONFIG.pms}));}catch(e){}
   _syncTeamDropdowns();
   tcRenderTeam();
@@ -8752,7 +8752,7 @@ async function loadFromSupabase(){
       if(rt.data.impl_pd) TEAM_CONFIG.implPD =rt.data.impl_pd;
       if(rt.data.impl_pod) TEAM_CONFIG.implPOD =rt.data.impl_pod;
       if(rt.data.impl_fpod)TEAM_CONFIG.implFPOD=rt.data.impl_fpod;
-      TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD||[]).concat(TEAM_CONFIG.implPOD||[]).concat(TEAM_CONFIG.implFPOD||[]);
+      TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD||[]).concat(TEAM_CONFIG.implPOD||[]).concat(TEAM_CONFIG.implFPOD||[]).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
       if(rt.data.pms && !TEAM_CONFIG._fromLocalStorage)TEAM_CONFIG.pms=rt.data.pms;
       try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD||[],implPOD:TEAM_CONFIG.implPOD||[],implFPOD:TEAM_CONFIG.implFPOD||[],pms:TEAM_CONFIG.pms}));}catch(e){}
     }

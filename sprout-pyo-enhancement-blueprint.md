@@ -3419,3 +3419,17 @@ User requested that the `manager` and `admin` login roles get the same unrestric
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Re-test as a Manager and Admin login: confirm My Clients (all 5 tabs) is fully editable, Vault add/delete works, and Settings shows Team Config / Backup / GitHub / Integrations / External API panels.
+
+## 93. Dashboard — duplicate resource rows in "Resource Workload by Status" and "Avg Progress by Resource" (September 21, 2026)
+
+User reported (screenshot `01.png` under `Screenshots\09212026`) that the Admin Dashboard's **Resource Workload by Status** and **Avg Progress by Resource** panels showed several team members twice (e.g. Armie, Leslee, Pau, Mhae each appeared as two separate rows).
+
+### Root cause
+`TEAM_CONFIG.implementers` — the single list both panels loop over (`renderDashboard()`, `index.html`) — is built by concatenating the per-pool rosters: `implPYO + implGov + implHR + implOTK + implPD + implPOD + implFPOD`. Anyone assigned to more than one pool (e.g. a PYO implementer who is *also* the Gov or OTK resource for some accounts) was simply concatenated in twice with no de-duplication, at all three places this list gets rebuilt: the `pyo_team` localStorage fallback loader, `stSaveTeam()` (Settings → Team Configuration save), and `loadFromSupabase()` (`team_config` table load on login).
+
+### Fix (`index.html`)
+Added `.filter(function(v,i,a){return v&&a.indexOf(v)===i;})` (dedupe, preserving first-seen order, dropping blanks) to the end of all three `TEAM_CONFIG.implementers` concat expressions. Fixed at the single source of truth rather than patching each screen, so every consumer of `TEAM_CONFIG.implementers` is corrected automatically: Dashboard Resource Workload/Avg Progress, the Add Client modal's Implementer dropdown, MOM staff-tagging, resource color assignment (`RC`), and `resolveImplNickname()`. Self-heals on next login/save — no data migration or `DATA_VERSION` bump needed, since `TEAM_CONFIG.implementers` is always recomputed from the per-pool arrays rather than stored as its own field.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-load the Dashboard as Admin/Manager/God and confirm each team member now appears exactly once in both panels.
