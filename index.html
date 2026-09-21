@@ -1729,7 +1729,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
         </div>
         <div style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Client <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
-          <select id="vf-client" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select client (optional) —</option></select>
+          <select id="vf-client" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select client —</option></select>
         </div>
         <div id="vf-mom-extra" style="display:none;">
           <div style="margin-bottom:10px;">
@@ -1746,6 +1746,15 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
           <div style="margin-bottom:10px;">
             <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Meeting Date <span style="color:var(--r)">*</span></div>
             <input id="vf-mom-date" type="date" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+          </div>
+        </div>
+        <div id="vf-proposal-extra" style="display:none;">
+          <div style="margin-bottom:10px;">
+            <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Type <span style="font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
+            <select id="vf-proposal-type" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+              <option value="">Proposal</option>
+              <option value="Work Order">Work Order</option>
+            </select>
           </div>
         </div>
         <div id="vf-deck-extra" style="display:none;">
@@ -2994,14 +3003,14 @@ function vaultShowForm(){
     var clientList=CURRENT_ROLE==='implementer'
       ?D.filter(function(d){return implOwnsClient(d,IMPL_USER);})
       :D;
-    vfClient.innerHTML='<option value="">— Select client (optional) —</option>'
+    vfClient.innerHTML='<option value="">— Select client —</option>'
       +clientList.map(function(d){return '<option value="'+d.client+'">'+d.client+'</option>';}).join('');
   }
   document.getElementById('vf-url').focus();
 }
 function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
-  ['vf-url','vf-notes','vf-client','vf-mom-type','vf-mom-date','vf-deck-type'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['vf-url','vf-notes','vf-client','vf-mom-type','vf-mom-date','vf-deck-type','vf-proposal-type'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('vf-cat').value='';
   vaultCatChange('');
   var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
@@ -3009,12 +3018,15 @@ function vaultHideForm(){
 function vaultCatChange(cat){
   var momExtra=document.getElementById('vf-mom-extra');
   var deckExtra=document.getElementById('vf-deck-extra');
+  var proposalExtra=document.getElementById('vf-proposal-extra');
   var urlReq=document.getElementById('vf-url-req');
   var urlOpt=document.getElementById('vf-url-opt');
   var isMOM=cat==='MOMs';
   var isDeck=cat==='Decks';
+  var isProposal=cat==='Proposals';
   if(momExtra)momExtra.style.display=isMOM?'block':'none';
   if(deckExtra)deckExtra.style.display=isDeck?'block':'none';
+  if(proposalExtra)proposalExtra.style.display=isProposal?'block':'none';
   if(urlReq)urlReq.style.display=isMOM?'none':'';
   if(urlOpt)urlOpt.style.display=isMOM?'':'none';
 }
@@ -3027,7 +3039,8 @@ function vaultSaveItem(){
   if(!cat){err.textContent='Please select a category.';err.style.display='inline';return;}
   var isMOM=cat==='MOMs';
   var isDeck=cat==='Decks';
-  var momType='',momDate='',deckType='';
+  var isProposal=cat==='Proposals';
+  var momType='',momDate='',deckType='',proposalType='';
   if(isMOM){
     momType=(document.getElementById('vf-mom-type').value||'').trim();
     momDate=(document.getElementById('vf-mom-date').value||'').trim();
@@ -3036,6 +3049,9 @@ function vaultSaveItem(){
   } else if(isDeck){
     deckType=(document.getElementById('vf-deck-type').value||'').trim();
     if(!deckType){err.textContent='Please select a deck type.';err.style.display='inline';return;}
+    if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
+  } else if(isProposal){
+    proposalType=(document.getElementById('vf-proposal-type').value||'').trim();
     if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
   } else {
     if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
@@ -3048,12 +3064,15 @@ function vaultSaveItem(){
     name=momType+' MOM'+(clientName?' — '+clientName:'')+' — '+_momDateFmt;
   } else if(isDeck){
     name=deckType+(clientName?' — '+clientName:'')+' — '+today;
+  } else if(isProposal&&proposalType){
+    name=proposalType+(clientName?' — '+clientName:'')+' — '+today;
   } else {
     name=cat+' — '+today;
   }
   var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url||null,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:today};
   if(isMOM){item.momType=momType;item.momDate=momDate;}
   if(isDeck){item.deckType=deckType;}
+  if(isProposal){item.proposalType=proposalType;}
   VAULT_ITEMS.unshift(item);
   vaultSaveToStorage();
   vaultHideForm();
@@ -3247,7 +3266,7 @@ function renderVault(){
     r+='<div class="vault-entry-name">'+v.name+'</div>';
     if(v.notes)r+='<div style="font-size:10px;color:var(--s4);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+v.notes+'</div>';
     r+='</div>';
-    r+='<span class="vault-cat-badge" style="background:'+cfg.bg+';color:'+cfg.c+';flex-shrink:0;">'+(v.deckType||cfg.label)+'</span>';
+    r+='<span class="vault-cat-badge" style="background:'+cfg.bg+';color:'+cfg.c+';flex-shrink:0;">'+(v.deckType||v.proposalType||cfg.label)+'</span>';
     r+='<div class="vault-entry-meta">'+v.uploadedBy+' · '+v.uploadedAt+'</div>';
     r+='<div class="vault-entry-acts">';
     r+='<a class="vault-open-btn" href="'+openHref+'"'+openTarget+' style="padding:5px 10px;font-size:11px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Open</a>';
@@ -3267,7 +3286,15 @@ function renderVault(){
     h+='<span style="font-size:11px;color:var(--s4);">'+drillLabel+' · '+drillItems.length+' item'+(drillItems.length!==1?'s':'')+'</span>';
     h+='</div>';
     h+='<div class="vault-cgroup"><div>';
-    drillItems.forEach(function(v){h+=_vaultEntryRow(v);});
+    // Work Orders are a Proposals sub-type — break them into their own subheader
+    // instead of mixing them into the plain Proposals list.
+    var workOrders=drillItems.filter(function(v){return v.category==='Proposals'&&v.proposalType==='Work Order';});
+    var otherItems=drillItems.filter(function(v){return !(v.category==='Proposals'&&v.proposalType==='Work Order');});
+    otherItems.forEach(function(v){h+=_vaultEntryRow(v);});
+    if(workOrders.length){
+      h+='<div style="font-size:10px;font-weight:800;color:var(--s4);text-transform:uppercase;letter-spacing:.06em;padding:12px 2px 5px;border-bottom:1px solid var(--s1);margin-bottom:8px;">Work Order ('+workOrders.length+')</div>';
+      workOrders.forEach(function(v){h+=_vaultEntryRow(v);});
+    }
     h+='</div></div>';
     grid.innerHTML=h;
   } else {
@@ -3339,7 +3366,8 @@ async function _vaultSupaUpsert(item){
              type:item.type,url:item.url||null,file_name:item.fileName||null,
              file_path:item.filePath||null,file_type:item.fileType||null,
              notes:item.notes||null,uploaded_by:item.uploadedBy||null,uploaded_at:item.uploadedAt||null,
-             mom_type:item.momType||null,mom_date:item.momDate||null,deck_type:item.deckType||null};
+             mom_type:item.momType||null,mom_date:item.momDate||null,deck_type:item.deckType||null,
+             proposal_type:item.proposalType||null};
     var r=await _supa.from('vault_items').upsert(row,{onConflict:'id'});
     if(r.error)console.warn('vault upsert error:',r.error.message);
   }catch(e){console.warn('vault Supabase upsert failed:',e);}
@@ -8812,7 +8840,7 @@ async function loadFromSupabase(){
       var localMap={};VAULT_ITEMS.forEach(function(v){localMap[v.id]=v;});
       var supaIds=new Set(rv.data.map(function(v){return v.id;}));
       var localOnly=VAULT_ITEMS.filter(function(v){return !supaIds.has(v.id);});
-      var fromSupa=rv.data.map(function(v){var local=localMap[v.id];return{id:v.id,name:v.name,category:v.category,clientName:v.client_name||null,type:v.type,url:v.url||'',fileName:v.file_name||'',filePath:v.file_path||null,fileType:v.file_type||'',fileData:(local&&local.fileData)||'',notes:v.notes||'',uploadedBy:v.uploaded_by||'',uploadedAt:v.uploaded_at||'',momType:v.mom_type||null,momDate:v.mom_date||null,deckType:v.deck_type||null};});
+      var fromSupa=rv.data.map(function(v){var local=localMap[v.id];return{id:v.id,name:v.name,category:v.category,clientName:v.client_name||null,type:v.type,url:v.url||'',fileName:v.file_name||'',filePath:v.file_path||null,fileType:v.file_type||'',fileData:(local&&local.fileData)||'',notes:v.notes||'',uploadedBy:v.uploaded_by||'',uploadedAt:v.uploaded_at||'',momType:v.mom_type||null,momDate:v.mom_date||null,deckType:v.deck_type||null,proposalType:v.proposal_type||null};});
       VAULT_ITEMS=fromSupa.concat(localOnly);
       vaultSaveToStorage();
     }

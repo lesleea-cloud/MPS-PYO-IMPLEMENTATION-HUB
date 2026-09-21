@@ -3622,3 +3622,46 @@ ALTER TABLE client_issues ADD COLUMN IF NOT EXISTS updates JSONB DEFAULT '[]'::j
 1. Run `Issue_Updates_Column.sql` in Supabase SQL Editor (in addition to `Issue_Status_Date_Column.sql` from §100 if not already run).
 2. Redeploy `index.html` to Vercel.
 3. Open an existing issue that has old resolution-notes text and confirm it now shows as the first dated update; add a second update and confirm both persist after a page reload.
+
+---
+
+## 102. Implementation Vault — "Select client (optional)" placeholder wording (September 21, 2026)
+
+### What changed
+Screenshot `14.png` flagged the redundant "(optional)" text inside the Client dropdown's placeholder option in the "Add File" form — the field is already labeled `CLIENT (optional)` above it, so the dropdown text repeated it unnecessarily.
+
+### Fix (`index.html`)
+Both places the dropdown's placeholder option is built — the static HTML (`#vf-client`) and its JS re-population in `vaultShowForm()` — changed from `— Select client (optional) —` to `— Select client —`. The `CLIENT (optional)` field label above the dropdown is unchanged (not what was highlighted).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+
+---
+
+## 103. Implementation Vault — "Work Order" as a sub-type under Proposals, with its own subheader (September 21, 2026)
+
+### What changed
+Screenshots `11`–`13` showed the Implementation Vault's Proposals category (client tile view, drill-in view, and the "Add File" category picker). Request: a "Work Order" subheader nested under Proposals — confirmed via clarifying question this means a **sub-type within Proposals** (not a new sibling category), mirroring how "Decks" already has a required Deck Type (KOM Deck, Fitgap Deck, etc.) and "MOMs" has a Meeting Type.
+
+### Changes made (`index.html`)
+- **Add File form**: new `#vf-proposal-extra` block (shown only when Category = Proposals) with a `Type` dropdown — `Proposal` (default, blank) or `Work Order`. Optional, unlike Deck Type/Meeting Type which are required.
+- `vaultCatChange()`: now also toggles `vf-proposal-extra` visibility for `cat==='Proposals'`.
+- `vaultSaveItem()`: reads `proposalType`; when set to "Work Order", the auto-generated entry name uses `Work Order — <client> — <date>` (same pattern Decks already use), instead of the generic `Proposals — <date>`. Stored on the item as `item.proposalType`.
+- `_vaultEntryRow()`: the per-entry category badge now falls back through `deckType → proposalType → category label`, so a Work Order entry shows a "Work Order" badge instead of "Proposals".
+- **Drill-in view** (one client's files within the current category): items are now split — plain items render first as before, then, if any exist, a **"Work Order (N)"** subheader (same visual style as the existing MOMs "Manual Entries"/"From Gmail Sync" grouping) followed by the Work Order items. A client with no Work Order entries sees no change at all.
+- `_vaultSupaUpsert()` / Supabase load mapping: `proposal_type` sent and read back alongside the existing `mom_type`/`deck_type`.
+
+### Not changed
+- The Category dropdown, sidebar nav, and tile view still show "Proposals" as the one top-level category — Work Order is purely a tag within it, per the chosen approach.
+
+### Supabase change required
+New file **`Vault_Proposal_Type_Column.sql`**:
+```sql
+ALTER TABLE vault_items ADD COLUMN IF NOT EXISTS proposal_type TEXT DEFAULT NULL;
+```
+Run in Supabase → SQL Editor before/with this deploy.
+
+### Manual steps still required
+1. Run `Vault_Proposal_Type_Column.sql` in Supabase SQL Editor.
+2. Redeploy `index.html` to Vercel.
+3. Add a Proposals-category file with Type = Work Order, then drill into that client's Proposals and confirm it appears under a separate "Work Order" subheader, badged "Work Order" instead of "Proposals".
