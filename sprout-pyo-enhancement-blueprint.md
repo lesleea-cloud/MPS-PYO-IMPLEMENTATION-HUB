@@ -3767,3 +3767,17 @@ The Weekly Implementation Meeting Report table (Weekly Status page → Weekly Re
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. On Weekly Status, click a non-dash count and confirm it expands to client names; click it again and confirm it collapses back to the number.
+
+---
+
+## 109. Added a favicon (September 21, 2026)
+
+### What changed
+The app had no `<link rel="icon">` at all — browser tabs showed the generic blank-page icon. Added a favicon that reuses the app's own existing brand mark (the green rounded-square "layers" icon already used in the header/login logo — `.logo-mark`/`.ll-logo-mark`), so the tab icon matches the in-app branding exactly rather than introducing a new/different image.
+
+### Fix (`index.html`)
+Added a single `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,...">` in `<head>`, right after `<title>`. It's an inline SVG data URI (no separate image file to host or keep in sync) — a 24×24 rounded square, `#32CE13` (the `--g` brand green) background, with the same white 3-bar "layers" stroke icon used elsewhere, at `rx="6"` to match `.logo-mark`'s `border-radius:8px` proportionally.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Hard-refresh the live site and confirm the browser tab shows the green Sprout icon instead of a blank page icon (browsers can cache the old blank favicon — a hard refresh or new tab may be needed to see it).
