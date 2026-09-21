@@ -9002,7 +9002,14 @@ function stSaveDataToFile(){
 var _supa=(function(){
   return supabase.createClient(
     'https://jchqgxyectvsqfmrnype.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaHFneHllY3R2c3FmbXJueXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjA1MjIsImV4cCI6MjA5NjIzNjUyMn0.3Hr4sA0z_IpeTVDp520ozWm8587YzXXQN9ez3ixs4OM'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjaHFneHllY3R2c3FmbXJueXBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NjA1MjIsImV4cCI6MjA5NjIzNjUyMn0.3Hr4sA0z_IpeTVDp520ozWm8587YzXXQN9ez3ixs4OM',
+    // persistSession:false — the session lives only in memory for this page load, never
+    // written to localStorage. Signing in still works normally (including the Google OAuth
+    // redirect round-trip within the same load), but nothing can silently auto-restore a
+    // previous login on a fresh page load/tab revisit — every visit requires an explicit
+    // "Sign in with Google" click. Trade-off: a manual page refresh while already signed in
+    // also returns to the login screen instead of staying signed in.
+    {auth:{persistSession:false}}
   );
 })();
 
@@ -9241,16 +9248,16 @@ function onAuthSuccess(user){
 
 var _authHandled=false;
 (function initAuth(){
+  // Only react to a genuine SIGNED_IN event (fired right after the user completes the
+  // Google OAuth redirect round-trip) — never INITIAL_SESSION, and no proactive
+  // getSession() check on load. With persistSession:false above there's normally nothing
+  // to restore anyway, but staying explicit here means this page never auto-logs anyone
+  // in from a leftover/cached session under any circumstance — an actual sign-in click is
+  // always required.
   _supa.auth.onAuthStateChange(function(event,session){
-    if((event==='SIGNED_IN'||event==='INITIAL_SESSION')&&session&&!_authHandled){
+    if(event==='SIGNED_IN'&&session&&!_authHandled){
       _authHandled=true;
       onAuthSuccess(session.user);
-    }
-  });
-  _supa.auth.getSession().then(function(res){
-    if(res.data&&res.data.session&&!_authHandled){
-      _authHandled=true;
-      onAuthSuccess(res.data.session.user);
     }
   });
 })();

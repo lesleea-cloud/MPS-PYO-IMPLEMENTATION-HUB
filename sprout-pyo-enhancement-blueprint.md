@@ -3868,3 +3868,22 @@ Couldn't reproduce the exact "first click does nothing" mechanism from code alon
 2. Sign out, then switch tabs away and back — confirm the login screen stays put and does **not** auto-sign back in.
 3. Test "Sign in with Google" from a clean state and see if the first click now works reliably; report back if it's still flaky so we can dig further (this fix targets the most likely cause but wasn't independently reproducible from code alone).
 4. Confirm the spinner/"Signing you in…" message appears right after Google auth succeeds, for the duration of the dashboard load.
+
+---
+
+## 114. Auto sign-in disabled outright (September 21, 2026)
+
+### What changed
+§113's fix closed the specific race-condition window that could cause an unwanted auto-login, but the user asked for something more absolute: the app should **never** auto sign in, period. Went further than a targeted bug fix here — this is a deliberate behavior change, not just closing a race.
+
+### Fix (`index.html`)
+- `supabase.createClient(...)` now passes `{auth:{persistSession:false}}`. The session now lives only in memory for the current page load and is never written to `localStorage` — so there's nothing left for a future page load to silently restore, under any circumstance (tab revisit, browser restart, whatever). Signing in still works normally within the same load, including completing the Google OAuth redirect round-trip.
+- `initAuth()` simplified to only react to a genuine `SIGNED_IN` event (fired right after a real Google OAuth login completes) — `INITIAL_SESSION` handling and the proactive `getSession()` check on load were both removed, since both existed specifically to auto-restore a prior session, which is exactly the behavior being turned off.
+
+### Trade-off (please confirm this is acceptable)
+Refreshing the page (F5) or reopening the app in a new tab **while already signed in** now also returns to the login screen — session persistence being off means the browser has no way to distinguish "an abandoned login screen from yesterday" from "I was actively working and just refreshed." Every fresh page load requires clicking "Sign in with Google" again. If this turns out to be too disruptive during active use, the alternative would be re-enabling persistence but only auto-restoring a session that's still fresh (e.g. under some age threshold) — let me know if you'd rather have that instead.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Sign in, then simply refresh the page — confirm you're returned to the login screen (this is now expected, not a bug).
+3. Sign in, switch tabs away and back — confirm still signed in *within that same tab session* (no reload happened), and confirm a genuinely new tab/reload always requires signing in again.
