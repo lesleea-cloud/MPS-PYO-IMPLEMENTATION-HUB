@@ -3524,3 +3524,17 @@ Right after injecting the employee rows into `sheet1.xml`, the code now also rew
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Generate a Masterfile output, then check File → Info (or right-click → Properties → Details) in Excel and confirm "Date created" / "Date last saved" now show today's date instead of 2011.
+
+---
+
+## 98. Masterfile Creator — strip embedded date stamps from the output filename's Company Name portion (September 21, 2026)
+
+### What happened
+User left the new Company Name field (§96) blank and the fallback used the uploaded Source File's raw filename (`Pierian- EmployeeTemplate_09-11-2026 1.xlsx`), producing a downloaded file named `Pierian- EmployeeTemplate_09-11-2026 1_PayrollPie_ADD_09-21-2026_184456.xlsx` — the source file's own internal date stamp (`09-11-2026`, when the client's template was last saved) got carried into the company-name portion, sitting right next to the actual generation date (`09-21-2026`) added at the end. Confusing and redundant.
+
+### Fix (`index.html`, `mfDownload()`)
+After sanitizing `cn` (the company-name portion of the filename), strip any embedded date-like token matching `MM-DD-YYYY` / `M-D-YY` / `MM/DD/YYYY` (with surrounding underscores/hyphens/spaces collapsed) before appending `_PayrollPie_ADD_<today's date>_<time>`. Applies whether `cn` came from a typed Company Name or the source-filename fallback. Verified against the exact reported filename: `Pierian- EmployeeTemplate_09-11-2026 1` → `Pierian- EmployeeTemplate 1` (date removed, rest of the name untouched — the stray trailing "1" from the source filename was left as-is since it wasn't part of what was reported).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Generate a Masterfile output without typing a Company Name (letting it fall back to a source filename that contains a date) and confirm the date does not appear in the downloaded filename.

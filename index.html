@@ -7872,6 +7872,10 @@ async function mfDownload(){
     }
     var cnSrc=(MF.companyName||'').trim()||(MF.refName||'Masterfile').replace(/\.[^\/\.]+$/,'');
     var cn=cnSrc.replace(/[^a-zA-Z0-9_\- ]/g,'').trim().replace(/\s+/g,' ');
+    // Strip any embedded date-like token (e.g. a version/date stamp carried over from the
+    // uploaded file's own name, like "..._09-11-2026") — the filename already appends the
+    // actual generation date below, so a leftover date from the source filename is just noise.
+    cn=cn.replace(/[_\-\s]*\b\d{1,2}[\-\/]\d{1,2}[\-\/]\d{2,4}\b[_\-\s]*/g,' ').trim().replace(/\s+/g,' ');
     var now=new Date();
     var dateStr=(now.getMonth()+1+'').padStart(2,'0')+'-'+(now.getDate()+'').padStart(2,'0')+'-'+now.getFullYear();
     var timeStr=(now.getHours()+'').padStart(2,'0')+(now.getMinutes()+'').padStart(2,'0')+(now.getSeconds()+'').padStart(2,'0');
