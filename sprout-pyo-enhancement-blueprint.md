@@ -3696,3 +3696,24 @@ The Resource Team, Implementation Phases, Add On Services, Milestone Dates, and 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Open My Clients → Overview and confirm all columns appear and scroll horizontally; edit a few fields (e.g. a phase checkbox, a milestone date, CSM) directly from Overview, then switch to that field's dedicated tab and confirm the edit shows up there too.
+
+---
+
+## 105. Implementation Vault — add multiple Decks in one "New Entry" (September 21, 2026)
+
+### What changed
+Screenshot `17.png`: the Decks "Add File" form only had one Deck Type + one URL field, so uploading several decks for the same client meant repeating the whole Save → reopen form cycle each time. It now supports adding several decks in a single save.
+
+### Changes made (`index.html`)
+- `#vf-deck-extra` now holds a repeatable `#vf-deck-rows` container (starts with one Deck Type + URL row) plus an **"+ Add another deck"** button. Each additional row gets a ✕ remove button (hidden when only one row remains, so there's always at least one).
+- New state: `VF_DECK_ROWS` (array of row indices) / `VF_DECK_ROW_SEQ` (next index to assign, never reused) and `vfDeckRowsRender()` / `vfAddDeckRow()` / `vfRemoveDeckRow(idx)` to manage them.
+- The generic shared "Google Drive / URL" field (`#vf-url-wrap`) is now hidden entirely when Category = Decks, since each deck row carries its own URL — `vaultCatChange()` toggles it alongside the existing MOM/Deck/Proposal extra-field toggling, and resets the deck rows back to one empty row every time Decks is (re)selected.
+- `vaultSaveItem()`: for `cat==='Decks'`, branches early — collects every row with both a Deck Type and URL filled in (incomplete rows are silently skipped, not errors, so a half-filled extra row doesn't block saving the rest), requires at least one complete row, then creates **one vault item per row**, all sharing the same Client and Notes. Toast message pluralizes ("3 decks saved to vault." vs "Deck saved to vault."). All other categories (Proposals, MOMs, Payroll Policy, Templates, Other) are unchanged — still single-entry per save.
+- `vaultHideForm()`: resets the deck rows back to one empty row (previously reset a since-removed single `#vf-deck-type` field).
+
+### Not changed
+- Only Decks got the multi-row treatment, matching the specific request — Proposals/MOMs/other categories still save one item per "New Entry" submission.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open Add File → Category: Decks, add 2-3 deck rows with different types/URLs, Save, and confirm all of them appear as separate vault entries for that client.

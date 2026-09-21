@@ -1757,20 +1757,14 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
             </select>
           </div>
         </div>
-        <div id="vf-deck-extra" style="display:none;">
-          <div style="margin-bottom:10px;">
-            <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Deck Type <span style="color:var(--r)">*</span></div>
-            <select id="vf-deck-type" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
-              <option value="">— Select deck type —</option>
-              <option value="KOM Deck">Kick-Off Meeting Deck</option>
-              <option value="Payroll Discussion Deck">Payroll Discussion Deck</option>
-              <option value="Parallel Run Deck">Parallel Run Deck</option>
-              <option value="Fitgap Deck">Fitgap Deck</option>
-              <option value="Fitgap Results Deck">Fitgap Results Deck</option>
-            </select>
-          </div>
+        <div id="vf-deck-extra" style="display:none;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Decks <span style="color:var(--r)">*</span></div>
+          <div id="vf-deck-rows"></div>
+          <button type="button" onclick="vfAddDeckRow()" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);">
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Add another deck
+          </button>
         </div>
-        <div style="margin-bottom:10px;">
+        <div id="vf-url-wrap" style="margin-bottom:10px;">
           <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Google Drive / URL <span id="vf-url-req" style="color:var(--r)">*</span><span id="vf-url-opt" style="display:none;font-size:10px;color:var(--s4);font-weight:400;text-transform:none;letter-spacing:0;">(optional)</span></div>
           <input id="vf-url" type="url" placeholder="Paste Google Drive link or any URL..." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
         </div>
@@ -3010,15 +3004,45 @@ function vaultShowForm(){
 }
 function vaultHideForm(){
   document.getElementById('vault-form').style.display='none';
-  ['vf-url','vf-notes','vf-client','vf-mom-type','vf-mom-date','vf-deck-type','vf-proposal-type'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['vf-url','vf-notes','vf-client','vf-mom-type','vf-mom-date','vf-proposal-type'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  VF_DECK_ROWS=[0];VF_DECK_ROW_SEQ=1;vfDeckRowsRender();
   document.getElementById('vf-cat').value='';
   vaultCatChange('');
   var err=document.getElementById('vf-error');if(err){err.style.display='none';err.textContent='';}
+}
+var VF_DECK_ROWS=[0];
+var VF_DECK_ROW_SEQ=1;
+function vfDeckRowsRender(){
+  var wrap=document.getElementById('vf-deck-rows');
+  if(!wrap)return;
+  wrap.innerHTML=VF_DECK_ROWS.map(function(idx){
+    return '<div style="display:flex;gap:6px;margin-bottom:8px;align-items:flex-start;">'
+      +'<select id="vf-deck-type-'+idx+'" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">'
+        +'<option value="">— Select deck type —</option>'
+        +'<option value="KOM Deck">Kick-Off Meeting Deck</option>'
+        +'<option value="Payroll Discussion Deck">Payroll Discussion Deck</option>'
+        +'<option value="Parallel Run Deck">Parallel Run Deck</option>'
+        +'<option value="Fitgap Deck">Fitgap Deck</option>'
+        +'<option value="Fitgap Results Deck">Fitgap Results Deck</option>'
+      +'</select>'
+      +'<input id="vf-deck-url-'+idx+'" type="url" placeholder="Paste Google Drive link or any URL..." style="flex:1.4;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">'
+      +(VF_DECK_ROWS.length>1?'<button type="button" onclick="vfRemoveDeckRow('+idx+')" title="Remove" style="padding:8px 10px;border-radius:8px;border:1px solid var(--s2);background:#fff;color:var(--s4);cursor:pointer;font-size:12px;flex-shrink:0;">✕</button>':'')
+    +'</div>';
+  }).join('');
+}
+function vfAddDeckRow(){
+  VF_DECK_ROWS.push(VF_DECK_ROW_SEQ++);
+  vfDeckRowsRender();
+}
+function vfRemoveDeckRow(idx){
+  VF_DECK_ROWS=VF_DECK_ROWS.filter(function(i){return i!==idx;});
+  vfDeckRowsRender();
 }
 function vaultCatChange(cat){
   var momExtra=document.getElementById('vf-mom-extra');
   var deckExtra=document.getElementById('vf-deck-extra');
   var proposalExtra=document.getElementById('vf-proposal-extra');
+  var urlWrap=document.getElementById('vf-url-wrap');
   var urlReq=document.getElementById('vf-url-req');
   var urlOpt=document.getElementById('vf-url-opt');
   var isMOM=cat==='MOMs';
@@ -3027,8 +3051,10 @@ function vaultCatChange(cat){
   if(momExtra)momExtra.style.display=isMOM?'block':'none';
   if(deckExtra)deckExtra.style.display=isDeck?'block':'none';
   if(proposalExtra)proposalExtra.style.display=isProposal?'block':'none';
+  if(urlWrap)urlWrap.style.display=isDeck?'none':'block';
   if(urlReq)urlReq.style.display=isMOM?'none':'';
   if(urlOpt)urlOpt.style.display=isMOM?'':'none';
+  if(isDeck){VF_DECK_ROWS=[0];VF_DECK_ROW_SEQ=1;vfDeckRowsRender();}
 }
 function vaultSaveItem(){
   var cat=document.getElementById('vf-cat').value;
@@ -3037,19 +3063,33 @@ function vaultSaveItem(){
   var notes=(document.getElementById('vf-notes').value||'').trim();
   var err=document.getElementById('vf-error');
   if(!cat){err.textContent='Please select a category.';err.style.display='inline';return;}
+  if(cat==='Decks'){
+    var today=_vaultToday();
+    var deckPairs=VF_DECK_ROWS.map(function(idx){
+      var tEl=document.getElementById('vf-deck-type-'+idx);
+      var uEl=document.getElementById('vf-deck-url-'+idx);
+      return {deckType:(tEl&&tEl.value||'').trim(),url:(uEl&&uEl.value||'').trim()};
+    }).filter(function(p){return p.deckType&&p.url;});
+    if(!deckPairs.length){err.textContent='Please add at least one deck with a type and URL.';err.style.display='inline';return;}
+    var newItems=deckPairs.map(function(p){
+      var item={id:'v_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),name:p.deckType+(clientName?' — '+clientName:'')+' — '+today,category:cat,clientName:clientName||null,type:'link',url:p.url,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:today,deckType:p.deckType};
+      return item;
+    });
+    newItems.forEach(function(item){VAULT_ITEMS.unshift(item);_vaultSupaUpsert(item);});
+    vaultSaveToStorage();
+    vaultHideForm();
+    renderVault();
+    showImportToast('success',newItems.length>1?(newItems.length+' decks saved to vault.'):'Deck saved to vault.');
+    return;
+  }
   var isMOM=cat==='MOMs';
-  var isDeck=cat==='Decks';
   var isProposal=cat==='Proposals';
-  var momType='',momDate='',deckType='',proposalType='';
+  var momType='',momDate='',proposalType='';
   if(isMOM){
     momType=(document.getElementById('vf-mom-type').value||'').trim();
     momDate=(document.getElementById('vf-mom-date').value||'').trim();
     if(!momType){err.textContent='Please select a meeting type.';err.style.display='inline';return;}
     if(!momDate){err.textContent='Please enter the meeting date.';err.style.display='inline';return;}
-  } else if(isDeck){
-    deckType=(document.getElementById('vf-deck-type').value||'').trim();
-    if(!deckType){err.textContent='Please select a deck type.';err.style.display='inline';return;}
-    if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
   } else if(isProposal){
     proposalType=(document.getElementById('vf-proposal-type').value||'').trim();
     if(!url){err.textContent='Please enter a URL.';err.style.display='inline';return;}
@@ -3062,8 +3102,6 @@ function vaultSaveItem(){
     var _momDateParts=momDate.split('-');
     var _momDateFmt=_momDateParts.length===3?(_momDateParts[1]+'/'+_momDateParts[2]+'/'+_momDateParts[0]):momDate;
     name=momType+' MOM'+(clientName?' — '+clientName:'')+' — '+_momDateFmt;
-  } else if(isDeck){
-    name=deckType+(clientName?' — '+clientName:'')+' — '+today;
   } else if(isProposal&&proposalType){
     name=proposalType+(clientName?' — '+clientName:'')+' — '+today;
   } else {
@@ -3071,14 +3109,13 @@ function vaultSaveItem(){
   }
   var item={id:'v_'+Date.now(),name:name,category:cat,clientName:clientName||null,type:'link',url:url||null,notes:notes,uploadedBy:CURRENT_NAME,uploadedAt:today};
   if(isMOM){item.momType=momType;item.momDate=momDate;}
-  if(isDeck){item.deckType=deckType;}
   if(isProposal){item.proposalType=proposalType;}
   VAULT_ITEMS.unshift(item);
   vaultSaveToStorage();
   vaultHideForm();
   renderVault();
   _vaultSupaUpsert(item);
-  showImportToast('success',isMOM?'MOM saved to vault.':isDeck?'Deck saved to vault.':'Link saved to vault.');
+  showImportToast('success',isMOM?'MOM saved to vault.':'Link saved to vault.');
 }
 function _vaultToday(){
   var d=new Date();
