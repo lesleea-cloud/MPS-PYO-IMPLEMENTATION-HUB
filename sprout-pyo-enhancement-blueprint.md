@@ -3750,3 +3750,20 @@ User felt §106's red font color alone wasn't obvious enough. Escalated to a 3-l
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Mark a client Churned and confirm on every tab: red name + "Churned" chip + light-red row background that persists on hover (shifts to a deeper red, doesn't disappear).
+
+---
+
+## 108. Weekly Status — click a count to see the client names, click again to collapse (September 21, 2026)
+
+### What changed
+The Weekly Implementation Meeting Report table (Weekly Status page → Weekly Report tab) shows a count per implementer per row (e.g. "Starter - On going implem" × "Denise" = `2`), but no way to see *which* clients made up that number without going to check each tab manually. Any count > 0 is now clickable: click it to expand that cell into the list of matching client names (one per line), click again to collapse back to the number.
+
+### Fix (`index.html`)
+- New `WK_EXPANDED_CELLS` state object (alongside the existing `WK_COLLAPSED` used for section collapse) and `wkToggleCell(id)` to flip a cell's expanded state and re-render.
+- Each cell's `matches` (the same `D.filter(...)` already computing the count) is kept instead of discarded, so expanding just re-renders that array as client names (`<br>`-separated) instead of throwing it away and only keeping `.length`.
+- Cell identity is a stable string key (`section label|row label|implementer name`) rather than a counter, so it doesn't depend on render order and survives re-renders correctly.
+- Zero-count cells (`—`) stay non-interactive — nothing to expand.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. On Weekly Status, click a non-dash count and confirm it expands to client names; click it again and confirm it collapses back to the number.

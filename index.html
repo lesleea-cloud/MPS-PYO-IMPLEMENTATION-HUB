@@ -3578,9 +3578,11 @@ function renderDashboard(){
  
 var WK_TAB='report';
 var WK_COLLAPSED={};
+var WK_EXPANDED_CELLS={};
 
 function wkTab(t){WK_TAB=t;renderWeekly();}
 function wkToggleSection(lbl){WK_COLLAPSED[lbl]=!WK_COLLAPSED[lbl];renderWeekly();}
+function wkToggleCell(id){WK_EXPANDED_CELLS[id]=!WK_EXPANDED_CELLS[id];renderWeekly();}
 
 function renderWeekly(){
   document.getElementById('weekly-greeting').textContent='Hi '+CURRENT_NAME+'!';
@@ -3700,9 +3702,17 @@ function renderWeekly(){
           h+='<td style="'+TD+'padding-left:24px;">'+row.lbl+'</td>';
           rl.forEach(function(impl){
             var mk=sec.matchKey||'resource';
-            var cnt=D.filter(function(d){return (d[mk]||'').trim()===impl&&row.fn(d);}).length;
-            var style=TDN+'color:'+(cnt>0?'#15803d':'#94a3b8')+';';
-            h+='<td style="'+style+'">'+(cnt>0?cnt:'—')+'</td>';
+            var matches=D.filter(function(d){return (d[mk]||'').trim()===impl&&row.fn(d);});
+            var cnt=matches.length;
+            var cellId=(sec.lbl+'|'+row.lbl+'|'+impl).replace(/'/g,"\\'");
+            var expanded=cnt>0&&WK_EXPANDED_CELLS[cellId];
+            var style=TDN+'color:'+(cnt>0?'#15803d':'#94a3b8')+';'+(cnt>0?'cursor:pointer;':'')+(expanded?'text-align:left;white-space:normal;':'');
+            if(expanded){
+              var names=matches.map(function(d){return escHtml(d.client);}).join('<br>');
+              h+='<td style="'+style+'" onclick="wkToggleCell(\''+cellId+'\')" title="Click to collapse">'+names+'</td>';
+            } else {
+              h+='<td style="'+style+'"'+(cnt>0?' onclick="wkToggleCell(\''+cellId+'\')" title="Click to see client names"':'')+'>'+(cnt>0?cnt:'—')+'</td>';
+            }
           });
           h+='</tr>';
         });
