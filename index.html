@@ -116,9 +116,13 @@ nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.38);}
 .il-pri-high{background:#fecaca;color:#991b1b;}
 .il-pri-medium{background:#fed7aa;color:#9a3412;}
 .il-pri-low{background:#fef9c3;color:#854d0e;}
-.il-status{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;border:none;font-family:var(--font);}
+.il-status{display:inline-block;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;border:none;font-family:var(--font);outline:none;}
 .il-open{background:#dbeafe;color:#1d4ed8;}
+.il-inprogress{background:#ffe5a5;color:#9a3412;}
 .il-resolved{background:#dcfce7;color:#15803d;}
+.il-pri-sel{border:none;cursor:pointer;font-family:var(--font);outline:none;}
+.il-desc-inp{font-size:12px;color:var(--s7);border:none;border-bottom:1px dashed transparent;background:transparent;font-family:var(--font);outline:none;width:100%;padding:0;}
+.il-desc-inp:hover,.il-desc-inp:focus{border-bottom-color:var(--s2);}
 .il-row{display:grid;grid-template-columns:140px 80px 70px 1fr 90px 28px;align-items:start;gap:8px;padding:.55rem .5rem;border-bottom:1px solid var(--s1);font-size:12px;}
 .il-row:last-child{border-bottom:none;}
 .il-row:hover{background:var(--g0);}
@@ -5259,7 +5263,7 @@ function renderIssueLog(rows){
   var today=new Date();var _m=String(today.getMonth()+1).padStart(2,'0');var _d=String(today.getDate()).padStart(2,'0');var todayStr=_m+'/'+_d+'/'+today.getFullYear();
   var html='<div class="il-wrap">'
     +'<div class="il-add-bar">'
-    +'<span style="font-size:12px;font-weight:600;color:var(--s6);">'+issues.length+' issue'+(issues.length!==1?'s':'')+' &nbsp;<span style="color:var(--s4);font-weight:400;">('+(issues.filter(function(i){return i.status==='open';}).length)+' open)</span></span>'
+    +'<span style="font-size:12px;font-weight:600;color:var(--s6);">'+issues.length+' issue'+(issues.length!==1?'s':'')+' &nbsp;<span style="color:var(--s4);font-weight:400;">('+(issues.filter(function(i){return i.status!=='resolved';}).length)+' open)</span></span>'
     +(canEdit?'<button class="il-add-btn" onclick="ilShowForm()"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Log Issue</button>':'')
     +'</div>'
     +'<div class="il-form" id="il-form">'
@@ -5276,16 +5280,31 @@ function renderIssueLog(rows){
     html+='<div class="il-row-hdr"><span>Client</span><span>Date</span><span>Priority</span><span>Description</span><span>Status</span><span></span></div>';
     html+=issues.map(function(i){
       var priCls='il-pri-'+i.priority;
-      var stCls=i.status==='open'?'il-open':'il-resolved';
-      var stLbl=i.status==='open'?'Open':'Resolved';
+      var stCls=i.status==='open'?'il-open':(i.status==='in_progress'?'il-inprogress':'il-resolved');
+      var stLbl=i.status==='open'?'Open':(i.status==='in_progress'?'In Progress':'Resolved');
       var safeRes=(i.resolution||'').replace(/"/g,'&quot;');
-      var resRow=canEdit&&i.status==='resolved'?'<div><input class="il-res-inp" placeholder="Resolution notes…" value="'+safeRes+'" onblur="ilUpdateRes(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/></div>':(i.resolution?'<div style="font-size:11px;color:var(--s5);margin-top:3px;">'+safeRes+'</div>':'');
-      var statusCell=canEdit?'<button class="il-status '+stCls+'" onclick="ilToggleStatus(\''+i.id+'\')">'+stLbl+'</button>':'<span class="il-status '+stCls+'" style="cursor:default;">'+stLbl+'</span>';
+      var resRow=canEdit&&i.status!=='open'?'<div><input class="il-res-inp" placeholder="Resolution notes…" value="'+safeRes+'" onblur="ilUpdateRes(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/></div>':(i.resolution?'<div style="font-size:11px;color:var(--s5);margin-top:3px;">'+safeRes+'</div>':'');
+      var statusCell=canEdit
+        ?'<select class="il-status '+stCls+'" onchange="ilUpdateStatus(\''+i.id+'\',this.value)">'
+          +'<option value="open"'+(i.status==='open'?' selected':'')+'>Open</option>'
+          +'<option value="in_progress"'+(i.status==='in_progress'?' selected':'')+'>In Progress</option>'
+          +'<option value="resolved"'+(i.status==='resolved'?' selected':'')+'>Resolved</option>'
+        +'</select>'
+        :'<span class="il-status '+stCls+'" style="cursor:default;">'+stLbl+'</span>';
+      var priCell=canEdit
+        ?'<select class="il-pri il-pri-sel '+priCls+'" onchange="ilUpdatePriority(\''+i.id+'\',this.value)">'
+          +['high','medium','low'].map(function(p){return '<option value="'+p+'"'+(i.priority===p?' selected':'')+'>'+p.charAt(0).toUpperCase()+p.slice(1)+'</option>';}).join('')
+        +'</select>'
+        :'<span class="il-pri '+priCls+'">'+i.priority+'</span>';
+      var safeDesc=(i.description||'').replace(/"/g,'&quot;');
+      var descCell=canEdit
+        ?'<input class="il-desc-inp" value="'+safeDesc+'" onblur="ilUpdateDesc(\''+i.id+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"/>'
+        :'<span>'+i.description+'</span>';
       return '<div class="il-row">'
         +'<span style="font-size:11.5px;font-weight:500;color:var(--s7);">'+i.clientName+'</span>'
         +'<span style="font-size:11px;color:var(--s4);">'+i.date+'</span>'
-        +'<span><span class="il-pri '+priCls+'">'+i.priority+'</span></span>'
-        +'<span style="font-size:12px;color:var(--s7);">'+i.description+resRow+'</span>'
+        +'<span>'+priCell+'</span>'
+        +'<span style="font-size:12px;color:var(--s7);">'+descCell+resRow+'</span>'
         +'<span>'+statusCell+'</span>'
         +'<span>'+(canEdit?'<button class="il-del-btn" onclick="ilDelete(\''+i.id+'\')" title="Delete">✕</button>':'')+'</span>'
         +'</div>';
@@ -5317,13 +5336,32 @@ function ilSave(){
   if(typeof implRenderAttention==='function')implRenderAttention();
 }
 
-function ilToggleStatus(id){
+function ilUpdateStatus(id,val){
   var issue=CL_ISSUES.find(function(i){return i.id===id;});
   if(!issue)return;
-  issue.status=issue.status==='open'?'resolved':'open';
+  issue.status=val;
   ilSaveToStorage();
   _ilSupaUpsert(issue);
   renderIssuesPage();
+  if(typeof implRenderAttention==='function')implRenderAttention();
+}
+
+function ilUpdatePriority(id,val){
+  var issue=CL_ISSUES.find(function(i){return i.id===id;});
+  if(!issue)return;
+  issue.priority=val;
+  ilSaveToStorage();
+  _ilSupaUpsert(issue);
+  renderIssuesPage();
+  if(typeof implRenderAttention==='function')implRenderAttention();
+}
+
+function ilUpdateDesc(id,val){
+  var issue=CL_ISSUES.find(function(i){return i.id===id;});
+  if(!issue)return;
+  issue.description=(val||'').trim();
+  ilSaveToStorage();
+  _ilSupaUpsert(issue);
   if(typeof implRenderAttention==='function')implRenderAttention();
 }
 
@@ -5916,7 +5954,7 @@ function implRenderAttention(myD){
 
   /* ── Open issues from Issue Log ── */
   var myNos=myD.map(function(d){return d.no;});
-  CL_ISSUES.filter(function(i){return i.status==='open'&&myNos.indexOf(i.clientNo)>=0;}).forEach(function(i){
+  CL_ISSUES.filter(function(i){return i.status!=='resolved'&&myNos.indexOf(i.clientNo)>=0;}).forEach(function(i){
     var priMap={high:{p:0,color:'#dc2626',badgeBg:'#fecaca',badgeTxt:'#991b1b'},medium:{p:1,color:'#ea580c',badgeBg:'#fed7aa',badgeTxt:'#9a3412'},low:{p:2,color:'#f59e0b',badgeBg:'#fef9c3',badgeTxt:'#854d0e'}};
     var pm=priMap[i.priority]||priMap['medium'];
     alerts.push({no:i.clientNo,priority:-1+pm.p,color:pm.color,name:i.clientName,sub:i.description,dateLabel:'Logged',dateVal:i.date,dateColor:'',badge:i.priority.charAt(0).toUpperCase()+i.priority.slice(1),badgeCls:'background:'+pm.badgeBg+';color:'+pm.badgeTxt,phase:'Issue',daysLabel:'',daysColor:''});

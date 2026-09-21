@@ -3543,3 +3543,29 @@ After sanitizing `cn` (the company-name portion of the filename), strip any embe
 After pushing §98 live (confirmed via direct fetch of the deployed `index.html` — byte-identical to local, fix code present) the date still wasn't stripped in testing (`Pierian- EmployeeTemplate_09-11-2026 1_PayrollPie_ADD_...`). Root cause: the regex used `\b` immediately before the digits (`\b\d{1,2}...`), but `_` counts as a **word character** in regex, so `_09` has no word boundary between `_` and `0` — the `\b` assertion silently never matched, and the whole replace was a no-op. This wasn't a deployment/caching problem at all (that was ruled out by fetching the live site directly and diffing byte size against local).
 
 **Fix:** removed both `\b` assertions — the surrounding `[_\-\s]*` classes already properly delimit the date token, so the boundary check was both wrong and unnecessary. Verified via a standalone regex test (PowerShell `.NET` regex, equivalent semantics to JS here) against the exact reported string: `Pierian- EmployeeTemplate_09-11-2026 1` → `Pierian- EmployeeTemplate 1`.
+
+---
+
+## 99. Issue Log — Status is now a dropdown (with a new "In Progress" state), Description and Priority are now editable (September 21, 2026)
+
+### What changed
+Screenshot `06.png` (Issue Log page) showed Status as a plain "Resolved" badge with no way to change it back, and Description/Priority were fixed at creation time with no way to update them later.
+
+### Status — now a 3-state dropdown
+- Replaced the old binary toggle button (`ilToggleStatus()`, click to flip Open ↔ Resolved) with a `<select>` dropdown (`ilUpdateStatus(id, val)`), offering **Open / In Progress / Resolved**.
+- New `.il-inprogress` badge style (amber, matching the existing Open=blue / Resolved=green convention).
+- Resolution notes input now shows whenever status is `open`→ not shown, but **both** `in_progress` and `resolved` (previously resolution notes only appeared once "Resolved" was picked) — so notes can be added while work is still in progress, not just after closing.
+- "X open" counts (Issue Log header count, and the Implementer Dashboard's Needs Attention issue alerts) were changed from `status==='open'` to `status!=='resolved'`, so an issue moved to "In Progress" doesn't silently disappear from open counts/alerts.
+
+### Description and Priority — now editable inline
+- Priority: static badge replaced with a `<select>` (`ilUpdatePriority(id, val)`) styled the same as the priority badge (High/Medium/Low), only shown to roles that can edit (implementer/admin/manager/god).
+- Description: static text replaced with a borderless inline text input (`ilUpdateDesc(id, val)`, save on blur/Enter), matching the existing Resolution-notes input pattern (`.il-desc-inp`, new CSS).
+- Client and Date remain fixed after logging (not requested).
+
+### Not changed
+- Read-only roles (i.e. anyone `canEdit` is false for — currently none, since implementer/admin/manager/god all qualify) still see plain badges/text instead of the editable controls.
+- `_ilSupaUpsert()` already persists `status`/`priority`/`description` as free-text columns — no schema change needed for the new `in_progress` value.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. On the Issue Log page, confirm Status shows as a dropdown with 3 options, and that editing Description or Priority inline saves and persists after a page reload.
