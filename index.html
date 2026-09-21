@@ -1240,6 +1240,10 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
       <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
       Monthly Stats
     </div>
+    <div class="nav-item" id="nav-statusreport" onclick="go('statusreport')" style="display:flex;">
+      <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      Client Status Report
+    </div>
     <div class="nav-divider"></div>
     <!-- Legacy items kept hidden for go() loop compatibility -->
     <div class="nav-item" id="nav-clients" style="display:none;" onclick="go('clients')"></div>
@@ -1485,6 +1489,25 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
         </div>
       </div>
       <div id="monthly-out"></div>
+    </div>
+
+    <!-- ══ CLIENT STATUS REPORT ══ -->
+    <div class="page" id="page-statusreport">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Client Status Report</div>
+          <div class="sec-sub">Live / Ongoing / Not Yet Started for a selected month, plus year-to-date</div>
+        </div>
+        <div>
+          <select id="sr-month" onchange="renderStatusReport()" style="padding:8px 12px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
+            <option value="">All Months</option>
+            <option>January</option><option>February</option><option>March</option><option>April</option>
+            <option>May</option><option>June</option><option>July</option><option>August</option>
+            <option>September</option><option>October</option><option>November</option><option>December</option>
+          </select>
+        </div>
+      </div>
+      <div id="statusreport-out"></div>
     </div>
 
     <!-- ══ ALL CLIENTS ══ -->
@@ -2456,7 +2479,7 @@ var PMTOOL_SCHEMA=[
   {key:'service',label:'Availed Service',target:'service'},
   {key:'resource',label:'Implementer',target:'resource'},
   {key:'pm',label:'Project Manager',target:'pm'},
-  {key:'hri',label:'HR-I',target:'hri'},
+  {key:'hri',aliases:['hrsi'],label:'HR-I',target:'hri'},
   {key:'gov',label:'Sprout Gov Implementer',target:'gov'},
   {key:'otkImpl',label:'OTK Resource',target:'otkImpl'},
   {key:'pdImpl',label:'Payroll Disbursement Implementer',target:'pdImpl'},
@@ -2489,6 +2512,14 @@ var PMTOOL_SCHEMA=[
   {key:'payrollOnDemand',label:'Add-on: Payroll on Demand',target:'addons.pod'},
   {key:'finalPayOnDemand',label:'Add-on: Final Pay on Demand',target:'addons.fpod'}
 ];
+function pmtoolNormKey(k){return String(k||'').toLowerCase().replace(/[^a-z0-9]/g,'');}
+function pmtoolMatchSchema(k){
+  var norm=pmtoolNormKey(k);
+  return PMTOOL_SCHEMA.find(function(s){
+    if(pmtoolNormKey(s.key)===norm)return true;
+    return (s.aliases||[]).some(function(a){return pmtoolNormKey(a)===norm;});
+  });
+}
 function goPmTool(){
   go('pmtool');
   fetchPmToolEvents().then(renderPmTool);
@@ -2822,8 +2853,7 @@ function pmtoolOpenAssign(rid){
     Object.keys(p).forEach(function(k){
       var val=p[k];
       var disp=(val&&typeof val==='object')?JSON.stringify(val):String(val);
-      var norm=k.toLowerCase().replace(/[^a-z0-9]/g,'');
-      var match=PMTOOL_SCHEMA.find(function(s){return s.key.toLowerCase().replace(/[^a-z0-9]/g,'')===norm;});
+      var match=pmtoolMatchSchema(k);
       // Every field defaults to a target and pre-checked Apply, whether or not
       // it's populated — curated PMTOOL_SCHEMA match if one exists, otherwise
       // a generic "PM Tool Data" slot on the client (CL_PMTOOL, see
@@ -2947,8 +2977,7 @@ async function pmtoolAutoProcessEvents(){
     if(!rec)return;
     var changed=[];
     Object.keys(p).forEach(function(k){
-      var norm=k.toLowerCase().replace(/[^a-z0-9]/g,'');
-      var match=PMTOOL_SCHEMA.find(function(s){return s.key.toLowerCase().replace(/[^a-z0-9]/g,'')===norm;});
+      var match=pmtoolMatchSchema(k);
       var target=match?match.target:'pmtool.'+k;
       pmtoolSetField(rec,target,p[k]);
       changed.push(match?match.label:pmtoolPrettyKey(k));
@@ -3503,7 +3532,7 @@ function _cpSupaSave(clientNo){
 }
 
 function go(page){
-  ['dashboard','weekly','monthly','clients','impl','settings','issues','vault','audit','pmtool'].forEach(function(p){
+  ['dashboard','weekly','monthly','statusreport','clients','impl','settings','issues','vault','audit','pmtool'].forEach(function(p){
     var pg=document.getElementById('page-'+p);
     var ni=document.getElementById('nav-'+p);
     if(pg)pg.classList.remove('active');
@@ -3572,6 +3601,7 @@ function go(page){
   if(page==='dashboard')renderDashboard();
   else if(page==='weekly')renderWeekly();
   else if(page==='monthly')renderMonthlyStats();
+  else if(page==='statusreport')renderStatusReport();
   else if(page==='clients'){switchClientTab('overview');}
   else if(page==='impl')renderImpl();
   else if(page==='settings')renderSettings();
@@ -3980,6 +4010,57 @@ function renderMonthlyStats(){
   h+='</table></div></div>';
 
   document.getElementById('monthly-out').innerHTML=h;
+}
+
+var SR_EXPANDED={};
+function srToggle(id){SR_EXPANDED[id]=!SR_EXPANDED[id];renderStatusReport();}
+function renderStatusReport(){
+  var monthSel=document.getElementById('sr-month');
+  if(monthSel&&!monthSel.dataset.touched){
+    monthSel.dataset.touched='1';
+    var mNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    monthSel.value=mNames[new Date().getMonth()];
+  }
+  var selMonth=monthSel?monthSel.value:'';
+  var myD=CURRENT_ROLE==='implementer'?D.filter(function(d){return implOwnsClient(d,IMPL_USER);}):D;
+  var STATUSES=[
+    {k:'Live',label:'Live',c:SC['Live']},
+    {k:'Ongoing',label:'Ongoing',c:SC['Ongoing']},
+    {k:'Not yet started',label:'Not Yet Started',c:SC['Not yet started']}
+  ];
+  var monthD=selMonth?myD.filter(function(d){return d.month===selMonth;}):myD;
+
+  function statCard(list,label,color,cardId){
+    var expanded=SR_EXPANDED[cardId];
+    var h='<div style="flex:1;min-width:180px;background:'+color+'14;border:1px solid '+color+'30;border-radius:10px;padding:12px 14px;border-left:4px solid '+color+';'+(list.length?'cursor:pointer;':'')+'"'+(list.length?' onclick="srToggle(\''+cardId+'\')" title="Click to '+(expanded?'collapse':'see clients')+'"':'')+'>';
+    h+='<div style="font-size:11px;font-weight:700;color:'+color+';text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">'+label+'</div>';
+    h+='<div style="font-size:26px;font-weight:700;color:'+color+';font-family:var(--mono);line-height:1;">'+list.length+'</div>';
+    if(list.length&&expanded){
+      h+='<div style="margin-top:8px;font-size:11px;color:var(--s7);line-height:1.7;max-height:220px;overflow-y:auto;">'+list.map(function(d){return escHtml(d.client);}).join('<br>')+'</div>';
+    } else if(list.length){
+      h+='<div style="font-size:10px;color:var(--s4);margin-top:4px;">Click to see clients</div>';
+    }
+    h+='</div>';
+    return h;
+  }
+
+  var h='<div class="panel"><div class="panel-title" style="margin-bottom:.6rem;">'+(selMonth||'All Months')+'</div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+  STATUSES.forEach(function(s){
+    var list=monthD.filter(function(d){return d.remarks===s.k;});
+    h+=statCard(list,s.label,s.c,'m-'+s.k);
+  });
+  h+='</div></div>';
+
+  h+='<div class="panel" style="margin-top:1rem;"><div class="panel-title" style="margin-bottom:.6rem;">Year-to-Date</div>';
+  h+='<div style="display:flex;gap:10px;flex-wrap:wrap;">';
+  STATUSES.forEach(function(s){
+    var list=myD.filter(function(d){return d.remarks===s.k;});
+    h+=statCard(list,s.label,s.c,'y-'+s.k);
+  });
+  h+='</div></div>';
+
+  document.getElementById('statusreport-out').innerHTML=h;
 }
 
 // ══ EDIT/LOCK STATE ══

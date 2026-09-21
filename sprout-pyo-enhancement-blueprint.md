@@ -3803,3 +3803,40 @@ New `pmtoolAutoProcessEvents()`, called automatically at the end of `fetchPmTool
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Open the PM Tool Data page (or click Refresh) with at least one unassigned event queued up, and confirm it disappears from "unassigned" and shows up as a real client (new or updated) with a toast summary and an Audit Trail entry.
+
+---
+
+## 111. PM Tool field "HRSI" now maps to the client's HR-I field (September 21, 2026)
+
+### What happened
+Screenshot `21.png`: a real PM Tool payload (Decimal Global Solutions Inc.) has a field literally named **`HRSI`** (value "Crystel-Joy Tamon"), which is the HR Implementer assignment. `PMTOOL_SCHEMA`'s entry for this was `{key:'hri', target:'hri'}` — the field-name matching (case/punctuation-insensitive) normalizes `"HRSI"` to `"hrsi"` and `"hri"` to `"hri"`, which don't match, so it fell through to the generic "PM Tool Data" bucket instead of populating the client's actual **HR-I** field (visible on Resource Team / Overview) — exactly the bug §110's auto-sync inherited from the pre-existing manual "Assign to client" mapping logic.
+
+### Fix (`index.html`)
+- `PMTOOL_SCHEMA`'s `hri` entry gained an `aliases:['hrsi']` list.
+- New shared `pmtoolNormKey(k)` / `pmtoolMatchSchema(k)` helpers (schema-key lookup now checks `key` **and** any `aliases`), replacing the inline normalize-and-find logic that was duplicated in both `pmtoolOpenAssign()` (the manual Assign modal) and `pmtoolAutoProcessEvents()` (§110's auto-sync) — one fix now applies to both paths instead of needing to patch each separately.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Refresh PM Tool Data and confirm an event with an `HRSI` field now sets that client's HR-I field directly, instead of landing in the generic PM Tool Data tab.
+
+---
+
+## 112. New "Client Status Report" tab — Live/Ongoing/Not Yet Started by month + YTD (September 21, 2026)
+
+### Context
+User's Mancom (management committee) reporting used to VLOOKUP straight off the old Excel-based Implementation Monitoring sheet to quickly pull Live/Ongoing/Not-yet-started counts and client lists per month — a reference "Annex:Zona" sheet (screenshot `22.png`) shows how detailed that got (counts *and* MRR, broken down per service type). Since moving to the Hub, that VLOOKUP shortcut is gone, turning what used to be fast into manual work. Confirmed via clarifying question to build the **simple version first** (month-scoped counts + expandable client lists, plus YTD) rather than replicating the full per-service/MRR breakdown from the Annex sheet — that detail can be added later if still needed once this ships.
+
+### What was added (`index.html`)
+- New nav item **"Client Status Report"** under the Reports section (sidebar), alongside Weekly Status and Monthly Stats — visible to all roles the same way those two already are (not in any role's `hideNav` list).
+- New page `#page-statusreport` with a **Month dropdown** (defaults to the current calendar month on first load; "All Months" also selectable) and a render container.
+- New `renderStatusReport()`: shows three cards — **Live / Ongoing / Not Yet Started** — for the selected month, each showing the count and, when clicked, expanding to the actual client list (same click-to-expand/collapse interaction as §108's Weekly Status counts). Below that, a second row of the same three cards scoped to **Year-to-Date** (all months, not just the selected one) for quick side-by-side comparison.
+- Respects the existing implementer-scoping pattern (`implOwnsClient`) — an implementer only sees their own clients' counts, matching Weekly Status/Monthly Stats.
+
+### Not built yet (deferred, per the scope decision above)
+- Per-service-type columns (Payroll Starter, PYO, Payroll Disbursement, BenAd, Payroll on Demand, Statutory Disbursement, Sprout Gov, OTK) like the Annex sheet's column layout.
+- MRR figures per status/service (the `mrr` field already exists on `CL_AFTERHO` via the PM Tool integration, so this is feasible to add later without new data plumbing).
+- "Special Project" / "Under Implementation" grouping labels from the Annex sheet — this version uses the Hub's existing status vocabulary (Live/Ongoing/Not Yet Started) directly instead.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open **Client Status Report**, confirm it defaults to the current month, switch months and confirm counts update, click a count to confirm it expands to the client list and collapses again on a second click, and check the Year-to-Date row reflects totals across all months.
