@@ -1113,8 +1113,8 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-std" onchange="acmCheckGov()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Statutory Disbursement</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-otk" onchange="acmCheckOtk()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Outsourced Timekeeping</label>
           <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pd" onchange="acmCheckPd()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll Disbursement</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pod" onchange="acmCheckPod()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll on Demand</label>
-          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-fpod" onchange="acmCheckFpod()" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Final Pay on Demand</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-pod" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Payroll on Demand</label>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--s6);cursor:pointer;"><input type="checkbox" id="acm-fpod" style="width:14px;height:14px;accent-color:var(--g);cursor:pointer;"> Final Pay on Demand</label>
         </div>
       </div>
       <div id="acm-gov-row" style="display:none;">
@@ -1128,14 +1128,6 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
       <div id="acm-pd-row" style="display:none;">
         <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">PD Implementer</div>
         <select id="acm-pd-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
-      </div>
-      <div id="acm-pod-row" style="display:none;">
-        <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Payroll on Demand Implementer</div>
-        <select id="acm-pod-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
-      </div>
-      <div id="acm-fpod-row" style="display:none;">
-        <div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;">Final Pay on Demand Implementer</div>
-        <select id="acm-fpod-impl" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;"><option value="">— Select —</option></select>
       </div>
       <div id="acm-error" style="display:none;padding:8px 12px;background:var(--r0);border:1px solid var(--r1);border-radius:8px;font-size:12px;color:var(--r);"></div>
     </div>
@@ -1628,8 +1620,6 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
                 <th class="cth">HR-I</th>
                 <th class="cth">OTK Implementer</th>
                 <th class="cth">PD Implementer</th>
-                <th class="cth">POD Implementer</th>
-                <th class="cth">FPOD Implementer</th>
                 <th class="cth">Project Manager</th>
               </tr></thead>
               <tbody id="cl-body-resource"></tbody>
@@ -2168,18 +2158,6 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
         <div style="font-size:11px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Payroll Disbursement Implementer</div>
         <div id="st-pd-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.5rem;"></div>
         <button onclick="tcAddRow('pd')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1.25rem;">
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Add
-        </button>
-
-        <div style="font-size:11px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Payroll on Demand Implementer</div>
-        <div id="st-pod-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.5rem;"></div>
-        <button onclick="tcAddRow('pod')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1.25rem;">
-          <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Add
-        </button>
-
-        <div style="font-size:11px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Final Pay on Demand Implementer</div>
-        <div id="st-fpod-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:.5rem;"></div>
-        <button onclick="tcAddRow('fpod')" style="display:inline-flex;align-items:center;gap:5px;padding:4px 11px;background:var(--g0);color:var(--g4);border:1px solid var(--g2);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:1.25rem;">
           <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Add
         </button>
 
@@ -2953,12 +2931,10 @@ function pmtoolCreateClient(rid){
   setChk('acm-pd',addons.payrollDisbursement||p.payrollDisbursement);
   setChk('acm-pod',addons.payrollOnDemand||p.payrollOnDemand);
   setChk('acm-fpod',addons.finalPayOnDemand||p.finalPayOnDemand);
-  acmCheckGov();acmCheckOtk();acmCheckPd();acmCheckPod();acmCheckFpod();
+  acmCheckGov();acmCheckOtk();acmCheckPd();
   setVal('acm-gov',p.gov);
   setVal('acm-otk-impl',p.otkImpl);
   setVal('acm-pd-impl',p.pdImpl);
-  setVal('acm-pod-impl',p.podImpl);
-  setVal('acm-fpod-impl',p.fpodImpl);
 }
 function vaultExpandMOM(id){
   var preview=document.getElementById('mombody-'+id);
@@ -4249,8 +4225,6 @@ function svcEditEnd(no){
 function clUpdateResource(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.resource;d.resource=val;logAudit(no,'Resource Team','resource','Resource',old,val);}autoSave();renderClients();}
 function clUpdateOtkImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.otkImpl||'';d.otkImpl=val;logAudit(no,'Resource Team','otkImpl','OTK Implementer',old,val);}autoSave();}
 function clUpdatePdImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pdImpl||'';d.pdImpl=val;logAudit(no,'Resource Team','pdImpl','PD Implementer',old,val);}autoSave();}
-function clUpdatePodImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.podImpl||'';d.podImpl=val;logAudit(no,'Resource Team','podImpl','POD Implementer',old,val);}autoSave();}
-function clUpdateFpodImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.fpodImpl||'';d.fpodImpl=val;logAudit(no,'Resource Team','fpodImpl','FPOD Implementer',old,val);}autoSave();}
 function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.days;d.days=parseInt(val)||0;logAudit(no,'Overview','days','Days',old,d.days);}autoSave();renderClients();}
 function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.remarks;d.remarks=val;logAudit(no,'Overview','status','Status',old,val);}autoSave();_supaFlush();renderClients();}
 function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pm;d.pm=val;logAudit(no,'Overview','pm','Project Manager',old,val);}autoSave();}
@@ -4325,19 +4299,13 @@ function openAddClientModal(){
   if(otkImplEl){otkImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implOTK||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var pdImplEl=document.getElementById('acm-pd-impl');
   if(pdImplEl){pdImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implPD||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var podImplEl=document.getElementById('acm-pod-impl');
-  if(podImplEl){podImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implPOD||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
-  var fpodImplEl=document.getElementById('acm-fpod-impl');
-  if(fpodImplEl){fpodImplEl.innerHTML='<option value="">— Select —</option>'+(TEAM_CONFIG.implFPOD||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   var implEl=document.getElementById('acm-impl');
   if(implEl){implEl.innerHTML='<option value="">— Select implementer —</option>'+(TEAM_CONFIG.implPYO||[]).map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');}
   // Reset form values
-  ['acm-month','acm-pm','acm-hri','acm-service','acm-impl','acm-gov','acm-otk-impl','acm-pd-impl','acm-pod-impl','acm-fpod-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['acm-month','acm-pm','acm-hri','acm-service','acm-impl','acm-gov','acm-otk-impl','acm-pd-impl'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('acm-gov-row').style.display='none';
   document.getElementById('acm-otk-row').style.display='none';
   document.getElementById('acm-pd-row').style.display='none';
-  document.getElementById('acm-pod-row').style.display='none';
-  document.getElementById('acm-fpod-row').style.display='none';
   var acmImplReqEl=document.getElementById('acm-impl-req');if(acmImplReqEl)acmImplReqEl.style.display='';
   ['acm-pm-wrap','acm-hri-wrap','acm-impl-wrap'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='';});
   var daysEl=document.getElementById('acm-days');if(daysEl)daysEl.value='0';
@@ -4390,15 +4358,6 @@ function acmCheckPd(){
   var show=document.getElementById('acm-pd').checked;
   document.getElementById('acm-pd-row').style.display=show?'':'none';
 }
-function acmCheckPod(){
-  var show=document.getElementById('acm-pod').checked;
-  document.getElementById('acm-pod-row').style.display=show?'':'none';
-}
-function acmCheckFpod(){
-  var show=document.getElementById('acm-fpod').checked;
-  document.getElementById('acm-fpod-row').style.display=show?'':'none';
-}
-
 function submitAddClient(){
   var month  =document.getElementById('acm-month').value.trim();
   var name   =document.getElementById('acm-name').value.trim();
@@ -4409,8 +4368,6 @@ function submitAddClient(){
   var gov    =(document.getElementById('acm-gov').value||'').trim();
   var otkImpl=(document.getElementById('acm-otk-impl').value||'').trim();
   var pdImpl =(document.getElementById('acm-pd-impl').value||'').trim();
-  var podImpl =(document.getElementById('acm-pod-impl').value||'').trim();
-  var fpodImpl=(document.getElementById('acm-fpod-impl').value||'').trim();
   var err=document.getElementById('acm-error');
   var missing=[];
   if(!month)  missing.push('Month');
@@ -4427,7 +4384,7 @@ function submitAddClient(){
   var maxNo=D.reduce(function(m,d){return Math.max(m,d.no);},0);
   var newNo=maxNo+1;
   var days=parseInt(document.getElementById('acm-days').value)||0;
-  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,gov:gov,otkImpl:otkImpl,pdImpl:pdImpl,podImpl:podImpl,fpodImpl:fpodImpl,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,checklist:0,par:0,live:0,post:0});
+  D.push({no:newNo,month:month,client:name,resource:impl,pm:pm,hri:hri,gov:gov,otkImpl:otkImpl,pdImpl:pdImpl,remarks:'Not yet started',service:service,days:days,komDate:'',simDate:'',checklistDate:'',parDate:'',handOver:'',liveRun:'',kom:0,sim:0,checklist:0,par:0,live:0,post:0});
   logAudit(newNo,'Overview','client','Client Added','—',name+' ('+service+', '+month+', Implementer: '+impl+')');
   // Save add-on services
   var addons={
@@ -5106,8 +5063,6 @@ function renderClients(){
       var isGov=(d.service&&d.service.toLowerCase().indexOf('gov')>=0)||(a.sg===1||a.ba===1||a.std===1);
       var isOtk=a.otk===1;
       var isPd=a.pd===1;
-      var isPod=a.pod===1;
-      var isFpod=a.fpod===1;
       var hasHR=d.service&&d.service.indexOf('HR')>=0;
       var rtRO=false;
       var roTxt='font-size:12px;font-family:var(--font);color:var(--s8);';
@@ -5120,12 +5075,6 @@ function renderClients(){
       var pdCell=isPd
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pdImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdatePdImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPD||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.pdImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
-      var podCell=isPod
-        ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.podImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdatePodImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implPOD||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.podImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
-        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
-      var fpodCell=isFpod
-        ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.fpodImpl||'—')+'</span></td>':'<td class="ctd"><select class="cl-gov-sel" onchange="clUpdateFpodImpl('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implFPOD||[]).map(function(n){return '<option value="'+n+'"'+(n===(d.fpodImpl||'')?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
-        :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
       var hriCell=hasHR
         ?(rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.hri||'—')+'</span></td>':'<td class="ctd"><select class="cl-hri-sel" onchange="clUpdateHrI('+d.no+',this.value)"><option value="">—</option>'+(TEAM_CONFIG.implHR||[]).map(function(n){return '<option value="'+n+'"'+(n===d.hri?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')
         :'<td class="ctd" style="color:var(--s4);text-align:center;">—</td>';
@@ -5137,8 +5086,6 @@ function renderClients(){
         hriCell+
         otkCell+
         pdCell+
-        podCell+
-        fpodCell+
         (rtRO?'<td class="ctd"><span style="'+roTxt+'">'+(d.pm||'—')+'</span></td>':'<td class="ctd"><select class="cl-pm-sel" onchange="clUpdatePm('+d.no+',this.value)"><option value="">—</option>'+TEAM_CONFIG.pms.map(function(n){return '<option value="'+n+'"'+(n===d.pm?' selected':'')+'>'+n+'</option>';}).join('')+'</select></td>')+
       '</tr>';
     }).join('');
@@ -8279,8 +8226,8 @@ function stConfirmReplace(){
   showImportToast('success',D.length+' records loaded. Go to All Clients to review.');
 }
 
-var TC_MAP={pyo:'implPYO',gov:'implGov',hr:'implHR',otk:'implOTK',pd:'implPD',pod:'implPOD',fpod:'implFPOD',pm:'pms'};
-var TC_LIST_ID={pyo:'st-pyo-list',gov:'st-gov-list',hr:'st-hr-list',otk:'st-otk-list',pd:'st-pd-list',pod:'st-pod-list',fpod:'st-fpod-list',pm:'st-pm-list'};
+var TC_MAP={pyo:'implPYO',gov:'implGov',hr:'implHR',otk:'implOTK',pd:'implPD',pm:'pms'};
+var TC_LIST_ID={pyo:'st-pyo-list',gov:'st-gov-list',hr:'st-hr-list',otk:'st-otk-list',pd:'st-pd-list',pm:'st-pm-list'};
 
 function tcRenderTeam(){
   var inp='padding:7px 10px;border:1px solid var(--s2);border-radius:7px;font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;flex:1;min-width:0;';
@@ -8293,7 +8240,7 @@ function tcRenderTeam(){
         +'</div>';
     }).join('');
   }
-  ['pyo','gov','hr','otk','pd','pod','fpod','pm'].forEach(function(t){
+  ['pyo','gov','hr','otk','pd','pm'].forEach(function(t){
     var el=document.getElementById(TC_LIST_ID[t]);
     if(el) el.innerHTML=rows(TEAM_CONFIG[TC_MAP[t]]||[],t);
   });
@@ -8364,15 +8311,13 @@ function stSaveTeam(){
   TEAM_CONFIG.implHR =collect('hr');
   TEAM_CONFIG.implOTK=collect('otk');
   TEAM_CONFIG.implPD =collect('pd');
-  TEAM_CONFIG.implPOD =collect('pod');
-  TEAM_CONFIG.implFPOD=collect('fpod');
   TEAM_CONFIG.pms    =collect('pm');
-  TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD).concat(TEAM_CONFIG.implPOD).concat(TEAM_CONFIG.implFPOD).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
-  try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD,implPOD:TEAM_CONFIG.implPOD,implFPOD:TEAM_CONFIG.implFPOD,pms:TEAM_CONFIG.pms}));}catch(e){}
+  TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
+  try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD,pms:TEAM_CONFIG.pms}));}catch(e){}
   _syncTeamDropdowns();
   tcRenderTeam();
   if(typeof _supa!=='undefined'&&_supa){
-    _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,impl_pd:TEAM_CONFIG.implPD,impl_pod:TEAM_CONFIG.implPOD,impl_fpod:TEAM_CONFIG.implFPOD,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){
+    _supa.from('team_config').upsert({id:1,impl_pyo:TEAM_CONFIG.implPYO,impl_gov:TEAM_CONFIG.implGov,impl_hr:TEAM_CONFIG.implHR,impl_otk:TEAM_CONFIG.implOTK,impl_pd:TEAM_CONFIG.implPD,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r){
       if(r.error){
         console.warn('Full team_config save failed, trying PM-only fallback:',r.error);
         _supa.from('team_config').upsert({id:1,pms:TEAM_CONFIG.pms},{onConflict:'id'}).then(function(r2){if(r2.error)console.warn('PM-only save failed:',r2.error);});
@@ -8750,11 +8695,9 @@ async function loadFromSupabase(){
       if(rt.data.impl_hr) TEAM_CONFIG.implHR =rt.data.impl_hr;
       if(rt.data.impl_otk)TEAM_CONFIG.implOTK=rt.data.impl_otk;
       if(rt.data.impl_pd) TEAM_CONFIG.implPD =rt.data.impl_pd;
-      if(rt.data.impl_pod) TEAM_CONFIG.implPOD =rt.data.impl_pod;
-      if(rt.data.impl_fpod)TEAM_CONFIG.implFPOD=rt.data.impl_fpod;
-      TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD||[]).concat(TEAM_CONFIG.implPOD||[]).concat(TEAM_CONFIG.implFPOD||[]).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
+      TEAM_CONFIG.implementers=TEAM_CONFIG.implPYO.concat(TEAM_CONFIG.implGov).concat(TEAM_CONFIG.implHR).concat(TEAM_CONFIG.implOTK).concat(TEAM_CONFIG.implPD||[]).filter(function(v,i,a){return v&&a.indexOf(v)===i;});
       if(rt.data.pms && !TEAM_CONFIG._fromLocalStorage)TEAM_CONFIG.pms=rt.data.pms;
-      try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD||[],implPOD:TEAM_CONFIG.implPOD||[],implFPOD:TEAM_CONFIG.implFPOD||[],pms:TEAM_CONFIG.pms}));}catch(e){}
+      try{localStorage.setItem('pyo_team',JSON.stringify({implPYO:TEAM_CONFIG.implPYO,implGov:TEAM_CONFIG.implGov,implHR:TEAM_CONFIG.implHR,implOTK:TEAM_CONFIG.implOTK,implPD:TEAM_CONFIG.implPD||[],pms:TEAM_CONFIG.pms}));}catch(e){}
     }
     try{localStorage.setItem('pyo_data',JSON.stringify(D));localStorage.setItem('pyo_addons',JSON.stringify(CL_ADDONS));localStorage.setItem('pyo_milestones',JSON.stringify(CL_MILESTONES));localStorage.setItem('pyo_afterho',JSON.stringify(CL_AFTERHO));localStorage.setItem('pyo_pmtool',JSON.stringify(CL_PMTOOL));}catch(e){}
     // Load vault items from Supabase — merges with localStorage, preserving offline base64
@@ -8952,7 +8895,7 @@ function _syncTeamDropdowns(){
   TEAM_CONFIG.implementers.forEach(function(n,i){if(n)RC[n]=colors[i%colors.length];});
   var crSel=document.getElementById('cr');
   if(crSel){
-    var crList=[].concat(TEAM_CONFIG.implPYO||[],TEAM_CONFIG.implGov||[],TEAM_CONFIG.implOTK||[],TEAM_CONFIG.implPD||[],TEAM_CONFIG.implPOD||[],TEAM_CONFIG.implFPOD||[]).filter(Boolean);
+    var crList=[].concat(TEAM_CONFIG.implPYO||[],TEAM_CONFIG.implGov||[],TEAM_CONFIG.implOTK||[],TEAM_CONFIG.implPD||[]).filter(Boolean);
     crList=crList.filter(function(n,i){return crList.indexOf(n)===i;});
     crSel.innerHTML='<option value="">All resources</option>'+crList.map(function(n){return '<option value="'+n+'">'+n+'</option>';}).join('');
   }

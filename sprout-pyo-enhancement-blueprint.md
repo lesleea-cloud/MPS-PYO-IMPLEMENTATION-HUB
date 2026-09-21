@@ -3433,3 +3433,37 @@ Added `.filter(function(v,i,a){return v&&a.indexOf(v)===i;})` (dedupe, preservin
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Re-load the Dashboard as Admin/Manager/God and confirm each team member now appears exactly once in both panels.
+
+## 94. Removed POD Implementer / FPOD Implementer from the Resource Team tab (September 21, 2026)
+
+User requested (screenshot `02.png` under `Screenshots\09212026`, highlighting the **POD Implementer** and **FPOD Implementer** columns in My Clients → **Resource Team** tab) removing this resource-assignment feature entirely. Confirmed this is distinct from the "Payroll on Demand" / "Final Pay on Demand" **add-on services** (the checkboxes in the Add Client modal and the Add-on Services tab, which track whether a client uses that service) — only the *who implements it* assignment feature was removed; the add-on services themselves are untouched.
+
+### Changes made (`index.html`)
+
+**Resource Team tab**
+- Removed the `POD Implementer` / `FPOD Implementer` `<th>` columns from the table header.
+- Removed the `podCell`/`fpodCell` construction and their inclusion in the row output in `renderClients()` (`CL_TAB==='resource'` branch); removed the now-unused `isPod`/`isFpod` locals.
+- Removed `clUpdatePodImpl()` / `clUpdateFpodImpl()` — now dead code.
+
+**Add Client modal**
+- Removed the "Payroll on Demand Implementer" / "Final Pay on Demand Implementer" select rows (`#acm-pod-row`, `#acm-fpod-row`) that appeared when their checkbox was ticked. The **checkboxes themselves** (`#acm-pod` "Payroll on Demand", `#acm-fpod` "Final Pay on Demand") are kept — they still set the add-on flag on the new client — but no longer reveal an implementer-select sub-field, so their `onchange` handlers (`acmCheckPod()`/`acmCheckFpod()`) were removed along with the functions.
+- `openAddClientModal()`: removed population/reset of `#acm-pod-impl`/`#acm-fpod-impl`, and removal of the now-gone row show/hide resets.
+- `submitAddClient()`: no longer reads `podImpl`/`fpodImpl` values or writes them onto the new client record.
+- `populateProjFromPmEvent`-style PM Tool prefill (the function around `setVal('acm-gov', ...)`) no longer calls the removed `acmCheckPod()`/`acmCheckFpod()` or sets the removed select fields.
+
+**Settings → Team Configuration**
+- Removed the "Payroll on Demand Implementer" and "Final Pay on Demand Implementer" roster panels (`#st-pod-list`, `#st-fpod-list` + their "Add" buttons).
+- `TC_MAP` / `TC_LIST_ID`: removed the `pod`/`fpod` entries.
+- `tcRenderTeam()`: no longer iterates `pod`/`fpod`.
+- `stSaveTeam()`: no longer collects `.tc-pod-inp`/`.tc-fpod-inp`, no longer sets `TEAM_CONFIG.implPOD`/`implFPOD`, and no longer includes `impl_pod`/`impl_fpod` in the `team_config` upsert or the `pyo_team` localStorage payload — **on next "Save Team Configuration" click, the `impl_pod`/`impl_fpod` columns in Supabase will be cleared** (Supabase upsert nulls out omitted columns), which is the intended end state.
+- `loadFromSupabase()`: no longer reads `impl_pod`/`impl_fpod` into `TEAM_CONFIG`.
+- `TEAM_CONFIG.implementers` concat (all 3 build sites) and the dashboard resource-color-refresh `crList` no longer include `implPOD`/`implFPOD`.
+
+### Not changed (left in place, low-risk/backward-compatible)
+- `CL_ADDONS[no].pod` / `.fpod` (the add-on service checkboxes), `CL_SERVICES`, `CL_TYPE==='special'` filter, Add-on Services tab, and all related Excel export/import columns — these track the *service*, not the implementer, and are unaffected.
+- `d.podImpl` / `d.fpodImpl` fields on client records, the `clients` table's `pod_impl`/`fpod_impl` columns (Supabase save/load), and `PMTOOL_SCHEMA`'s `podImpl`/`fpodImpl` mapping targets (used by the separate PM Tool integration's field-mapping) — kept for backward compatibility, matching the same pattern used when `Processor` was removed from the After Hand Over tab in §7. They're vestigial now (nothing in the UI displays or edits them) but harmless.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. As Admin, open Settings → Team Configuration and click "Save Team Configuration" once to clear the now-unused `impl_pod`/`impl_fpod` columns in Supabase.
+3. Confirm the Resource Team tab no longer shows POD/FPOD Implementer columns, and that adding a new client with "Payroll on Demand"/"Final Pay on Demand" checked still saves correctly (just without an implementer assignment).
