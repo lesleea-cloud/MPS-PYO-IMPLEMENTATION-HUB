@@ -3995,3 +3995,28 @@ The old native variance implementation (`vaReset`, `renderVarianceUI`, `vaCompar
 1. Redeploy `index.html` to Vercel.
 2. Open Tools → "Parallel Run Variance Analysis" and confirm the new tool loads cleanly inside the modal (upload → map columns → results → download `.xlsx`), and that closing/reopening it resets to a fresh upload screen.
 3. While that modal is open, spot-check a few *other* pages/tabs in the dashboard (Dashboard, My Clients, sidebar) look visually unchanged — this is the main residual risk of a direct code merge versus an iframe, even though the CSS was scoped defensively.
+
+---
+
+## 120. MOM Generator — several accuracy/format fixes found by testing against a real transcript + expected output (October 4, 2026)
+
+### What changed
+Tested `momExtractWithAI`/`momBuildText` against a real reference set (`AspiraGlobal (PYO) - Payroll Discussion` transcript, its actual sent MOM, and the house MOM format template) and found six concrete gaps between what the generator produces and what the team actually sends.
+
+### Fixes (`index.html`)
+1. **Missing section** — the AI prompt only ever produced one `reminderItems` bucket, but the real MOM has two distinct sections: 🪧 **General Reminders** (standing policies) and 🔔 **Reminders for \<next phase\>** (dated checklist for the upcoming phase). The prompt now asks for both (`generalReminderItems` + `nextPhaseReminderItems`), and `momBuildText` renders both sections in that order.
+2. **Next-phase detection was keyword-brittle** — the old approach scanned the *whole* transcript for phase keywords (`parallel run`, `live run`, etc.) in a fixed priority order. A call that recaps the entire project timeline (mentioning several future phases in passing) could make it latch onto a phase mentioned once but not actually next — confirmed this would've happened on the test transcript (`live run` appears earlier in the priority list than the catch-all `parallel run` pattern, which didn't even exist before this fix, and the transcript recaps both). Claude now returns its own `nextPhaseLabel` based on actually understanding the call's chronology; the keyword scan is kept only as a fallback if the AI doesn't supply one. Also added the missing plain "Parallel Run" pattern to that fallback scan (previously only "Parallel Run II/III" were detectable).
+3. **Meeting-type detection ignored a better signal** — it keyword-sniffed the first ~20–30 lines of transcript/slide text, which misfired on the test case (matched "Variance Analysis Discussion" because that phrase appears early, when the actual meeting was a "Payroll Discussion"). The transcript filename already encodes the real meeting type (e.g. `"AspiraGlobal (PYO) - Payroll Discussion - 2026_07_21 ... - Transcript"` → `"Payroll Discussion"`), so that's now parsed and preferred; keyword-sniffing is kept as a fallback.
+4. **Greeting didn't match house style** — was "Hi {Client} **Team**," / "Thank you for meeting with us **yesterday**." Now reads "Hi {Client}," / "Thank you for attending our {meeting type} last {actual weekday}, {date}." — matching the real sent email, using a new `momDayOfWeek()` helper.
+5. **Attachments list was hardcoded to 2 generic items** (deck name + "Variance Analysis Report"). Per your call, kept it a **fixed, always-the-same checklist** rather than AI-derived — expanded to the full 9-item house template list (deck name, Payroll Instructions Template, Proposed Payroll Calendar v1, Payroll Reports (Sample), Payroll Register (Default format), Statutory Report, Final Pay Report, GL Report, Variance Analysis Report).
+6. **Sign-off didn't match house style** — was "Should you have any questions... Thank you, and we would appreciate it if you could confirm receipt..." Now reads "Kindly confirm receipt of this email. / If you have any concerns, please feel free to reach out. / Thank you! / All the best, / {your name}" (using the already-existing `CURRENT_NAME` global), matching the real sent email exactly.
+7. **Self-caught bug**: while adding the new 🪧 General Reminders header, found that `momClassifyLines()` (shared by both the RTF and DOCX export paths) only recognized 👉/🔔/📍 as header-emoji prefixes — a 🪧 line would've silently exported as a plain paragraph instead of a bold section header. Fixed the regex, and updated the in-UI "Tip: start a line with..." hint to mention 🪧 too.
+
+### Explicitly NOT changed (your call)
+- The password line still always gets appended to every MOM, even though the AspiraGlobal reference example has no password at all. Kept as-is per your answer — not made conditional.
+- Attachments stayed a fixed list rather than being derived per-meeting by the AI, per your answer — so it won't adapt if a specific client's MOM should drop/add an item (e.g. the reference MOM itself doesn't list "Variance Analysis Report" separately, since variance was covered as a meeting topic, not a mailed report — the fixed list will still include it every time).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-run the MOM Generator on the AspiraGlobal transcript (Templates for upload\MOM Generator\Simulation) and compare the output against "Expected Output file.docx" in the same folder — check the General Reminders section appears, the next-phase label says "Parallel Run" (not "Live Run" or "Next Phase"), the meeting type reads "Payroll Discussion", and the greeting/sign-off read naturally.
+3. Try it on one or two other real transcripts whose filenames **don't** follow the "Client - Meeting Type - Date - Transcript" convention, to confirm the meeting-type fallback (keyword-sniffing) still produces something reasonable.

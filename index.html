@@ -8228,7 +8228,7 @@ function renderMOMUI(){
     +'<div id="mom-status" style="display:none;padding:.7rem 1rem;border-radius:8px;font-size:12px;margin-bottom:.75rem;"></div>'
     // Preview / editable draft
     +'<div id="mom-preview" style="display:none;margin-bottom:.75rem;">'
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;"><div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;">MOM Draft — click to edit</div><div style="font-size:10px;color:var(--s4);">Tip: start a line with 👉, 📍 or 🔔 to make it a bold section header</div></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.5rem;"><div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;">MOM Draft — click to edit</div><div style="font-size:10px;color:var(--s4);">Tip: start a line with 👉, 📍, 🔔 or 🪧 to make it a bold section header</div></div>'
       +'<div id="mom-preview-body" style="background:var(--s0);border:1px solid var(--s2);border-radius:8px;padding:1rem;font-size:12px;line-height:1.7;color:var(--s7);max-height:340px;overflow-y:auto;font-family:var(--font);outline:none;"></div>'
     +'</div>'
     // Footer
@@ -8463,23 +8463,37 @@ function momReadPdfText(file){
 }
 
 // ── AI-powered extraction: Claude reads the transcript and writes the MOM item lists ──
-async function momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,slidesName,sproutStaff,apiKey){
+async function momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,slidesName,transcriptName,sproutStaff,apiKey){
   sproutStaff=sproutStaff||(TEAM_CONFIG.implementers||[]).filter(Boolean);
 
   // ── Detect next phase (deterministic — kept from the prior implementation) ──
+  // Plain "parallel run" is checked LAST as a catch-all: it must not shadow the numbered variants (II/III), which are checked first.
   var nextPhase='Next Phase';
-  var phasePatterns=[/parallel run ii/i,/parallel run 2/i,/live run/i,/go.?live/i,/parallel run iii/i,/parallel run 3/i,/post.?live/i];
-  var phaseNames=['Parallel Run II','Parallel Run II','Live Run','Live Run','Parallel Run III','Parallel Run III','Post Live'];
+  var phasePatterns=[/parallel run ii/i,/parallel run 2/i,/parallel run iii/i,/parallel run 3/i,/live run/i,/go.?live/i,/post.?live/i,/parallel run/i];
+  var phaseNames=['Parallel Run II','Parallel Run II','Parallel Run III','Parallel Run III','Live Run','Live Run','Post Live','Parallel Run'];
   var allText=pdfText+' '+transcriptText;
   for(var pi=0;pi<phasePatterns.length;pi++){if(phasePatterns[pi].test(allText)){nextPhase=phaseNames[pi];break;}}
 
-  // ── Detect meeting type (deterministic) ──
-  var meetingType='Implementation Discussion';
-  var pdfPreview=pdfText.split(/\n/).slice(0,30).join(' ');
-  var txPreview=transcriptText.split(/\n/).slice(0,20).join(' ');
-  var mtPatterns=[/parallel run i\b/i,/parallel run ii/i,/parallel run iii/i,/variance analysis/i,/kick.?off/i,/kom\b/i,/live run/i,/post.?live/i,/simulation/i];
-  var mtNames=['Parallel Run I Discussion','Parallel Run II Discussion','Parallel Run III Discussion','Variance Analysis Discussion','KOM Discussion','KOM Discussion','Live Run Discussion','Post Live Discussion','Simulation Discussion'];
-  for(var mi=0;mi<mtPatterns.length;mi++){if(mtPatterns[mi].test(pdfPreview)||mtPatterns[mi].test(txPreview)){meetingType=mtNames[mi];break;}}
+  // ── Detect meeting type ──
+  // Prefer the type embedded in the transcript filename (e.g. "AspiraGlobal (PYO) - Payroll Discussion - 2026_07_21 ... - Transcript"
+  // → "Payroll Discussion") — the team already names the meeting type in the filename, which is far more reliable than keyword-sniffing
+  // the call content. Fall back to keyword-sniffing only when the filename doesn't yield a usable segment.
+  var meetingType='';
+  var fnParts=(transcriptName||'').replace(/\.[^/.]+$/,'').split(/\s+-\s+/).map(function(s){return s.trim();}).filter(Boolean);
+  for(var fp=1;fp<fnParts.length;fp++){
+    if(/^\d{4}[_\-]\d{2}[_\-]\d{2}/.test(fnParts[fp])) break;
+    if(/^transcript$/i.test(fnParts[fp])) continue;
+    meetingType=fnParts[fp];
+    break;
+  }
+  if(!meetingType){
+    meetingType='Implementation Discussion';
+    var pdfPreview=pdfText.split(/\n/).slice(0,30).join(' ');
+    var txPreview=transcriptText.split(/\n/).slice(0,20).join(' ');
+    var mtPatterns=[/parallel run i\b/i,/parallel run ii/i,/parallel run iii/i,/variance analysis/i,/kick.?off/i,/kom\b/i,/live run/i,/post.?live/i,/simulation/i];
+    var mtNames=['Parallel Run I Discussion','Parallel Run II Discussion','Parallel Run III Discussion','Variance Analysis Discussion','KOM Discussion','KOM Discussion','Live Run Discussion','Post Live Discussion','Simulation Discussion'];
+    for(var mi=0;mi<mtPatterns.length;mi++){if(mtPatterns[mi].test(pdfPreview)||mtPatterns[mi].test(txPreview)){meetingType=mtNames[mi];break;}}
+  }
 
   var shortName=clientName.split(' ').slice(0,3).join(' ');
   var initials=clientName.split(/\s+/).filter(function(w){return w.length>2;}).map(function(w){return w[0].toUpperCase();}).join('');
@@ -8488,17 +8502,19 @@ async function momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,sl
   var password=initials+'@'+year+'!';
   var deckName=slidesName?slidesName.replace(/\.[^/.]+$/,'').replace(/_/g,' ').trim():'Slide Deck Presented';
 
-  // ── Ask Claude to read the transcript and write the four item lists ──
+  // ── Ask Claude to read the transcript and write the five item lists ──
   var staffList=sproutStaff.length?sproutStaff.join(', '):'(none specified)';
   var prompt='You are drafting a "Minutes of the Meeting" (MOM) email for Sprout PYO, a payroll outsourcing company, summarizing an internal payroll-implementation discussion with a client.\n\n'
     +'Client: '+clientName+'\nMeeting date: '+meetingDate+'\nSprout staff on the call (attribute their spoken lines to Sprout; everyone else on the call is the client): '+staffList+'\n\n'
-    +'Read the FULL transcript below (it is a raw, sometimes messy, Taglish call transcript — ignore filler words, false starts, and transcription errors) and produce four lists of clean, complete, professionally-phrased sentences suitable for a client-facing email, exactly the way a human account manager would write them up. Do NOT copy raw transcript fragments verbatim, and do NOT include filler, hedging, or conversational back-and-forth — synthesize multi-turn exchanges into a single decisive sentence stating what was actually agreed or asked.\n\n'
+    +'Read the FULL transcript below (it is a raw, sometimes messy, Taglish call transcript — ignore filler words, false starts, and transcription errors) and produce five lists of clean, complete, professionally-phrased sentences suitable for a client-facing email, exactly the way a human account manager would write them up. Do NOT copy raw transcript fragments verbatim, and do NOT include filler, hedging, or conversational back-and-forth — synthesize multi-turn exchanges into a single decisive sentence stating what was actually agreed or asked.\n\n'
     +'1. agreedItems — things agreed upon or confirmed during the call (policies, dates, computations, formats, etc.)\n'
     +'2. clientItems — action items or information still pending FROM the client (things the client needs to submit, confirm, or provide)\n'
     +'3. sproutItems — action items still pending FOR Sprout PYO (coordinate, review, follow up, etc.)\n'
-    +'4. reminderItems — general reminders, standing policies, or notes for the upcoming phase (e.g. parallel run, live run) that do not fit the other three buckets\n\n'
+    +'4. generalReminderItems — standing company policies or general notes mentioned that are NOT specific to the next phase or tied to a date (e.g. "only summary attendance can be processed", "off-cycle payouts are considered special runs", "rush processing is available with advance notice")\n'
+    +'5. nextPhaseReminderItems — the specific, often dated, checklist of items needed FOR THE UPCOMING PHASE (e.g. parallel run submissions and their due dates, documents still needed for the next step, the next meeting date/time). If a next meeting date/time was mentioned, include it here as its own item.\n\n'
+    +'Also determine nextPhaseLabel: a short 2-4 word label for the SINGLE immediate next phase/step/meeting that this call is leading into (e.g. "Parallel Run", "Live Run", "KOM", "Post Live Review"). The transcript may recap the ENTIRE project timeline (mentioning several future phases in passing) — nextPhaseLabel must be the very next one from where this call leaves off, not a later phase that only gets mentioned in that recap. Use "" if genuinely unclear.\n\n'
     +'Return ONLY a valid JSON object, no prose before or after, no markdown code fences, with exactly this shape (use an empty array if a bucket has nothing genuinely applicable):\n'
-    +'{"agreedItems":["..."],"clientItems":["..."],"sproutItems":["..."],"reminderItems":["..."]}\n\n'
+    +'{"agreedItems":["..."],"clientItems":["..."],"sproutItems":["..."],"generalReminderItems":["..."],"nextPhaseReminderItems":["..."],"nextPhaseLabel":"..."}\n\n'
     +(pdfText?'--- SLIDE DECK TEXT ---\n'+pdfText.slice(0,6000)+'\n\n':'')
     +'--- TRANSCRIPT ---\n'+transcriptText;
 
@@ -8513,12 +8529,19 @@ async function momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,sl
   var agreedItems=(parsed.agreedItems||[]).filter(Boolean);
   var clientItems=(parsed.clientItems||[]).filter(Boolean);
   var sproutItems=(parsed.sproutItems||[]).filter(Boolean);
-  var reminderItems=(parsed.reminderItems||[]).filter(Boolean);
+  var generalReminderItems=(parsed.generalReminderItems||[]).filter(Boolean);
+  var reminderItems=(parsed.nextPhaseReminderItems||[]).filter(Boolean);
+
+  // Claude reads the whole call and understands chronology, so it can tell the very next phase
+  // apart from a later phase that only got mentioned in a timeline recap — the keyword-scan
+  // default above can't make that distinction, so prefer Claude's answer when it gives one.
+  if(parsed.nextPhaseLabel&&String(parsed.nextPhaseLabel).trim()) nextPhase=String(parsed.nextPhaseLabel).trim();
 
   if(!agreedItems.length) agreedItems.push('[No agreed items detected — please fill in manually]');
   if(!clientItems.length) clientItems.push('[No pending client items detected — please fill in manually]');
   if(!sproutItems.length) sproutItems.push('[No pending Sprout items detected — please fill in manually]');
-  if(!reminderItems.length) reminderItems.push('[No reminders detected — please fill in manually]');
+  if(!generalReminderItems.length) generalReminderItems.push('[No general reminders detected — please fill in manually]');
+  if(!reminderItems.length) reminderItems.push('[No next-phase reminders detected — please fill in manually]');
 
   // Password is a fixed company convention — never let the AI generate this
   agreedItems.push('To open the attachments, please use this password: '+password);
@@ -8528,37 +8551,54 @@ async function momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,sl
     shortName:shortName,
     clientName:clientName,
     meetingDate:meetingDate,
+    meetingType:meetingType,
     deckName:deckName,
     nextPhase:nextPhase,
     agreedItems:agreedItems,
     clientItems:clientItems,
     sproutItems:sproutItems,
+    generalReminderItems:generalReminderItems,
     reminderItems:reminderItems
   };
 }
 
+function momDayOfWeek(dateStr){
+  var d=new Date(dateStr);
+  if(isNaN(d.getTime()))return '';
+  return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+}
 // ── Build preview text ──
 function momBuildText(m){
   var lines=[];
   lines.push(m.title);lines.push('');
-  lines.push('Hi '+m.shortName+' Team,');lines.push('');
+  lines.push('Hi '+m.shortName+',');lines.push('');
   lines.push('Good day!');lines.push('');
-  lines.push('Thank you for meeting with us yesterday.');lines.push('');
-  lines.push('Here is the MOM for your reference.');lines.push('');
+  var dow=momDayOfWeek(m.meetingDate);
+  var whenClause=dow?('last '+dow+', '+m.meetingDate):m.meetingDate;
+  lines.push('Thank you for attending our '+(m.meetingType||'meeting')+' '+whenClause+'. Please see MOM for your reference.');lines.push('');
   lines.push('👉 Attachments');
   lines.push('Please see the zipped folder to access the following:');
-  lines.push('1. '+m.deckName);lines.push('2. Variance Analysis Report');lines.push('');
+  var attachments=[m.deckName,'Payroll Instructions Template','Proposed Payroll Calendar v1','Payroll Reports (Sample)','Payroll Register (Default format)','Statutory Report','Final Pay Report','GL Report','Variance Analysis Report'];
+  attachments.forEach(function(a,i){lines.push((i+1)+'. '+a);});lines.push('');
   lines.push('👉 Agreed Upon Items');
   (m.agreedItems||[]).forEach(function(item,i){lines.push((i+1)+'. '+item);});lines.push('');
   lines.push('📍 Pending Items for '+m.shortName+':');
   (m.clientItems||[]).forEach(function(item,i){lines.push((i+1)+'. '+item);});lines.push('');
   lines.push('📍 Pending Items for Sprout PYO:');
   (m.sproutItems||[]).forEach(function(item,i){lines.push((i+1)+'. '+item);});lines.push('');
+  lines.push('🪧 General Reminders');
+  (m.generalReminderItems||[]).forEach(function(item,i){lines.push((i+1)+'. '+item);});lines.push('');
   lines.push('🔔 Reminders for '+m.nextPhase);
   (m.reminderItems||[]).forEach(function(item,i){lines.push((i+1)+'. '+item);});lines.push('');
-  lines.push('Should you have any questions or clarifications please feel free to reach out.');
+  lines.push('Kindly confirm receipt of this email.');
   lines.push('');
-  lines.push('Thank you, and we would appreciate it if you could confirm receipt of this email.');
+  lines.push('If you have any concerns, please feel free to reach out.');
+  lines.push('');
+  lines.push('Thank you!');
+  lines.push('');
+  lines.push('All the best,');
+  lines.push('');
+  lines.push(CURRENT_NAME||'');
   return lines.join('\n');
 }
 
@@ -8628,7 +8668,7 @@ async function momGenerate(){
     // Step 3 — send to Claude for real comprehension
     momShowOverlay(3,'Sending transcript to Claude for analysis…');
     var sproutStaff=MOM_STATE.sproutStaff||(TEAM_CONFIG.implementers||[]).filter(Boolean);
-    var extracted=await momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,MOM_STATE.slidesName||'',sproutStaff,apiKey);
+    var extracted=await momExtractWithAI(transcriptText,pdfText,clientName,meetingDate,MOM_STATE.slidesName||'',MOM_STATE.transcriptName||'',sproutStaff,apiKey);
 
     // Step 4 — Claude drafts the summary
     momShowOverlay(4,'Claude is drafting the summary…');
@@ -8681,7 +8721,7 @@ function momClassifyLines(lines){
     }
     if(!trimmed){ out.push({type:'blank'}); return; }
     if(/^📍/.test(trimmed)){ out.push({type:'header',text:trimmed,color:'7C3AED'}); counter=0; return; }
-    if(/^(👉|🔔)/.test(trimmed)){ out.push({type:'header',text:trimmed}); counter=0; return; }
+    if(/^(👉|🔔|🪧)/.test(trimmed)){ out.push({type:'header',text:trimmed}); counter=0; return; }
     var numMatch=trimmed.match(/^\d+\.\s+(.*)$/);
     if(numMatch){ counter++; out.push({type:'item',n:counter,text:numMatch[1]}); return; }
     out.push({type:'plain',text:trimmed});
