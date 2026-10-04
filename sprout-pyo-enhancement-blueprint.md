@@ -3916,16 +3916,16 @@ No other logic needed to change: client-type filtering (`CL_TYPE==='pyo'` bucket
 The sidebar nav item that filters My Clients down to Sprout Gov / Statutory Disbursement work was renamed, and its membership was widened to also pull in PYO combo clients that include a Sprout Gov or Statutory Disbursement component — previously it only matched clients whose **entire** service was standalone "Sprout Gov" or "Statutory Disbursement".
 
 ### Fix (`index.html`)
-- Sidebar nav label (`#nav-cl-gov`) — renamed from "Sprout Gov" to **"Sprout and Statutory"** (originally landed as "Sprout and Statutory Module"; "Module" was dropped per follow-up request on October 4, 2026).
+- Sidebar nav label (`#nav-cl-gov`) — renamed from "Sprout Gov" to **"Sprout Gov and Statutory Disbursement"**. (Went through two intermediate names earlier on October 4, 2026 — "Sprout and Statutory Module", then "Sprout and Statutory" after "Module" was dropped — before landing on this final wording.)
 - `renderClients()` — `CL_TYPE==='gov'` filter now also matches `service==='PYO + HR + Sprout Gov'` and `service==='PYO + HR + Statutory Disbursement'`, in addition to the existing standalone "Sprout Gov" / "Statutory Disbursement" matches.
-- Page header shown when this module is open now reads "Sprout and Statutory — 2026" / "Sprout Gov and Statutory Disbursement implementation projects", instead of incorrectly falling back to the generic "PYO Clients — 2026" header it was showing before (pre-existing gap — the title logic only special-cased Payroll Starter vs. everything else).
+- Page header shown when this module is open now reads "Sprout Gov and Statutory Disbursement — 2026" / "Sprout Gov and Statutory Disbursement implementation projects", instead of incorrectly falling back to the generic "PYO Clients — 2026" header it was showing before (pre-existing gap — the title logic only special-cased Payroll Starter vs. everything else).
 
 ### Note on scope
-These PYO combo clients still also appear under the **PYO** module as before (the `pyo` bucket's exclusion list only drops exact standalone-service matches, not combo strings) — they now show up in both places, same pattern already used for "Stand Alone Add-on Services" clients. Didn't touch Payroll Disbursement / Special Projects / Stand Alone Add-on Services / OTK nav items — their page-title fallback to "PYO Clients — 2026" is the same pre-existing gap but wasn't part of this request.
+These PYO combo clients still also appear under the **PYO** module as before (the `pyo` bucket's exclusion list only drops exact standalone-service matches, not combo strings) — they now show up in both places, same pattern already used for "Stand Alone Add-on Services" clients. Didn't touch Special Projects / Stand Alone Add-on Services / OTK nav items — their page-title fallback to "PYO Clients — 2026" is the same pre-existing gap but wasn't part of this request. (Payroll Disbursement got its own equivalent fix in §118.)
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
-2. Click "Sprout and Statutory" in the sidebar — confirm the header reads correctly and the list includes standalone Sprout Gov/Statutory Disbursement clients **and** any "PYO + HR + Sprout Gov" / "PYO + HR + Statutory Disbursement" clients.
+2. Click "Sprout Gov and Statutory Disbursement" in the sidebar — confirm the header reads correctly and the list includes standalone Sprout Gov/Statutory Disbursement clients **and** any "PYO + HR + Sprout Gov" / "PYO + HR + Statutory Disbursement" clients.
 3. Confirm those same combo clients still appear under the "PYO" nav item too.
 
 ---
