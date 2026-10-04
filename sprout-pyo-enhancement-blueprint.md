@@ -4025,6 +4025,8 @@ Tested `momExtractWithAI`/`momBuildText` against a real reference set (`AspiraGl
 
 ## 121. Payroll Variance Analysis — downloaded .xlsx now matches the house report format exactly (October 4, 2026)
 
+**⚠️ Superseded by §122 the same day.** This entry's approach (manually-styled SheetJS cells) turned out not to actually work — you generated a real report right after this shipped and the colors were completely missing. Root cause and the real fix are in §122; this entry is kept for the data-model/column-layout analysis, which was correct and carried forward unchanged.
+
 ### What changed
 The variance tool's "Download .xlsx" button (Tools → Parallel Run Variance Analysis, merged in as §119) was writing a plain, unstyled spreadsheet (`XLSX.utils.aoa_to_sheet` — just raw values, no colors, no formatting). Per the reference file `Variance Anaylsis Expected Output file.xlsx` (Templates for upload\Parallel Run), the house report is fully Sprout-branded: a merged title bar, colored headers, a 4-tier color-coded variance legend, and colored Increase/Decrease/Missing badges in the detail rows. Reverse-engineered the reference file's raw XML (fonts, fills, number formats, merges, column widths) to extract the exact design, then rebuilt `downloadReport()` to reproduce it.
 
@@ -4047,3 +4049,23 @@ The reference file uses **live Excel formulas** (`=C3-B3`, conditional-formattin
 1. Redeploy `index.html` to Vercel.
 2. Run the variance tool against a real pair of files (e.g. the two CSVs in Templates for upload\Parallel Run) and download the report.
 3. Open it next to "Variance Anaylsis Expected Output file.xlsx" and compare colors, header styling, legend, and the Remarks badges side by side.
+
+---
+
+## 122. Payroll Variance Analysis — §121's styling didn't actually render; root cause found and fixed with a different library (October 4, 2026)
+
+### What happened
+You generated a real report (`Trade Window Incorporated_Variance Analysis Report_10042026_1156.xlsx`) right after §121 shipped and asked why it still didn't match the template. Diffed it byte-for-byte against the reference file's internal XML. **All the data was 100% correct** — every number, every label, the headcount reconciliation, the legend text, the footnote — but **zero styling survived**: no colors, no bold, no borders, nothing. Confirmed by inspecting the generated file's `styles.xml` directly: it contained only 4 bare number-format entries and the single default font — the custom fonts/fills/borders §121's code assigned to every cell were silently dropped.
+
+### Root cause
+The app's bundled Excel library, `xlsx.full.min.js` (SheetJS, loaded from cdnjs — the free/community edition), **cannot write custom cell styling**. It only accepts and preserves *number formats* (`.z`) when building a sheet from scratch; everything else assigned via `.s` (fill, font, border, alignment) is quietly ignored by the writer. This isn't a bug in §121's code — the style objects were correctly shaped — the library's free tier genuinely doesn't support writing them. Full style-write support in SheetJS is a paid-only feature. Confirmed this doesn't affect any of the app's *other* existing exports (Masterfile Creator, Payroll Policy Generator) because those work by starting from a **pre-styled template file already baked with the right formatting** (`PP_TEMPLATE_B64`, read via `XLSX.read`) and only overwriting cell *values* — they never ask the library to create a new style, so the limitation never surfaces there. The variance report needed brand-new per-row styling decided at runtime (which tier color a variance falls into), which is exactly the thing this library can't do.
+
+### Fix (`index.html`)
+Rather than work around SheetJS's limitation with an increasingly fragile pre-built-template hack, added **ExcelJS** (`https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js`, new `<script>` tag alongside the other CDN libraries) — a different library specifically built with full style-write support, confirmed as a proper browser-ready bundle (exposes `window.ExcelJS`) before relying on it. Rewrote `downloadReport()` to build both sheets with `ExcelJS.Workbook()`, setting `.font`/`.fill`/`.border`/`.alignment`/`.numFmt` directly on each cell (`argb` hex colors, e.g. `FF092903` for Sprout dark green) — all the same colors, column widths, row heights, and layout already reverse-engineered from the reference file in §121, now actually rendering. Output is produced via `workbook.xlsx.writeBuffer()` → `Blob` → a temporary `<a download>` click, the same download pattern already used elsewhere in this app (Masterfile Creator).
+
+Caught and fixed one bug of my own while rewriting this: `ws.getCell(r,c).value = x` is a JS assignment *expression* — it evaluates to `x`, not the cell — so an early draft that wrote `styleCell(ws.getCell(r,c).value = x, {...})` would have styled nothing. Fixed by adding a `setCell(ws, r, c, v, opts)` helper that sets the value and styles the actual cell reference as two separate steps.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-run the variance tool and download a report — confirm colors/fonts/borders now actually appear (the thing §121 failed to do).
+3. Compare side-by-side with "Variance Anaylsis Expected Output file.xlsx" as before.
