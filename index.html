@@ -3429,6 +3429,7 @@ function vfDeckRowsRender(){
       +'<select id="vf-deck-type-'+idx+'" style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">'
         +'<option value="">— Select deck type —</option>'
         +'<option value="KOM Deck">Kick-Off Meeting Deck</option>'
+        +'<option value="Simulation Deck">Simulation Deck</option>'
         +'<option value="Payroll Discussion Deck">Payroll Discussion Deck</option>'
         +'<option value="Parallel Run Deck">Parallel Run Deck</option>'
         +'<option value="Fitgap Deck">Fitgap Deck</option>'
@@ -7928,8 +7929,8 @@ function openTool(val){
     document.getElementById('tool-modal-box').style.maxWidth='480px';
     var deckLinks=[
       {label:'MPS Deck Generator',desc:'Open the Sprout MPS Deck Generator tool',url:'http://tinyurl.com/MPSDeckGenerator',icon:'🎞️'},
-      {label:'Drive Folder 1',desc:'Deck resource folder',url:'https://drive.google.com/drive/folders/1qXfNdWIxcZmfFxiw8UX0WrgdV1jcO86O',icon:'📁'},
-      {label:'Drive Folder 2',desc:'Deck resource folder',url:'https://drive.google.com/drive/folders/1HnVHw-apZ37UMVu1u8l5s8tRyBTi4PQL',icon:'📁'}
+      {label:'Deck Templates',desc:'Browse the deck template library',url:'https://drive.google.com/drive/folders/1qXfNdWIxcZmfFxiw8UX0WrgdV1jcO86O',icon:'📁'},
+      {label:'Generated Output Decks',desc:'Browse generated decks — new files here auto-sync to Implementation Vault',url:'https://drive.google.com/drive/folders/1HnVHw-apZ37UMVu1u8l5s8tRyBTi4PQL',icon:'📁'}
     ];
     document.getElementById('tool-modal-body').innerHTML='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem;">'
       +deckLinks.map(function(l){

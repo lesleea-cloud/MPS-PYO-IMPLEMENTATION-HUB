@@ -4094,3 +4094,45 @@ The two Drive folders are labeled generically ("Drive Folder 1" / "Drive Folder 
 1. Redeploy `index.html` to Vercel.
 2. Click "Deck Generator" under Common in the sidebar and confirm all three links open correctly in a new tab.
 3. Let me know the real names for the two Drive folders so I can relabel them.
+
+---
+
+## 124. Generated decks folder (Drive Folder 2) now auto-syncs into Implementation Vault → Decks (October 4, 2026)
+
+### What changed
+New files dropped into Drive Folder 2 (`https://drive.google.com/drive/folders/1HnVHw-apZ37UMVu1u8l5s8tRyBTi4PQL`, one of the two folders linked from the new Deck Generator tool, §123) now show up automatically as Implementation Vault → Decks entries — no manual "paste the link" step. Confirmed this needed a real backend job rather than something triggered from the browser: the app's Google sign-in goes through Supabase Auth, which never hands the client a standing Google API token, so there's nothing in the page itself that can call the Drive API on its own, let alone while nobody has the app open.
+
+### How it works
+1. A Vercel Cron job (`vercel.json`) hits a new serverless function every 30 minutes.
+2. `api/integrations/drive-decks-sync.js` authenticates as a Google service account (hand-rolled RS256 JWT signing via Node's built-in `crypto` — no new npm dependency, matching this project's existing zero-dependency `/api` functions) and lists the files in that Drive folder.
+3. For each file not already synced (tracked via a new `drive_file_id` column — see `Drive_Decks_Sync_Column.sql`), it parses the filename and creates a Vault "Decks" entry.
+4. **Filename parsing**, based on the convention you gave me (`{Client Name}_[Phase N] {Deck description}`, e.g. `"Trade Window Incorporated_[Phase 1] PYO KOM"`): splits on the first `_` for the client name, then matches the `[Phase N] ...` tag for the description, and maps the description to one of the existing deck-type labels (KOM Deck, Payroll Discussion Deck, Parallel Run Deck, Fitgap Deck, Fitgap Results Deck) by keyword, or a new **Simulation Deck** type (added to the manual "Add entry" dropdown too, for consistency, since your sample included a Simulation-phase deck that didn't map to anything existing). Anything that doesn't match a known keyword falls back to the raw parsed description rather than guessing wrong.
+5. Auto-synced entries are tagged `uploaded_by: 'Drive Sync'` and `notes: 'Auto-synced from Drive folder'`, so they're visually distinguishable in the Vault from manually-added ones.
+
+### What you still need to do (outside this codebase — I don't have access to do these for you)
+1. **Create a Google Cloud service account** (Google Cloud Console → IAM & Admin → Service Accounts), enable the **Drive API** for that project, and generate a JSON key.
+2. **Share Drive Folder 2 with the service account's email address** (the `client_email` from that JSON key) — same as sharing a folder with any other Google account, Viewer access is enough.
+3. **In Vercel → Project Settings → Environment Variables, add:**
+   - `GOOGLE_SA_EMAIL` — the service account's `client_email`
+   - `GOOGLE_SA_PRIVATE_KEY` — the service account's `private_key` (paste it as-is, including the `\n` sequences — the function un-escapes them)
+   - `DRIVE_DECKS_FOLDER_ID` — `1HnVHw-apZ37UMVu1u8l5s8tRyBTi4PQL`
+   - `CRON_SECRET` (optional but recommended) — any random string; once set, Vercel automatically sends it as a bearer token on cron calls, and the function will reject any request without it, so no one else can trigger it by guessing the URL.
+4. Run `Drive_Decks_Sync_Column.sql` in Supabase → SQL Editor.
+5. Redeploy so `vercel.json`'s new cron entry takes effect.
+
+### Manual steps still required
+1. Everything in the section above — this feature does nothing until that setup is done.
+2. Once configured, drop a test file into Drive Folder 2 named like the sample convention (e.g. `"Test Client_[Phase 1] PYO KOM"`) and wait up to 30 minutes (or trigger the function URL manually once to test immediately) — confirm it appears in Implementation Vault → Decks with the right client name and deck type.
+3. Check Vercel's function logs if nothing appears, to see which of the setup steps above is still missing.
+
+---
+
+## 125. Deck Generator link labels renamed (October 4, 2026)
+
+### What changed
+In the Deck Generator panel (§123), the two generic placeholder labels are now meaningful:
+- "Drive Folder 1" → **Deck Templates**
+- "Drive Folder 2" → **Generated Output Decks** (description now also notes it's the folder that auto-syncs to the Vault, per §124)
+
+### Fix (`index.html`, `openTool()`'s `deckLinks` array)
+Just the `label`/`desc` text — URLs and behavior unchanged. Elsewhere in this blueprint (§123, §124), "Drive Folder 1" / "Drive Folder 2" are still used as the historical names for those two folders — same folders, just renamed in the UI.
