@@ -4020,3 +4020,30 @@ Tested `momExtractWithAI`/`momBuildText` against a real reference set (`AspiraGl
 1. Redeploy `index.html` to Vercel.
 2. Re-run the MOM Generator on the AspiraGlobal transcript (Templates for upload\MOM Generator\Simulation) and compare the output against "Expected Output file.docx" in the same folder — check the General Reminders section appears, the next-phase label says "Parallel Run" (not "Live Run" or "Next Phase"), the meeting type reads "Payroll Discussion", and the greeting/sign-off read naturally.
 3. Try it on one or two other real transcripts whose filenames **don't** follow the "Client - Meeting Type - Date - Transcript" convention, to confirm the meeting-type fallback (keyword-sniffing) still produces something reasonable.
+
+---
+
+## 121. Payroll Variance Analysis — downloaded .xlsx now matches the house report format exactly (October 4, 2026)
+
+### What changed
+The variance tool's "Download .xlsx" button (Tools → Parallel Run Variance Analysis, merged in as §119) was writing a plain, unstyled spreadsheet (`XLSX.utils.aoa_to_sheet` — just raw values, no colors, no formatting). Per the reference file `Variance Anaylsis Expected Output file.xlsx` (Templates for upload\Parallel Run), the house report is fully Sprout-branded: a merged title bar, colored headers, a 4-tier color-coded variance legend, and colored Increase/Decrease/Missing badges in the detail rows. Reverse-engineered the reference file's raw XML (fonts, fills, number formats, merges, column widths) to extract the exact design, then rebuilt `downloadReport()` to reproduce it.
+
+### Fix (`index.html`, `downloadReport()` inside the merged variance-tool React component)
+Replaced the plain `aoa_to_sheet` call with manually-styled cells (same proven technique already used by this app's other styled `.xlsx` exports — `ws[addr].s = {...}` for styling, `ws[addr].z = '...'` for number formats, written via `XLSX.writeFile(wb, name, {bookSST:false, cellStyles:true})`).
+
+**VARIANCE SUMMARY sheet:**
+- Merged title row: "{Client} · Variance Summary" — white bold text on Sprout dark green (`#092903`, matches `--s9` in `index.html`'s own CSS).
+- Header row: white bold text on Sprout bright green (`#239A0D`, matches `--g4`).
+- Each payroll-item row colors its Variance (%) cell by severity, reusing the reference file's exact 4-tier palette: **≥10% gap** → orange text/tan fill (`#A1470B`/`#FFE5A5`, matches `--o1`); **1–10% gap** → olive/pale-yellow-green (`#5D6F07`/`#F6FCD1`); **within 1%** → dark green/pale green (`#106510`/`#E9FAE5`, matches `--g0`); **no variance** → the entire row dims to gray (`#B4B2A9`).
+- A "Var % legend" row (color swatches for all 4 tiers) and a footnote row ("Variance = Client − Sprout · Var % = Variance ÷ Client") below the table, exactly matching the reference.
+- Headcount row formats Sprout/Client as whole numbers; every other row formats them as money (2 decimals).
+
+**DETAILS sheet:** same green header styling; the Remarks column now shows a colored prefixed badge instead of plain text — "▲ Increase" (orange/tan, same tier as ≥10% gap), "▼ Decrease" (blue/light-blue), "● Not in Sprout file" / "● Not in Client file" (purple/light-purple) — matching the reference file's badge treatment exactly.
+
+### Not done (by design, not oversight)
+The reference file uses **live Excel formulas** (`=C3-B3`, conditional-formatting rules) so the coloring updates if someone hand-edits a cell afterward. Since this report is a one-time generated snapshot, the rebuild writes **static computed values with static per-cell colors** instead — visually identical output, without the fragility of trying to write Excel conditional-formatting XML from the browser (the bundled SheetJS build's free tier doesn't reliably support authoring those rules; direct cell styling is the proven, already-used approach in this codebase).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Run the variance tool against a real pair of files (e.g. the two CSVs in Templates for upload\Parallel Run) and download the report.
+3. Open it next to "Variance Anaylsis Expected Output file.xlsx" and compare colors, header styling, legend, and the Remarks badges side by side.

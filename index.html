@@ -7555,23 +7555,124 @@ function pvtMount(){
       if (!results) return;
       try {
         const wb = XLSX.utils.book_new();
-        const summaryAoa = [
-          ["Payroll Items", "Sprout", "Client", "Variance (Amount)", "Variance (%)", "Reason"],
-          ...results.summary.map((r) => {
-            const variance = r.client - r.sprout;
-            const pct = r.client !== 0 ? `${(variance / r.client * 100).toFixed(2)}%` : "";
-            return [r.item, r.sprout, r.client, variance, pct, r.reason];
-          })
-        ];
-        const detailsAoa = [
-          ["Employee ID", "Fullname", "Income / Deduction", "Sprout", "Client", "Variance", "Remarks"],
-          ...results.details.map((r) => [r.id, r.name, r.item, r.sprout, r.client, r.client - r.sprout, r.remark])
-        ];
-        const ws1 = XLSX.utils.aoa_to_sheet(summaryAoa);
-        const ws2 = XLSX.utils.aoa_to_sheet(detailsAoa);
+
+        // ── Cell/sheet helpers (same proven pattern already used by this app's other styled .xlsx exports) ──
+        const scn = (ws, r, c, v, s, fmt) => {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          ws[addr] = { v, t: typeof v === "number" ? "n" : "s" };
+          if (s) ws[addr].s = s;
+          if (fmt) ws[addr].z = fmt;
+          return ws[addr];
+        };
+        const srange = (ws, r1, c1, r2, c2) => {
+          if (!ws["!merges"]) ws["!merges"] = [];
+          ws["!merges"].push({ s: { r: r1, c: c1 }, e: { r: r2, c: c2 } });
+        };
+        const setRowHt = (ws, r, ht) => {
+          if (!ws["!rows"]) ws["!rows"] = [];
+          while (ws["!rows"].length <= r) ws["!rows"].push({});
+          ws["!rows"][r] = { hpt: ht };
+        };
+
+        // Sprout brand palette, matching the house Variance Analysis template exactly
+        const TITLE_BG = "092903", HEADER_BG = "239A0D", WHITE = "FFFFFF", BODY_TXT = "092903", BORDER = "E5E3DC";
+        const TIER_HIGH = { fg: "A1470B", bg: "FFE5A5" };    // >= 10% gap  /  Increase
+        const TIER_MED = { fg: "5D6F07", bg: "F6FCD1" };     // 1% - 10% gap
+        const TIER_LOW = { fg: "106510", bg: "E9FAE5" };     // within 1%
+        const TIER_NONE = { fg: "B4B2A9", bg: "FFFFFF" };    // no variance
+        const TIER_DEC = { fg: "1356BA", bg: "D8EBFF" };     // Decrease
+        const TIER_MISSING = { fg: "5F21B6", bg: "EEE9FE" }; // not found in one of the two files
+        const thinBorder = { style: "thin", color: { rgb: BORDER } };
+        const cellBorder = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+        const titleStyle = { fill: { fgColor: { rgb: TITLE_BG } }, font: { color: { rgb: WHITE }, bold: true, sz: 14, name: "Rubik" }, alignment: { vertical: "center", indent: 1 } };
+        const hdr = (align) => ({ fill: { fgColor: { rgb: HEADER_BG } }, font: { color: { rgb: WHITE }, bold: true, sz: 11, name: "Rubik" }, alignment: { horizontal: align, vertical: "center", indent: align === "center" ? 0 : 1 }, border: cellBorder });
+        const bodyLeft = { font: { color: { rgb: BODY_TXT }, sz: 11, name: "Rubik" }, alignment: { horizontal: "left", vertical: "center", indent: 1 }, border: cellBorder };
+        const bodyWrap = { font: { color: { rgb: BODY_TXT }, sz: 11, name: "Rubik" }, alignment: { horizontal: "left", vertical: "center", wrapText: true, indent: 1 }, border: cellBorder };
+        const bodyMoney = { font: { color: { rgb: BODY_TXT }, sz: 11, name: "Rubik" }, alignment: { horizontal: "right", vertical: "center", indent: 1 }, border: cellBorder };
+        const dimLeft = { font: { color: { rgb: TIER_NONE.fg }, sz: 11, name: "Rubik" }, alignment: { horizontal: "left", vertical: "center", indent: 1 }, border: cellBorder };
+        const dimMoney = { font: { color: { rgb: TIER_NONE.fg }, sz: 11, name: "Rubik" }, alignment: { horizontal: "right", vertical: "center", indent: 1 }, border: cellBorder };
+        const tierPctStyle = (tier) => ({ fill: { fgColor: { rgb: tier.bg } }, font: { color: { rgb: tier.fg }, bold: tier === TIER_HIGH, sz: 10, name: "Rubik" }, alignment: { horizontal: "center", vertical: "center" }, border: cellBorder });
+        const legendLabel = { font: { color: { rgb: "5F5E5A" }, bold: true, sz: 9, name: "Rubik" } };
+        const legendSwatch = (tier, bold) => ({ fill: { fgColor: { rgb: tier.bg } }, font: { color: { rgb: tier.fg }, bold: !!bold, sz: 9, name: "Rubik" }, alignment: { horizontal: "center", vertical: "center" } });
+        const footnote = { font: { italic: true, color: { rgb: "888780" }, sz: 9, name: "Rubik" } };
+
+        function tierFor(pct) {
+          const a = Math.abs(pct);
+          if (a >= 0.1) return TIER_HIGH;
+          if (a > 0.01) return TIER_MED;
+          if (a !== 0) return TIER_LOW;
+          return TIER_NONE;
+        }
+
+        // ── SHEET 1: VARIANCE SUMMARY ──
+        const ws1 = {};
+        let row = 0;
+        scn(ws1, row, 0, `${companyName || "Client"} · Variance Summary`, titleStyle);
+        srange(ws1, row, 0, row, 5); setRowHt(ws1, row, 30); row++;
+
+        ["Payroll Items", "Sprout", "Client", "Variance (Amount)", "Variance (%)", "Reason"].forEach((label, c) => {
+          scn(ws1, row, c, label, hdr(c === 0 || c === 5 ? "left" : "right"));
+        });
+        setRowHt(ws1, row, 24); row++;
+
+        results.summary.forEach((r) => {
+          const isHeadcount = r.item === "Headcount";
+          const variance = r.client - r.sprout;
+          const pct = r.client !== 0 ? variance / r.client : 0;
+          const noVar = variance === 0;
+          const tier = tierFor(pct);
+          const numFmt = isHeadcount ? "#,##0" : "#,##0.00";
+          scn(ws1, row, 0, r.item, noVar ? dimLeft : bodyLeft);
+          scn(ws1, row, 1, r.sprout, noVar ? dimMoney : bodyMoney, numFmt);
+          scn(ws1, row, 2, r.client, noVar ? dimMoney : bodyMoney, numFmt);
+          scn(ws1, row, 3, variance, noVar ? dimMoney : bodyMoney, numFmt);
+          scn(ws1, row, 4, pct, tierPctStyle(tier), "0.00%");
+          scn(ws1, row, 5, r.reason || "", noVar ? dimLeft : bodyWrap);
+          setRowHt(ws1, row, 19.5); row++;
+        });
+
+        row++; // spacer
+        scn(ws1, row, 0, "Var % legend", legendLabel);
+        scn(ws1, row, 1, "≥ 10% gap", legendSwatch(TIER_HIGH, true));
+        scn(ws1, row, 2, "1% – 10% gap", legendSwatch(TIER_MED));
+        scn(ws1, row, 3, "Within 1%", legendSwatch(TIER_LOW));
+        scn(ws1, row, 4, "No variance", legendSwatch(TIER_NONE));
+        row++;
+        scn(ws1, row, 0, "Variance = Client − Sprout   ·   Var % = Variance ÷ Client", footnote);
+        row++;
+
+        ws1["!cols"] = [{ wch: 50 }, { wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 14 }, { wch: 50 }];
+        ws1["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: row, c: 5 } });
+
+        // ── SHEET 2: DETAILS ──
+        const ws2 = {};
+        ["Employee ID", "Fullname", "Income / Deduction", "Sprout", "Client", "Variance", "Remarks"].forEach((label, c) => {
+          scn(ws2, 0, c, label, hdr(c <= 2 ? "left" : (c === 6 ? "center" : "right")));
+        });
+        setRowHt(ws2, 0, 24);
+        results.details.forEach((r, i) => {
+          const rr = i + 1;
+          const variance = r.client - r.sprout;
+          let remarkTier = TIER_DEC, remarkPrefix = "▼  ";
+          if (r.remark === "Increase") { remarkTier = TIER_HIGH; remarkPrefix = "▲  "; }
+          else if (r.remark === "Decrease") { remarkTier = TIER_DEC; remarkPrefix = "▼  "; }
+          else { remarkTier = TIER_MISSING; remarkPrefix = "●  "; }
+          scn(ws2, rr, 0, r.id, bodyLeft);
+          scn(ws2, rr, 1, r.name, bodyLeft);
+          scn(ws2, rr, 2, r.item, bodyLeft);
+          scn(ws2, rr, 3, r.sprout, bodyMoney, "#,##0.00");
+          scn(ws2, rr, 4, r.client, bodyMoney, "#,##0.00");
+          scn(ws2, rr, 5, variance, { font: { color: { rgb: BODY_TXT }, bold: true, sz: 11, name: "Rubik" }, alignment: { horizontal: "right", vertical: "center" }, border: cellBorder }, "#,##0.00");
+          scn(ws2, rr, 6, remarkPrefix + r.remark, { fill: { fgColor: { rgb: remarkTier.bg } }, font: { color: { rgb: remarkTier.fg }, bold: true, sz: 10, name: "Rubik" }, alignment: { horizontal: "center", vertical: "center" }, border: cellBorder });
+          setRowHt(ws2, rr, 18.75);
+        });
+        ws2["!cols"] = [{ wch: 14 }, { wch: 34 }, { wch: 46 }, { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 22 }];
+        ws2["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: results.details.length, c: 6 } });
+
         XLSX.utils.book_append_sheet(wb, ws1, "VARIANCE SUMMARY");
         XLSX.utils.book_append_sheet(wb, ws2, "DETAILS");
-        XLSX.writeFile(wb, buildReportFilename(companyName));
+        XLSX.writeFile(wb, buildReportFilename(companyName), { bookSST: false, cellStyles: true });
       } catch (e) {
         setError("Download failed. The results on screen are still accurate.");
       }
