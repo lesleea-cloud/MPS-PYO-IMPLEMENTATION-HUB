@@ -3966,3 +3966,32 @@ Same undercounting pattern as §116/§117, found in the sidebar "Payroll Disburs
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
 2. Click "Payroll Disbursement" in the sidebar — confirm it now lists both standalone Payroll Disbursement clients and any client with the "PAY. DISB." checkbox ticked on the Add On Services Availed tab (e.g. "DIS TECH PHILIPPINES, LLC" per the screenshot that prompted this).
+
+---
+
+## 119. Payroll Variance Analysis Tool replaced with the standalone React build (October 4, 2026)
+
+### What changed
+A separate file, `payroll_variance_tool_offline_16.html` (a standalone, offline-capable React/Tailwind app bundling React 18, ReactDOM, and SheetJS inline), was merged directly into `index.html` to replace the native "Parallel Run Variance Analysis" tool (Tools menu → key `'variance'`), per explicit request to merge the code rather than embed it as an iframe.
+
+### Why this was risky, and how the risk was handled
+`index.html` is hand-written vanilla JS; the source file is a compiled React app whose Tailwind CSS reset uses **unscoped, page-wide selectors** (`*`, `body`, `button,input,...`, `h1–h6`, etc.). Pasting that CSS in as-is would have overridden fonts, margins, and button/input appearance across the *entire* dashboard, everywhere — not just inside the new tool. To prevent that:
+- Every selector in the tool's ~14KB Tailwind stylesheet was mechanically rewritten to be prefixed with `.pvt-scope ` (e.g. `button,input{...}` → `.pvt-scope button,.pvt-scope input{...}`), so none of it can affect anything outside an element carrying that class. Verified beforehand that index.html's own CSS has no pre-existing unscoped rules (like a bare `.hidden{}` or `.flex{}`) that could leak the other way into the tool.
+- The tool's React component code made zero direct DOM/`document`/`window` calls outside its own refs (checked explicitly), so it's a clean, fully self-contained "island" — safe to mount/unmount repeatedly without side effects on the rest of the page.
+- The bundled SheetJS library inside the source file was **not** copied in — `index.html` already loads XLSX 0.18.5 from cdnjs, and the component only calls stable, long-standing APIs (`XLSX.read`, `.utils.sheet_to_json`, `.utils.aoa_to_sheet`, `.utils.book_new`, `.utils.book_append_sheet`, `.writeFile`), so the existing CDN copy is reused instead of duplicating ~1MB of library code.
+
+### Fix (`index.html`)
+- `<head>`: added `<style id="pvt-styles">` (the scoped Tailwind CSS), `<script id="pvt-react">` (React 18.3.1 production min, verbatim), and `<script id="pvt-reactdom">` (ReactDOM 18.3.1 production min, verbatim) — all inline, no new CDN dependency.
+- Main script: added the tool's component code (`PayrollVarianceTool` and its helpers — header-matching, column mapping, variance comparison, `.xlsx` report export) wrapped in two new functions:
+  - `pvtMount()` — mounts the React tree into `#pvt-root` via `ReactDOM.createRoot`.
+  - `pvtUnmount()` — unmounts it (`root.unmount()`), called on modal close so no stale React state survives between opens.
+- `openTool()`, `val==='variance'` branch — now sets the modal body to a `<div id="pvt-root" class="pvt-scope">` (plus a `#pvt-diag` error box mirroring the original's own error boundary) and calls `pvtMount()`, instead of the old `vaReset(); renderVarianceUI();`. Modal width bumped to 1100px to match the tool's original `max-w-5xl` layout.
+- `closeTool()` — now also calls `pvtUnmount()`.
+
+### Not touched
+The old native variance implementation (`vaReset`, `renderVarianceUI`, `vaCompare`, `vaExport`, `vaExportPptx`, and the ~15 other `va*` functions) was **left in place, just no longer called** from the Tools menu. Didn't delete it — it's inert dead code for now, kept as a fallback in case you want to roll back. Say the word if you'd like it removed for real.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open Tools → "Parallel Run Variance Analysis" and confirm the new tool loads cleanly inside the modal (upload → map columns → results → download `.xlsx`), and that closing/reopening it resets to a fresh upload screen.
+3. While that modal is open, spot-check a few *other* pages/tabs in the dashboard (Dashboard, My Clients, sidebar) look visually unchanged — this is the main residual risk of a direct code merge versus an iframe, even though the CSS was scoped defensively.
