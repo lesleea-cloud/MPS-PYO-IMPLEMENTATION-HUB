@@ -4136,3 +4136,69 @@ In the Deck Generator panel (§123), the two generic placeholder labels are now 
 
 ### Fix (`index.html`, `openTool()`'s `deckLinks` array)
 Just the `label`/`desc` text — URLs and behavior unchanged. Elsewhere in this blueprint (§123, §124), "Drive Folder 1" / "Drive Folder 2" are still used as the historical names for those two folders — same folders, just renamed in the UI.
+
+---
+
+## 126. Client folder creation — new in-app trigger, running in parallel with the existing "2026 Implem" Sheet + Apps Script automation (October 4, 2026)
+
+### Background
+You have an existing manual-entry workflow: a client gets typed into a "2026 Implem" Google Sheet (Client Name + Availed Service columns), which triggers an Apps Script (`onEditInstallable` → `createClientFolder`) that clones the right template folder based on the service, then writes the resulting link back into the Sheet. A second, separate Apps Script (`checkForNewFolders`, on a time trigger) polls those same destination folders every few minutes and posts "📁 *X's* folder is now uploaded in Y" to a Google Chat space.
+
+You described wanting this to also happen automatically from inside this app — a client comes in, gets pushed to a separate tool for resource assignment, comes back here with a resource now assigned, gets classified into the PYO or Payroll Starter tab, and at that point the folder (and the Chat notification, this time properly CC'ing the resource) should happen with zero manual step — **without retiring the existing Sheet-based flow**, since both need to keep working side by side.
+
+### How duplication is avoided, running both in parallel
+Two independent duplication risks, two independent fixes:
+1. **Folder duplication** — already solved for free. The Apps Script's `createClientFolder()` already checks Drive for an existing folder with the client's exact name before creating one. The new in-app function does the identical check. Whichever system acts first "wins"; the other just finds the existing folder by name and links to it instead of duplicating. The Apps Script needed **zero changes** for this.
+2. **Notification duplication** — the real risk, since the Apps Script's poller is origin-agnostic (announces *any* newly created folder in those 7 parents, regardless of what created it). If the app also posted its own Chat message, every app-created folder would get announced twice. Fix: the app **never posts to Chat itself**. Instead it writes the assigned resource's name into the new folder's Drive **description** field, and the existing poller (small edit already applied by you, per our earlier exchange — reads `folder.getDescription()` and appends a `cc: <name>` line) is left as the single, sole place that posts to Chat. One poller, one message per folder, from either origin.
+
+### ⚠️ Assumption I made — please confirm or correct
+I didn't get a definitive answer on what "pushed to PYO or Starter tab" means as a concrete in-app event, so I used the most directly-instrumented hook available: **the moment a client's `resource` field goes from empty to filled**, for any client whose service is Payroll Starter or contains "PYO". This fires from the existing Resource Team tab's resource dropdown (`clUpdateResource`). If you actually meant a different, separate action (e.g. a status/phase change, or something that happens in "Arianne's tool" and syncs back some other way), tell me and I'll move the hook.
+
+### Fix
+- **`api/_lib/googleAuth.js`** (new) — pulled the service-account JWT/token-exchange logic out of §124's `drive-decks-sync.js` into a shared helper, since this feature needs the same auth with a *different* OAuth scope (read-write `drive`, not `drive.metadata.readonly`). `drive-decks-sync.js` now imports this helper too — behavior-preserving refactor, not a functional change to §124.
+- **`api/integrations/create-client-folder.js`** (new) — given `{no, clientName, service, resource}`:
+  1. Short-circuits immediately (no Drive calls at all) if this client already has a `folder_link` saved.
+  2. Resolves the service to a template/destination pair. Ported from the Apps Script's `CONFIG.SERVICES`, but generalized: **any** service string containing "PYO" (case-insensitive) maps to the PYO template/destination, rather than requiring an exact match against a fixed list of combos. This matters because the Apps Script's exact list doesn't include "PYO + HR + Statutory Disbursement" (added in §115) — that service would have made the *Apps Script itself* throw `No mapping found for service`. The in-app version doesn't have that gap. "Payroll Starter" maps to its own template/destination with the `_Starter` filename suffix, exactly as before.
+  3. Checks Drive for an existing folder with that name (the dedup-vs-Sheet safety described above); creates it (recursively cloning the template's contents via `files.copy`) only if none exists.
+  4. Sets the folder's `description` to the resource's name.
+  5. Saves the folder URL to the client's new `folder_link` column in Supabase.
+- **`Client_Folder_Link_Column.sql`** (new) — `ALTER TABLE clients ADD COLUMN IF NOT EXISTS folder_link TEXT;`
+- **`index.html`**, `clUpdateResource(no,val)` — when `old` was empty and `val` isn't, and the client's service qualifies, fires a fire-and-forget POST to the new endpoint (`triggerClientFolderCreation`). Non-blocking; a failure just gets `console.warn`'d, same graceful-degradation pattern used by the Vault's own Supabase upsert calls.
+
+### What you still need to do (outside this codebase)
+1. If you haven't already set up the service account from §124, do so now (Google Cloud service account + Drive API enabled). **This feature can reuse that exact same service account** — it just needs broader folder permissions:
+   - **Editor** access on the 7 destination parent folders (the `destParentId`s from the Apps Script's `CONFIG.SERVICES` — same IDs as `PARENT_FOLDER_IDS` in the notifier script)
+   - **Viewer** access on the 2 template folders (`1KblDw7y1ZoKX9I5o6yeRmpuObZxLha_o` PYO, `1WI6YZBQyLTDotVtMYDUfbcQZS24a2FJg` Starter)
+2. `GOOGLE_SA_EMAIL` / `GOOGLE_SA_PRIVATE_KEY` env vars in Vercel — already set if you did §124; nothing new to add there.
+3. Run `Client_Folder_Link_Column.sql` in Supabase → SQL Editor.
+4. Redeploy.
+
+### Manual steps still required
+1. Everything above.
+2. Confirm or correct the trigger-condition assumption (see the ⚠️ note).
+3. Test: assign a resource to a PYO or Starter client that doesn't have a folder yet, confirm the folder appears in the right destination (cloned from the right template), and that the Chat space announces it with a `cc:` line naming that resource.
+4. Test the parallel-safety: manually enter that same client into the "2026 Implem" Sheet afterward and confirm the Apps Script finds the app-created folder by name instead of duplicating it, and backfills the Sheet's Folder Link column.
+
+---
+
+## 127. Bug — "My Dashboard" showed the wrong person's name and projects for Admin/Manager/God-role users (October 4, 2026)
+
+### What happened
+Zona (role: Admin) opened "My Dashboard" and saw "Hi, Ana" with Ana's two projects — not her own, not an empty state. Screenshot confirmed she was genuinely signed in as herself (header showed "ADMIN · Zona"), just the page content was someone else's.
+
+### Root cause
+The global `IMPL_USER` variable — the one "My Dashboard" (`renderImpl()`) uses for both the greeting (`Hi, {IMPL_USER}`) and the client filter (`implOwnsClient(d, IMPL_USER)`) — started out hardcoded to `'Ana'` (leftover sample/placeholder data from early development), and **every single login path only updated it when `CURRENT_ROLE === 'implementer'`**:
+```js
+if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
+```
+Since Zona's role is Admin, that condition never fired, so `IMPL_USER` just stayed stuck at `'Ana'` indefinitely. And "My Dashboard" is *not* hidden from Admins — confirmed in `ROLE_CONFIG`, where `admin.hideNav` is an empty array, same as Manager and God — so any Admin/Manager/God-role user who opened "My Dashboard" would see this same bug: whichever name `IMPL_USER` happened to be stuck at, never their own. This wasn't unique to Zona or to this one session.
+
+### Fix (`index.html`)
+Removed the `role==='implementer'` gating from every login path (`onAuthSuccess`, `llPickUser`, `doLocalLogin`, `doLogin`) — `IMPL_USER` now always gets set to the logged-in user's own name, regardless of role, since "My Dashboard" is reachable by all of them. Also changed the initial declaration from `var IMPL_USER='Ana'` to `var IMPL_USER=''` — `implOwnsClient()` already safely treats an empty value as "owns nothing" (`if(!u)return false`), so there's no longer a stale placeholder name to leak into view even transiently.
+
+Left `godSwitch()`'s own `IMPL_USER` line untouched — that one's for the God-mode role-*preview* toggle (letting Leslee temporarily view the app as if she were a different role), not a login path, and by the time it runs `IMPL_USER` is already correctly set from the real login.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Have Zona sign in again and open "My Dashboard" — confirm it now greets her by her own name and shows only clients where she's the assigned resource (very possibly zero, if she genuinely isn't assigned as a resource/implementer on anything — that's correct behavior now, not a bug).
+3. Spot-check with another Admin/Manager account if one's handy, same check.

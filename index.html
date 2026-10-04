@@ -2708,7 +2708,7 @@ var DATA_VERSION=/*DATA_VER*/1/*END_DATA_VER*/;
 
 var TODAY=new Date();TODAY.setHours(0,0,0,0);
 var PS=10, clPg=1;
-var IMPL_USER='Ana';
+var IMPL_USER='';
 var SELECTED_PROJECT=null;
 var CURRENT_ROLE='manager';
 var CURRENT_NAME='';
@@ -4782,7 +4782,18 @@ function svcEditEnd(no){
   var wrap=document.getElementById('sc-'+no);var sel=document.getElementById('ss-'+no);
   if(wrap)wrap.style.display='inline-flex';if(sel)sel.style.display='none';
 }
-function clUpdateResource(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.resource;d.resource=val;logAudit(no,'Resource Team','resource','Resource',old,val);}autoSave();renderClients();}
+function clUpdateResource(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.resource;d.resource=val;logAudit(no,'Resource Team','resource','Resource',old,val);if(!old&&val&&isPyoOrStarterSvc(d.service))triggerClientFolderCreation(d);}autoSave();renderClients();}
+// A resource just got assigned (no→some value) to a PYO-family or Payroll Starter client:
+// fire the in-app Drive-folder creation, running in parallel with the "2026 Implem" Sheet +
+// Apps Script automation (see api/integrations/create-client-folder.js for the dedup logic
+// that keeps the two from creating duplicate folders).
+function isPyoOrStarterSvc(svc){return svc==='Payroll Starter'||/pyo/i.test(svc||'');}
+function triggerClientFolderCreation(d){
+  fetch('/api/integrations/create-client-folder',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({no:d.no,clientName:d.client,service:d.service,resource:d.resource})
+  }).catch(function(e){console.warn('Client folder creation request failed:',e);});
+}
 function clUpdateOtkImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.otkImpl||'';d.otkImpl=val;logAudit(no,'Resource Team','otkImpl','OTK Implementer',old,val);}autoSave();}
 function clUpdatePdImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pdImpl||'';d.pdImpl=val;logAudit(no,'Resource Team','pdImpl','PD Implementer',old,val);}autoSave();}
 function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.days;d.days=parseInt(val)||0;logAudit(no,'Overview','days','Days',old,d.days);}autoSave();renderClients();}
@@ -10257,7 +10268,7 @@ function handleGoogleCredential(response){
     CURRENT_ROLE=user.role||'implementer';
     if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
     CURRENT_NAME=user.username;
-    if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
+    IMPL_USER=user.username;
     startApp();
   }catch(e){showLoginError('Sign-in failed. Please try again.');}
 }
@@ -10271,7 +10282,7 @@ function llPickUser(email){
     CURRENT_ROLE=user.role||'implementer';
     if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
     CURRENT_NAME=user.username;
-    if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
+    IMPL_USER=user.username;
     startApp();
   }catch(e){
     var errEl=document.getElementById('login-error');
@@ -10468,7 +10479,7 @@ function onAuthSuccess(user){
   CURRENT_ROLE=found.role||'implementer';
   if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
   CURRENT_NAME=found.username;
-  if(CURRENT_ROLE==='implementer')IMPL_USER=found.username;
+  IMPL_USER=found.username;
   loadFromSupabase().then(function(){startApp();}).catch(function(){startApp();});
 }
 
@@ -10500,7 +10511,7 @@ function doLocalLogin(){
   CURRENT_ROLE=user.role||'implementer';
   if(user.email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
   CURRENT_NAME=user.username;
-  if(CURRENT_ROLE==='implementer')IMPL_USER=user.username;
+  IMPL_USER=user.username;
   startApp();
 }
 
@@ -10529,7 +10540,7 @@ function doLogin(){
   }
   document.getElementById('login-error').classList.remove('show');
   CURRENT_ROLE=role;CURRENT_NAME=name;
-  IMPL_USER=(role==='implementer')?name:IMPL_USER;
+  IMPL_USER=resolveImplNickname(name);
   startApp();
 }
  
