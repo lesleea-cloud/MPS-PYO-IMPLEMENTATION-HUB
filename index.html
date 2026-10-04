@@ -1672,6 +1672,10 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
             <svg viewBox="0 0 24 24"><rect x="9" y="11" width="13" height="13" rx="2"/><path d="M5 7H4a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-1"/><line x1="12" y1="15" x2="18" y2="15"/><line x1="12" y1="19" x2="16" y2="19"/></svg>
             Pending Items Bank
           </button>
+          <button class="nav-tool-item" onclick="openTool('deck-gen')">
+            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Deck Generator
+          </button>
         </div>
         <div class="nav-phase-label"><span class="nav-phase-dot" style="background:#f59e0b;"></span>Phase 1 — Setup</div>
         <button class="nav-tool-item" onclick="openTool('payroll-acc')">
@@ -7888,7 +7892,8 @@ function openTool(val){
     'payroll-acc':{name:'Payroll Account Creator',icon:'🏦',desc:'Automate the creation of payroll account entries in Sprout Payroll.',color:'#854d0e'},
     'pending-bank':{name:'Pending Items Bank',icon:'📋',desc:'Manage a reusable bank of standard pending items and track them per client.',color:'#0e7490'},
     'payroll-policy':{name:'Payroll Policy Excel Generator',icon:'📋',desc:'Generate a structured Payroll Policy Excel document based on the client\'s payroll policy inputs.',color:'#a855f7'},
-    'payroll-repli':{name:'Payroll Repli Account Creator',icon:'🔁',desc:'Create replicated payroll accounts across multiple entities or branches.',color:'#0e7490'}
+    'payroll-repli':{name:'Payroll Repli Account Creator',icon:'🔁',desc:'Create replicated payroll accounts across multiple entities or branches.',color:'#0e7490'},
+    'deck-gen':{name:'Deck Generator',icon:'🎞️',desc:'Quick links to the MPS Deck Generator tool and the deck resource folders.',color:'#be123c'}
   };
   var t=TOOLS[val];if(!t)return;
   document.getElementById('tool-modal-title').textContent=t.name;
@@ -7919,6 +7924,22 @@ function openTool(val){
     document.getElementById('tool-modal-box').style.maxWidth='780px';
     PP_STATE={pdfFile:null,pdfB64:null,apiKey:localStorage.getItem('sprout_ai_key')||'',extracted:null};
     renderPayrollPolicyUI();
+  } else if(val==='deck-gen'){
+    document.getElementById('tool-modal-box').style.maxWidth='480px';
+    var deckLinks=[
+      {label:'MPS Deck Generator',desc:'Open the Sprout MPS Deck Generator tool',url:'http://tinyurl.com/MPSDeckGenerator',icon:'🎞️'},
+      {label:'Drive Folder 1',desc:'Deck resource folder',url:'https://drive.google.com/drive/folders/1qXfNdWIxcZmfFxiw8UX0WrgdV1jcO86O',icon:'📁'},
+      {label:'Drive Folder 2',desc:'Deck resource folder',url:'https://drive.google.com/drive/folders/1HnVHw-apZ37UMVu1u8l5s8tRyBTi4PQL',icon:'📁'}
+    ];
+    document.getElementById('tool-modal-body').innerHTML='<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.25rem;">'
+      +deckLinks.map(function(l){
+        return '<a href="'+l.url+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--s0);border:1px solid var(--s1);border-radius:10px;text-decoration:none;transition:border-color .15s,background .15s;" onmouseover="this.style.borderColor=\'#be123c40\';this.style.background=\'#be123c0d\';" onmouseout="this.style.borderColor=\'var(--s1)\';this.style.background=\'var(--s0)\';">'
+          +'<div style="font-size:22px;flex-shrink:0;">'+l.icon+'</div>'
+          +'<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--s8);margin-bottom:2px;">'+l.label+'</div><div style="font-size:11px;color:var(--s5);">'+l.desc+'</div></div>'
+          +'<div style="font-size:14px;color:var(--s4);flex-shrink:0;">↗</div>'
+          +'</a>';
+      }).join('')
+      +'</div><div style="display:flex;justify-content:flex-end;"><button onclick="closeTool()" style="padding:9px 22px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button></div>';
   } else {
     document.getElementById('tool-modal-box').style.maxWidth='480px';
     document.getElementById('tool-modal-body').innerHTML='<div style="display:flex;align-items:center;gap:14px;padding:1rem;background:var(--s0);border-radius:10px;border:1px solid var(--s1);margin-bottom:1.25rem;"><div style="font-size:32px;flex-shrink:0;">'+t.icon+'</div><div><div style="font-size:13px;font-weight:600;color:var(--s8);margin-bottom:4px;">'+t.name+'</div><div style="font-size:12px;color:var(--s5);line-height:1.6;">'+(t.desc||'')+'</div></div></div><div style="background:'+t.color+'0d;border:1.5px dashed '+t.color+'40;border-radius:10px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;"><div style="font-size:28px;margin-bottom:.5rem;">🚧</div><div style="font-size:13px;font-weight:700;color:'+t.color+';margin-bottom:4px;">Coming soon</div><div style="font-size:12px;color:var(--s4);">This module is currently under development.</div></div><div style="display:flex;justify-content:flex-end;"><button onclick="closeTool()" style="padding:9px 22px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Close</button></div>';

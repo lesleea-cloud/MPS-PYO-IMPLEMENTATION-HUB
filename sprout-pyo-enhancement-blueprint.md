@@ -4069,3 +4069,28 @@ Caught and fixed one bug of my own while rewriting this: `ws.getCell(r,c).value 
 1. Redeploy `index.html` to Vercel.
 2. Re-run the variance tool and download a report — confirm colors/fonts/borders now actually appear (the thing §121 failed to do).
 3. Compare side-by-side with "Variance Anaylsis Expected Output file.xlsx" as before.
+
+---
+
+## 123. New "Deck Generator" tool under Common — a links panel, not a generator (October 4, 2026)
+
+### What changed
+Added a new sidebar item under Administration → Common (alongside MOM Generator and Pending Items Bank): **Deck Generator**. Unlike the other Common tools, this one doesn't generate anything itself — it's a quick-links panel to three external resources: the MPS Deck Generator tool and two Google Drive folders.
+
+### Fix (`index.html`)
+- New nav button (`onclick="openTool('deck-gen')"`) added to the Common band in the sidebar, next to Pending Items Bank.
+- New `'deck-gen'` entry in the `TOOLS` registry (`openTool()`).
+- New branch in `openTool()` rendering three clickable link cards (icon + label + description, opens in a new tab via `target="_blank" rel="noopener"`):
+  1. **MPS Deck Generator** → `http://tinyurl.com/MPSDeckGenerator`
+  2. **Drive Folder 1** → `https://drive.google.com/drive/folders/1qXfNdWIxcZmfFxiw8UX0WrgdV1jcO86O`
+  3. **Drive Folder 2** → `https://drive.google.com/drive/folders/1HnVHw-apZ37UMVu1u8l5s8tRyBTi4PQL`
+
+### Note
+Link 1 was given as a Google redirect-wrapper URL (`google.com/url?q=...&sa=D&source=editors&ust=...&usg=...`) — a tracking artifact from copying a link out of a Google Doc/Slides, not a real destination. Used the clean underlying URL (`http://tinyurl.com/MPSDeckGenerator`) it was wrapping instead, since the wrapper form isn't meant for reuse outside Google's own pages and carries no benefit here.
+
+The two Drive folders are labeled generically ("Drive Folder 1" / "Drive Folder 2") since their actual purpose wasn't specified — easy one-line swap in `openTool()`'s `deckLinks` array once you tell me what each one is for.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Click "Deck Generator" under Common in the sidebar and confirm all three links open correctly in a new tab.
+3. Let me know the real names for the two Drive folders so I can relabel them.
