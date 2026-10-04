@@ -3916,16 +3916,16 @@ No other logic needed to change: client-type filtering (`CL_TYPE==='pyo'` bucket
 The sidebar nav item that filters My Clients down to Sprout Gov / Statutory Disbursement work was renamed, and its membership was widened to also pull in PYO combo clients that include a Sprout Gov or Statutory Disbursement component — previously it only matched clients whose **entire** service was standalone "Sprout Gov" or "Statutory Disbursement".
 
 ### Fix (`index.html`)
-- Sidebar nav label (`#nav-cl-gov`) — renamed from "Sprout Gov" to **"Sprout and Statutory Module"**.
+- Sidebar nav label (`#nav-cl-gov`) — renamed from "Sprout Gov" to **"Sprout and Statutory"** (originally landed as "Sprout and Statutory Module"; "Module" was dropped per follow-up request on October 4, 2026).
 - `renderClients()` — `CL_TYPE==='gov'` filter now also matches `service==='PYO + HR + Sprout Gov'` and `service==='PYO + HR + Statutory Disbursement'`, in addition to the existing standalone "Sprout Gov" / "Statutory Disbursement" matches.
-- Page header shown when this module is open now reads "Sprout and Statutory Module — 2026" / "Sprout Gov and Statutory Disbursement implementation projects", instead of incorrectly falling back to the generic "PYO Clients — 2026" header it was showing before (pre-existing gap — the title logic only special-cased Payroll Starter vs. everything else).
+- Page header shown when this module is open now reads "Sprout and Statutory — 2026" / "Sprout Gov and Statutory Disbursement implementation projects", instead of incorrectly falling back to the generic "PYO Clients — 2026" header it was showing before (pre-existing gap — the title logic only special-cased Payroll Starter vs. everything else).
 
 ### Note on scope
 These PYO combo clients still also appear under the **PYO** module as before (the `pyo` bucket's exclusion list only drops exact standalone-service matches, not combo strings) — they now show up in both places, same pattern already used for "Stand Alone Add-on Services" clients. Didn't touch Payroll Disbursement / Special Projects / Stand Alone Add-on Services / OTK nav items — their page-title fallback to "PYO Clients — 2026" is the same pre-existing gap but wasn't part of this request.
 
 ### Manual steps still required
 1. Redeploy `index.html` to Vercel.
-2. Click "Sprout and Statutory Module" in the sidebar — confirm the header reads correctly and the list includes standalone Sprout Gov/Statutory Disbursement clients **and** any "PYO + HR + Sprout Gov" / "PYO + HR + Statutory Disbursement" clients.
+2. Click "Sprout and Statutory" in the sidebar — confirm the header reads correctly and the list includes standalone Sprout Gov/Statutory Disbursement clients **and** any "PYO + HR + Sprout Gov" / "PYO + HR + Statutory Disbursement" clients.
 3. Confirm those same combo clients still appear under the "PYO" nav item too.
 
 ---
@@ -3950,3 +3950,19 @@ Two issues surfaced while testing the new "PYO + HR + Statutory Disbursement" se
 1. Redeploy `index.html` to Vercel.
 2. Open Weekly Status → Weekly Report tab, expand the Gov section, and confirm "Sprout Gov (with PYO) under Implem" now shows nonzero counts where it previously showed all dashes.
 3. Spot-check a couple of the new "- Live" / "- Churned" rows against the actual client list for a resource you know well.
+
+---
+
+## 118. "Payroll Disbursement" nav now also catches clients with the Pay. Disb. add-on ticked (October 4, 2026)
+
+### What changed
+Same undercounting pattern as §116/§117, found in the sidebar "Payroll Disbursement" nav item. My Clients → Add On Services Availed has a "PAY. DISB." checkbox that can be ticked on *any* client (e.g. a PYO combo client like "DIS TECH PHILIPPINES, LLC") — but clicking the "Payroll Disbursement" nav item only ever showed clients whose base service was the standalone "Payroll Disbursement" value. A client with the add-on ticked but a different base service (PYO, PYO + HR + Sprout Gov, etc.) never showed up there.
+
+### Fix (`index.html`, `renderClients()`)
+- `CL_TYPE==='pd'` filter now also matches `CL_ADDONS[d.no].pd` (the Pay. Disb. add-on flag), in addition to the existing standalone `service==='Payroll Disbursement'` check.
+- Added a dedicated page title/subtitle for this view ("Payroll Disbursement — 2026" / "Standalone and add-on Payroll Disbursement clients") instead of it falling back to the generic "PYO Clients — 2026" header — same gap already fixed for the Gov nav in §116.
+- Same multi-bucket behavior as Gov: a PYO client with the Pay. Disb. add-on ticked still also appears under the "PYO" nav item (the `pyo` bucket only excludes exact standalone-service matches, not add-on flags).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Click "Payroll Disbursement" in the sidebar — confirm it now lists both standalone Payroll Disbursement clients and any client with the "PAY. DISB." checkbox ticked on the Add On Services Availed tab (e.g. "DIS TECH PHILIPPINES, LLC" per the screenshot that prompted this).

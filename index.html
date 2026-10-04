@@ -1273,7 +1273,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
         </button>
         <button class="nav-tool-item" id="nav-cl-gov" onclick="goClients('gov')">
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#8139EE;flex-shrink:0;"></span>
-          Sprout and Statutory Module
+          Sprout and Statutory
         </button>
         <button class="nav-tool-item" id="nav-cl-pd" onclick="goClients('pd')">
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF7F00;flex-shrink:0;"></span>
@@ -5328,7 +5328,7 @@ function renderClients(){
   baseData=baseData.filter(function(d){
     if(CL_TYPE==='ps')      return d.service==='Payroll Starter';
     if(CL_TYPE==='gov')     return d.service==='Sprout Gov'||d.service==='Statutory Disbursement'||d.service==='PYO + HR + Sprout Gov'||d.service==='PYO + HR + Statutory Disbursement';
-    if(CL_TYPE==='pd')      return d.service==='Payroll Disbursement';
+    if(CL_TYPE==='pd')      return d.service==='Payroll Disbursement'||!!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].pd);
     if(CL_TYPE==='special') return d.service==='Special Projects'||d.service==='Payroll on Demand'||d.service==='Final Pay on Demand';
     if(CL_TYPE==='addons')  return !!(CL_ADDONS[d.no]&&(CL_ADDONS[d.no].ba||CL_ADDONS[d.no].std));
     if(CL_TYPE==='otk')     return d.service==='Outsourced Timekeeping'||!!(CL_ADDONS[d.no]&&CL_ADDONS[d.no].otk);
@@ -5351,8 +5351,11 @@ function renderClients(){
     if(impGrp)impGrp.style.display='none';
   } else {
     if(CL_TYPE==='gov'){
-      document.getElementById('cl-page-title').textContent='Sprout and Statutory Module — 2026';
+      document.getElementById('cl-page-title').textContent='Sprout and Statutory — 2026';
       document.getElementById('cl-page-sub').textContent='Sprout Gov and Statutory Disbursement implementation projects';
+    } else if(CL_TYPE==='pd'){
+      document.getElementById('cl-page-title').textContent='Payroll Disbursement — 2026';
+      document.getElementById('cl-page-sub').textContent='Standalone and add-on Payroll Disbursement clients';
     } else {
       var typeLabel=CL_TYPE==='ps'?'Payroll Starter':'PYO';
       document.getElementById('cl-page-title').textContent=typeLabel+' Clients — 2026';
