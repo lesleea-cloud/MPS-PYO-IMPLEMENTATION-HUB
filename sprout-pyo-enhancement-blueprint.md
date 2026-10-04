@@ -3887,3 +3887,66 @@ Refreshing the page (F5) or reopening the app in a new tab **while already signe
 1. Redeploy `index.html` to Vercel.
 2. Sign in, then simply refresh the page — confirm you're returned to the login screen (this is now expected, not a bug).
 3. Sign in, switch tabs away and back — confirm still signed in *within that same tab session* (no reload happened), and confirm a genuinely new tab/reload always requires signing in again.
+
+---
+
+## 115. New service option — "PYO + HR + Statutory Disbursement" (October 4, 2026)
+
+### What changed
+Added a new combo service type, matching the existing pattern used by "PYO + HR + Sprout Gov" but pairing Statutory Disbursement instead of Sprout Gov.
+
+### Fix (`index.html`)
+- `#acm-service` dropdown (Add New Client modal) — new `<option>PYO + HR + Statutory Disbursement</option>`, inserted alphabetically after "PYO + HR + Sprout Gov".
+- `.svc-ms-opt` service filter checkboxes (My Clients header filter) — matching new checkbox added.
+- `CL_SERVICES` array — new value added, which drives the inline editable service `<select>` in the Overview table.
+- `svcChips(svc)` — added a generic `indexOf('Statutory')` check so any service string containing "Statutory" (standalone or combo) now renders a `+Stat.` chip, using the same orange color already used for the standalone "Statutory Disbursement" chip.
+
+No other logic needed to change: client-type filtering (`CL_TYPE==='pyo'` bucket), the PS-vs-PYO phase-set logic (`isPS = d.service==='Payroll Starter'`), and the Implementer Dashboard "PYO" status bucket (`d.service.indexOf('PYO')>=0`) all already match on substrings/exclusions rather than an exhaustive service list, so the new combo is automatically treated as a standard PYO-type client (kom/sim/par/live/post phases, appears in PYO client list, counted in the PYO status bucket).
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Add a new client and confirm "PYO + HR + Statutory Disbursement" is selectable and behaves like a PYO client (Parallel Run phase, not Project Checklist).
+3. Confirm the new filter checkbox works on the My Clients page and the chip renders correctly in the Overview table.
+
+---
+
+## 116. "Sprout Gov" sidebar module renamed + now also catches PYO combo clients (October 4, 2026)
+
+### What changed
+The sidebar nav item that filters My Clients down to Sprout Gov / Statutory Disbursement work was renamed, and its membership was widened to also pull in PYO combo clients that include a Sprout Gov or Statutory Disbursement component — previously it only matched clients whose **entire** service was standalone "Sprout Gov" or "Statutory Disbursement".
+
+### Fix (`index.html`)
+- Sidebar nav label (`#nav-cl-gov`) — renamed from "Sprout Gov" to **"Sprout and Statutory Module"**.
+- `renderClients()` — `CL_TYPE==='gov'` filter now also matches `service==='PYO + HR + Sprout Gov'` and `service==='PYO + HR + Statutory Disbursement'`, in addition to the existing standalone "Sprout Gov" / "Statutory Disbursement" matches.
+- Page header shown when this module is open now reads "Sprout and Statutory Module — 2026" / "Sprout Gov and Statutory Disbursement implementation projects", instead of incorrectly falling back to the generic "PYO Clients — 2026" header it was showing before (pre-existing gap — the title logic only special-cased Payroll Starter vs. everything else).
+
+### Note on scope
+These PYO combo clients still also appear under the **PYO** module as before (the `pyo` bucket's exclusion list only drops exact standalone-service matches, not combo strings) — they now show up in both places, same pattern already used for "Stand Alone Add-on Services" clients. Didn't touch Payroll Disbursement / Special Projects / Stand Alone Add-on Services / OTK nav items — their page-title fallback to "PYO Clients — 2026" is the same pre-existing gap but wasn't part of this request.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Click "Sprout and Statutory Module" in the sidebar — confirm the header reads correctly and the list includes standalone Sprout Gov/Statutory Disbursement clients **and** any "PYO + HR + Sprout Gov" / "PYO + HR + Statutory Disbursement" clients.
+3. Confirm those same combo clients still appear under the "PYO" nav item too.
+
+---
+
+## 117. Weekly Implementation Meeting Report — Gov-section undercounting fixed + Live/Churned rows added everywhere (October 4, 2026)
+
+### What changed
+Two issues surfaced while testing the new "PYO + HR + Statutory Disbursement" service and the renamed Gov module: the "Sprout Gov (with PYO) under Implem" row in the Weekly Implementation Meeting Report (Reports → Weekly Status → Weekly Report tab, "Gov" section) was undercounting, and the report had no way to see Live or Churned accounts broken out per category — only an active-implementation snapshot.
+
+### Fix (`index.html`, `renderWeekly()`)
+- **Undercounting bug:** "Sprout Gov (with PYO) under Implem" previously only counted a client if the separate `sg` add-on checkbox was ticked — a client whose base service was literally "PYO + HR + Sprout Gov" wasn't counted unless someone *also* ticked that checkbox. New helper `isGovCombo(d)` matches either the add-on flag **or** service text containing "Sprout Gov". Same fix applied to "Disbursement under Implem" via a new `isStatCombo(d)` helper (add-on flag or service text containing "Statutory Disbursement") — so "PYO + HR + Statutory Disbursement" clients are now counted there too.
+- **New Live/Churned rows**, added to every section that previously only had an active-implementation ("under Implem") count:
+  - Starter: + "Starter - Live", "Starter - Churned"
+  - PYO: + "PYO - Live", "PYO - Churned"
+  - Gov: + "Sprout Gov (with PYO) - Live/Churned", "Sprout Gov stand alone - Live/Churned"
+  - BenAd: + "BenAd - Live", "BenAd - Churned"
+  - Disbursement: + "Disbursement - Live", "Disbursement - Churned"
+  - OTK: + "OTK Under Churned" (an "OTK Under Live" row already existed)
+- **Not touched:** the "For Turnover" section — its two rows are already specifically about Live-status clients pending turnover, so a generic Live/Churned split didn't make sense there (a churned client isn't pending turnover). Flagged this exclusion rather than guessing; let me know if you want it anyway.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open Weekly Status → Weekly Report tab, expand the Gov section, and confirm "Sprout Gov (with PYO) under Implem" now shows nonzero counts where it previously showed all dashes.
+3. Spot-check a couple of the new "- Live" / "- Churned" rows against the actual client list for a resource you know well.

@@ -1099,7 +1099,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
           <select id="acm-service" onchange="acmCheckGov();acmCheckOtk();" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--s2);font-size:12px;font-family:var(--font);color:var(--s8);background:#fff;outline:none;">
             <option value="">— Select service —</option>
             <option>Final Pay on Demand</option><option>Outsourced Timekeeping</option><option>Payroll Disbursement</option><option>Payroll on Demand</option><option>Payroll Starter</option><option>PYO</option><option>PYO + HR</option>
-            <option>PYO + HR + Sprout Gov</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option><option>Special Projects</option>
+            <option>PYO + HR + Sprout Gov</option><option>PYO + HR + Statutory Disbursement</option><option>PYO + Sprout Gov</option><option>Sprout Gov</option><option>Statutory Disbursement</option><option>Special Projects</option>
           </select>
         </div>
         <div id="acm-impl-wrap">
@@ -1273,7 +1273,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
         </button>
         <button class="nav-tool-item" id="nav-cl-gov" onclick="goClients('gov')">
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#8139EE;flex-shrink:0;"></span>
-          Sprout Gov
+          Sprout and Statutory Module
         </button>
         <button class="nav-tool-item" id="nav-cl-pd" onclick="goClients('pd')">
           <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#FF7F00;flex-shrink:0;"></span>
@@ -1599,6 +1599,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
             <label class="svc-ms-opt"><input type="checkbox" value="PYO" onchange="updateSvcMs()"> PYO</label>
             <label class="svc-ms-opt"><input type="checkbox" value="PYO + HR" onchange="updateSvcMs()"> PYO + HR</label>
             <label class="svc-ms-opt"><input type="checkbox" value="PYO + HR + Sprout Gov" onchange="updateSvcMs()"> PYO + HR + Sprout Gov</label>
+            <label class="svc-ms-opt"><input type="checkbox" value="PYO + HR + Statutory Disbursement" onchange="updateSvcMs()"> PYO + HR + Statutory Disbursement</label>
             <label class="svc-ms-opt"><input type="checkbox" value="PYO + Sprout Gov" onchange="updateSvcMs()"> PYO + Sprout Gov</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Sprout Gov" onchange="updateSvcMs()"> Sprout Gov</label>
             <label class="svc-ms-opt"><input type="checkbox" value="Statutory Disbursement" onchange="updateSvcMs()"> Statutory Disbursement</label>
@@ -3718,36 +3719,51 @@ function renderWeekly(){
   function notTurnedOver(d){return !(CL_AFTERHO[d.no]||{}).turnedOver;}
   function noCSM(d){return !(CL_AFTERHO[d.no]||{}).csm;}
 
+  function isGovCombo(d){return /sprout gov/i.test(d.service||'')||!!addon(d,'sg');}
+  function isStatCombo(d){return /statutory disbursement/i.test(d.service||'')||!!addon(d,'std');}
   var SECTIONS=[
     {lbl:'Starter',rows:[
       {lbl:'Starter - On going implem',                    fn:function(d){return isStar(d)&&d.remarks==='Ongoing';}},
       {lbl:'Starter - Not yet started / On Hold',          fn:function(d){return isStar(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
       {lbl:'# of accounts you process Starter',           fn:function(d){return isStar(d)&&d.live===1&&notTurnedOver(d);}},
       {lbl:'Need to turnover Starter - still unassigned',  fn:function(d){return isStar(d)&&d.remarks==='Live'&&notTurnedOver(d)&&noCSM(d);}},
+      {lbl:'Starter - Live',                               fn:function(d){return isStar(d)&&d.remarks==='Live';}},
+      {lbl:'Starter - Churned',                            fn:function(d){return isStar(d)&&d.remarks==='Churned';}},
     ]},
     {lbl:'PYO',rows:[
       {lbl:'PYO - on going Implem',                        fn:function(d){return isPYO(d)&&d.remarks==='Ongoing';}},
       {lbl:'PYO - not yet started / on hold Implem',       fn:function(d){return isPYO(d)&&(d.remarks==='Not yet started'||d.remarks==='On-Hold');}},
       {lbl:'# of accounts you process PYO',               fn:function(d){return isPYO(d)&&d.live===1&&notTurnedOver(d);}},
       {lbl:'Need to turnover PYO - still unassigned',      fn:function(d){return isPYO(d)&&d.remarks==='Live'&&notTurnedOver(d)&&noCSM(d);}},
+      {lbl:'PYO - Live',                                   fn:function(d){return isPYO(d)&&d.remarks==='Live';}},
+      {lbl:'PYO - Churned',                                fn:function(d){return isPYO(d)&&d.remarks==='Churned';}},
     ]},
     {lbl:'For Turnover',rows:[
       {lbl:'Assigned clients For Pending Turnover PYO',    fn:function(d){return isPYO(d)&&d.remarks==='Live'&&notTurnedOver(d);}},
       {lbl:'Assigned clients For Pending Turnover Starter',fn:function(d){return isStar(d)&&d.remarks==='Live'&&notTurnedOver(d);}},
     ]},
     {lbl:'Gov',matchKey:'gov',rows:[
-      {lbl:'Sprout Gov (with PYO) under Implem', fn:function(d){return isPYO(d)&&addon(d,'sg')&&isActive(d);}},
+      {lbl:'Sprout Gov (with PYO) under Implem', fn:function(d){return isPYO(d)&&isGovCombo(d)&&isActive(d);}},
+      {lbl:'Sprout Gov (with PYO) - Live',       fn:function(d){return isPYO(d)&&isGovCombo(d)&&d.remarks==='Live';}},
+      {lbl:'Sprout Gov (with PYO) - Churned',    fn:function(d){return isPYO(d)&&isGovCombo(d)&&d.remarks==='Churned';}},
       {lbl:'Sprout Gov stand alone under Implem', fn:function(d){return /sprout gov/i.test(d.service||'')&&!isPYO(d)&&isActive(d);}},
+      {lbl:'Sprout Gov stand alone - Live',       fn:function(d){return /sprout gov/i.test(d.service||'')&&!isPYO(d)&&d.remarks==='Live';}},
+      {lbl:'Sprout Gov stand alone - Churned',    fn:function(d){return /sprout gov/i.test(d.service||'')&&!isPYO(d)&&d.remarks==='Churned';}},
     ]},
     {lbl:'BenAd',matchKey:'gov',rows:[
       {lbl:'BenAd Under Implem',fn:function(d){return !!addon(d,'ba')&&isActive(d);}},
+      {lbl:'BenAd - Live',      fn:function(d){return !!addon(d,'ba')&&d.remarks==='Live';}},
+      {lbl:'BenAd - Churned',   fn:function(d){return !!addon(d,'ba')&&d.remarks==='Churned';}},
     ]},
     {lbl:'Disbursement',matchKey:'gov',rows:[
-      {lbl:'Disbursement under Implem',fn:function(d){var a=CL_ADDONS[d.no]||{};return !!a.std&&isActive(d);}},
+      {lbl:'Disbursement under Implem',fn:function(d){return isStatCombo(d)&&isActive(d);}},
+      {lbl:'Disbursement - Live',      fn:function(d){return isStatCombo(d)&&d.remarks==='Live';}},
+      {lbl:'Disbursement - Churned',   fn:function(d){return isStatCombo(d)&&d.remarks==='Churned';}},
     ]},
     {lbl:'OTK',matchKey:'otkImpl',rows:[
       {lbl:'OTK Under Implem',fn:function(d){return (!!addon(d,'otk')||d.service==='Outsourced Timekeeping')&&isActive(d);}},
       {lbl:'OTK Under Live',   fn:function(d){return (!!addon(d,'otk')||d.service==='Outsourced Timekeeping')&&d.remarks==='Live';}},
+      {lbl:'OTK Under Churned',fn:function(d){return (!!addon(d,'otk')||d.service==='Outsourced Timekeeping')&&d.remarks==='Churned';}},
     ]},
   ];
 
@@ -4282,7 +4298,7 @@ var CL_TAB='overview';
 var ML_SORT_COL=null,ML_SORT_DIR='asc';
 var CL_TYPE='pyo'; // 'pyo' or 'ps' (payroll starter)
 var CL_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-var CL_SERVICES=['Final Pay on Demand','Outsourced Timekeeping','Payroll Disbursement','Payroll on Demand','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement','Special Projects'];
+var CL_SERVICES=['Final Pay on Demand','Outsourced Timekeeping','Payroll Disbursement','Payroll on Demand','Payroll Starter','PYO','PYO + HR','PYO + HR + Sprout Gov','PYO + HR + Statutory Disbursement','PYO + Sprout Gov','Sprout Gov','Statutory Disbursement','Special Projects'];
 var MON_SELECTED=[];  // multi-select state for month filter
 var SVC_SELECTED=[];  // multi-select state for service filter
 // Extended data for add-on services and after handover (keyed by client no)
@@ -4439,6 +4455,7 @@ function svcChips(svc){
   if(svc.indexOf('PYO')>=0)c.push('<span class="svc-chip" style="color:var(--g4);background:var(--g0);">PYO</span>');
   if(svc.indexOf('HR')>=0)c.push('<span class="svc-chip" style="color:var(--b);background:var(--b0);">+HR</span>');
   if(svc.indexOf('Sprout Gov')>=0)c.push('<span class="svc-chip" style="color:var(--v);background:var(--v0);">'+(svc==='Sprout Gov'?'Gov':'+Gov')+'</span>');
+  if(svc.indexOf('Statutory')>=0)c.push('<span class="svc-chip" style="color:var(--o);background:var(--o0);">+Stat.</span>');
   return c.length?c.join(''):('<span class="svc-chip" style="color:var(--s4);background:var(--s1);">'+svc+'</span>');
 }
 function svcEditStart(no){
@@ -5310,7 +5327,7 @@ function renderClients(){
   // Client type filter
   baseData=baseData.filter(function(d){
     if(CL_TYPE==='ps')      return d.service==='Payroll Starter';
-    if(CL_TYPE==='gov')     return d.service==='Sprout Gov'||d.service==='Statutory Disbursement';
+    if(CL_TYPE==='gov')     return d.service==='Sprout Gov'||d.service==='Statutory Disbursement'||d.service==='PYO + HR + Sprout Gov'||d.service==='PYO + HR + Statutory Disbursement';
     if(CL_TYPE==='pd')      return d.service==='Payroll Disbursement';
     if(CL_TYPE==='special') return d.service==='Special Projects'||d.service==='Payroll on Demand'||d.service==='Final Pay on Demand';
     if(CL_TYPE==='addons')  return !!(CL_ADDONS[d.no]&&(CL_ADDONS[d.no].ba||CL_ADDONS[d.no].std));
@@ -5333,9 +5350,14 @@ function renderClients(){
     if(addBtn)addBtn.style.display='flex';
     if(impGrp)impGrp.style.display='none';
   } else {
-    var typeLabel=CL_TYPE==='ps'?'Payroll Starter':'PYO';
-    document.getElementById('cl-page-title').textContent=typeLabel+' Clients — 2026';
-    document.getElementById('cl-page-sub').textContent=CL_TYPE==='ps'?'Payroll Starter implementation projects':'PYO and complex implementation projects';
+    if(CL_TYPE==='gov'){
+      document.getElementById('cl-page-title').textContent='Sprout and Statutory Module — 2026';
+      document.getElementById('cl-page-sub').textContent='Sprout Gov and Statutory Disbursement implementation projects';
+    } else {
+      var typeLabel=CL_TYPE==='ps'?'Payroll Starter':'PYO';
+      document.getElementById('cl-page-title').textContent=typeLabel+' Clients — 2026';
+      document.getElementById('cl-page-sub').textContent=CL_TYPE==='ps'?'Payroll Starter implementation projects':'PYO and complex implementation projects';
+    }
     document.getElementById('cr').style.display='';
     var canAddDel=true;
     if(addBtn)addBtn.style.display=canAddDel?'flex':'none';
