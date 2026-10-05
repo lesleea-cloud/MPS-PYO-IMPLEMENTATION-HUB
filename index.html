@@ -7889,13 +7889,904 @@ function pvtUnmount(){
   if(PVT_ROOT){ try{PVT_ROOT.unmount();}catch(e){} PVT_ROOT=null; }
 }
 
+// ══════════════ SIMULATION VARIANCE ANALYSIS TOOL (React island — same pattern as pvtMount/pvtUnmount; reuses the .pvt-scope styles and the #pvt-diag error box) ══════════════
+// Checks a client pay register (1st and/or 2nd cut-off) against the policies the client gave in the Payroll Questionnaire:
+// SSS / PhilHealth / HDMF recomputed from the questionnaire's basis + deduction timing, LWOP / late / OT / ND against the
+// factor rate, plus de minimis, hourly pay, and gross/taxable/net arithmetic.
+var SVT_ROOT=null;
+function svtMount(){
+(function(){
+  const { useState, useMemo, useRef, Fragment } = React;
+  const h = React.createElement;
+  const TOL = 0.011;
+
+  // ── Statutory tables — update here when SSS / PhilHealth / Pag-IBIG rates change ──
+  const SSS_CFG = { mscMin: 5000, mscMax: 35000, step: 500, firstBracketTop: 5250, regularCap: 20000, eeRate: 0.05, erRate: 0.10, ecLow: 10, ecHigh: 30, ecThreshold: 15000 };
+  const PHIC_CFG = { rate: 0.05, floor: 10000, ceiling: 100000 };
+  const HDMF_CFG = { mfsCap: 10000, lowIncome: 1500, eeLowRate: 0.01, eeRate: 0.02, erRate: 0.02 };
+
+  const TIMING_LBL = { C1: "1st cut-off in full", C2: "2nd cut-off in full", split: "Split across both cut-offs" };
+  const STATUS_LBL = { pass: "Passed", flag: "Flagged", review: "Review", info: "Info" };
+  const STATUS_CLR = {
+    Passed: { fg: "106510", bg: "E9FAE5" },
+    Flagged: { fg: "A1470B", bg: "FFE5A5" },
+    Review: { fg: "5F21B6", bg: "EEE9FE" },
+    Info: { fg: "1356BA", bg: "D8EBFF" },
+    "Manual review": { fg: "5F5E5A", bg: "F1EFE8" },
+    "Not in register": { fg: "888780", bg: "FFFFFF" }
+  };
+
+  function Icon({ name, size = 14, className = "" }) {
+    const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", className };
+    const paths = {
+      upload: h("path", { d: "M12 16V4M12 4l-4 4M12 4l4 4M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3" }),
+      play: h("path", { d: "M6 4l14 8-14 8V4z" }),
+      download: h("path", { d: "M12 4v12M12 16l-4-4M12 16l4-4M4 20h16" }),
+      back: h("path", { d: "M19 12H5M5 12l6-6M5 12l6 6" }),
+      check: h("path", { d: "M4 12l5 5L20 6" }),
+      alert: h("path", { d: "M12 4l9 16H3L12 4zM12 10v4M12 17h.01" }),
+      file: h("path", { d: "M6 3h9l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" })
+    };
+    return h("svg", { ...common }, paths[name]);
+  }
+
+  // ── helpers ──
+  function r2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
+  function toNumber(v) {
+    if (v === null || v === void 0 || v === "") return 0;
+    if (typeof v === "number") return v;
+    const s = String(v).replace(/,/g, "").replace(/[()]/g, "").trim();
+    const n = parseFloat(s);
+    return isNaN(n) ? 0 : n;
+  }
+  function norm(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); }
+  function fmt(n) { return typeof n === "number" && isFinite(n) ? n.toLocaleString(void 0, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : (n == null ? "" : String(n)); }
+  function isFilled(c) { return c !== null && c !== void 0 && String(c).trim() !== ""; }
+  function sanitizeFilenamePart(s) { return String(s || "").replace(/[\\/:*?"<>|]/g, "").trim(); }
+  function buildReportFilename(companyName) {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, "0"), dd = String(now.getDate()).padStart(2, "0"), yyyy = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, "0"), min = String(now.getMinutes()).padStart(2, "0");
+    return `${sanitizeFilenamePart(companyName) || "Client"}_Simulation Variance Report_${mm}${dd}${yyyy}_${hh}${min}.xlsx`;
+  }
+
+  // ── statutory computations (monthly basis in, monthly amounts out) ──
+  function sssCompute(basis) {
+    const c = SSS_CFG;
+    let msc;
+    if (basis < c.firstBracketTop) msc = c.mscMin;
+    else if (basis >= c.mscMax - c.step / 2) msc = c.mscMax;
+    else msc = Math.floor((basis - c.firstBracketTop) / c.step) * c.step + c.firstBracketTop + c.step / 2;
+    const regular = Math.min(msc, c.regularCap), mpf = Math.max(0, msc - c.regularCap);
+    return { msc, sssEE: r2(regular * c.eeRate), mpfEE: r2(mpf * c.eeRate), sssER: r2(regular * c.erRate), mpfER: r2(mpf * c.erRate), ec: msc < c.ecThreshold ? c.ecLow : c.ecHigh };
+  }
+  function phicCompute(basis) {
+    const b = Math.min(Math.max(basis, PHIC_CFG.floor), PHIC_CFG.ceiling);
+    const total = r2(b * PHIC_CFG.rate);
+    const ee = Math.floor(total * 100 / 2 + 1e-9) / 100; // odd centavo goes to the employer share
+    return { phicEE: ee, phicER: r2(total - ee) };
+  }
+  function hdmfCompute(basis, pol) {
+    if (pol.hdmfMode === "fixed") return { hdmfEE: r2(pol.hdmfFixed), hdmfER: r2(pol.hdmfFixed) };
+    const mfs = Math.min(basis, HDMF_CFG.mfsCap);
+    return { hdmfEE: r2(mfs * (basis <= HDMF_CFG.lowIncome ? HDMF_CFG.eeLowRate : HDMF_CFG.eeRate)), hdmfER: r2(mfs * HDMF_CFG.erRate) };
+  }
+
+  // ── questionnaire parsing ──
+  // Handles both export layouts: a single header row ("Are you using the following? [ Pay Groups ]") and a two-row
+  // header where multi-choice sub-options sit on row 2 under a blank-continued parent question. Also accepts a
+  // vertical layout (question in column A, answer in column B).
+  function parseQuestionnaireAoa(aoa) {
+    const rows = (aoa || []).filter((r) => r && r.some(isFilled));
+    if (!rows.length) return { answers: [], responses: 0 };
+    const head = rows[0].map((c) => (c == null ? "" : String(c).trim()));
+    const filled0 = head.filter(Boolean).length;
+    if (filled0 <= 3 && rows.length >= 10) {
+      const answers = rows.map((r) => ({ q: String(r[0] || "").trim(), a: r[1] == null ? "" : String(r[1]).trim() })).filter((x) => x.q);
+      return { answers, responses: 1 };
+    }
+    let sub = null, dataStart = 1;
+    if (rows.length >= 3) {
+      const filled1 = rows[1].filter(isFilled).length;
+      if (filled1 > 0 && filled1 <= Math.max(3, filled0 / 4)) {
+        sub = rows[1].map((c) => (c == null ? "" : String(c).trim()));
+        dataStart = 2;
+      }
+    }
+    const dataRows = rows.slice(dataStart);
+    if (!dataRows.length) return { answers: [], responses: 0 };
+    const data = dataRows[dataRows.length - 1]; // latest response
+    const answers = [];
+    let parent = "";
+    const width = Math.max(head.length, sub ? sub.length : 0, data.length);
+    for (let i = 0; i < width; i++) {
+      if (head[i]) parent = head[i];
+      let q = head[i] || (sub && sub[i] ? parent : "");
+      if (!q) continue;
+      if (sub && sub[i]) q = `${head[i] || parent} [ ${sub[i]} ]`;
+      answers.push({ q, a: data[i] == null ? "" : String(data[i]).trim() });
+    }
+    return { answers, responses: dataRows.length };
+  }
+  function findAnswer(answers, keys) {
+    for (const k of keys) { const hit = answers.find((x) => norm(x.q) === k); if (hit) return hit.a; }
+    for (const k of keys) { const hit = answers.find((x) => norm(x.q).startsWith(k)); if (hit) return hit.a; }
+    for (const k of keys) { const hit = answers.find((x) => norm(x.q).includes(k)); if (hit) return hit.a; }
+    return "";
+  }
+  function extractRaw(a) {
+    const f = (...k) => findAnswer(a, k);
+    return {
+      company: f("companyname"),
+      frequency: f("payrollfrequencybeingused"),
+      payout: f("pleaselistdownpayoutdates"),
+      cutoff: f("pleaselistdownthecorrespondingcutoffperpayout"),
+      workHours: f("workhoursperdayworkdaysperyear", "workhoursperday"),
+      tax: f("taxcomputationbasis"),
+      preAnnual: f("preannualizationcomputation"),
+      annual: f("annualizationcomputation"),
+      bonusReclass: f("doweneedtoreclassify"),
+      absent: f("absentcomputationinclusion"),
+      late: f("lateundertimecomputationinclusion"),
+      otRates: f("otratespolicy"),
+      otElig: f("oteligibility"),
+      otBasis: f("overtimecomputationinclusion"),
+      thirteenthPeriod: f("13thmonthpayperiod"),
+      thirteenth: f("13thmonthpaycomputation"),
+      thirteenthIncl: f("13thmonthpayinclusions"),
+      finalPayFreq: f("finalpayfrequencypermonth"),
+      finalPayStat: f("todeductthecorrespondingstatutory"),
+      sss: f("ssscontributionbasis"),
+      sssFreq: f("ssscontributiondeductionfrequency"),
+      phic: f("phiccontributionbasis"),
+      phicFreq: f("phiccontributiondeductionfrequency"),
+      hdmf: f("hdmfcontributionbasis"),
+      hdmfFreq: f("hdmfcontributiondeductionfrequency"),
+      demin: f("doyouhavedeminimisincome"),
+      special: f("specialinstructionsornotes"),
+      dailyPaid: f("doyouhavethefollowingdailypaidemployees")
+    };
+  }
+  function parseTiming(text) {
+    const t = String(text || "").toLowerCase();
+    const m = t.match(/(1st|first|2nd|second)\s*(?:payout|pay-?out|cut-?off|cutoff|payroll)?\s*(?:in\s*)?full/);
+    if (m) return /1st|first/.test(m[1]) ? "C1" : "C2";
+    if (/split|equal|every|each|both|half|50/.test(t)) return "split";
+    if (/2nd|second|end of (the )?month/.test(t)) return "C2";
+    if (/1st|first/.test(t)) return "C1";
+    return "C2";
+  }
+  function derivePolicies(answers, raw) {
+    const wd = (raw.workHours.match(/\b(2\d\d|3[0-6]\d)\b/) || [])[1];
+    const hp = (raw.workHours.match(/(\d+(?:\.\d+)?)\s*(?:hrs?|hours|working\s*hours)/i) || [])[1];
+    const fixedM = raw.hdmf.match(/fixed\s*(?:php|₱|p)?\s*([\d,]+(?:\.\d+)?)/i);
+    return {
+      companyName: raw.company,
+      workDays: wd ? +wd : 261,
+      hoursPerDay: hp ? +hp : 8,
+      sssBasis: /gross/i.test(raw.sss) ? "gross" : "basic",
+      sssTiming: parseTiming(raw.sssFreq),
+      phicBasis: /gross/i.test(raw.phic) ? "gross" : "basic",
+      phicTiming: parseTiming(raw.phicFreq),
+      hdmfMode: fixedM ? "fixed" : "table",
+      hdmfFixed: fixedM ? toNumber(fixedM[1]) : 200,
+      hdmfTiming: parseTiming(raw.hdmfFreq),
+      deminimis: /^\s*yes/i.test(raw.demin),
+      hourlyAllowed: answers.some((x) => /hourly/i.test(x.a)),
+      deductAbsFromBasis: false
+    };
+  }
+
+  // ── register parsing (same heuristics as the Parallel Run tool) ──
+  function guessHeaderRow(aoa) {
+    let best = 0, bestScore = -1;
+    for (let r = 0; r < Math.min(aoa.length, 15); r++) {
+      const score = (aoa[r] || []).filter((c) => typeof c === "string" && c.trim() !== "").length;
+      if (score > bestScore) { bestScore = score; best = r; }
+    }
+    return best;
+  }
+  function looksLikeDataSheet(aoa) {
+    if (!aoa || aoa.length < 2) return false;
+    const headerRow = guessHeaderRow(aoa);
+    if ((aoa[headerRow] || []).filter((c) => typeof c === "string" && c.trim() !== "").length < 3) return false;
+    for (let r = headerRow + 1; r < Math.min(aoa.length, headerRow + 30); r++) {
+      if ((aoa[r] || []).filter(isFilled).length >= 2) return true;
+    }
+    return false;
+  }
+  function getColumns(aoa, headerRowIdx) {
+    const headerRowArr = aoa[headerRowIdx] || [];
+    let maxCols = headerRowArr.length;
+    const scanEnd = Math.min(aoa.length, headerRowIdx + 300);
+    for (let r = headerRowIdx; r < scanEnd; r++) { const row = aoa[r]; if (row && row.length > maxCols) maxCols = row.length; }
+    const cols = [];
+    for (let idx = 0; idx < maxCols; idx++) {
+      const hv = headerRowArr[idx];
+      if (isFilled(hv)) cols.push({ idx, name: String(hv).trim() });
+    }
+    return cols;
+  }
+  function isNoiseRow(idVal, nameVal) {
+    const idStr = String(idVal ?? "").trim(), nameStr = String(nameVal ?? "").trim();
+    const noise = /^(sub\s*)?total:?$|^grand\s*total:?$|^department\s*[:]/i;
+    if (!idStr) return true;
+    return noise.test(idStr) || noise.test(nameStr);
+  }
+  const ROLES = [
+    { key: "id", label: "Employee ID", m: (n) => ["empno", "employeeid", "empid", "employeeno", "employeenumber", "idno", "id", "employeecode"].includes(n) || n.startsWith("employeeid") },
+    { key: "name", label: "Employee name", m: (n) => ["name", "fullname", "employeename", "workername", "employee"].includes(n) },
+    { key: "basic", label: "Basic pay", m: (n) => ["basicpay", "basicsalary", "basic", "basicsalarysemimonthly", "basicpaysemimonthly", "regularpay"].includes(n) },
+    { key: "basicAdj", label: "Basic pay adjustment", m: (n) => (n.includes("basic") && n.includes("adj")) || n === "salaryadjustment" },
+    { key: "hourly", label: "Hourly pay", m: (n) => n.includes("hourlypay") && !n.includes("ytd") },
+    { key: "ot", label: "Regular OT", m: (n) => ["regot", "ot", "overtime", "ottotal", "overtimepay", "regularot", "regularovertime"].includes(n) },
+    { key: "nd", label: "Regular night diff", m: (n) => ["regnd", "nd", "nightdiff", "nightdifferential", "regularnd"].includes(n) },
+    { key: "bonus", label: "Bonus", m: (n) => n === "bonus" || n === "bonuses" },
+    { key: "demin", label: "De minimis", m: (n) => n.includes("deminimis") && !/deduction|monthly|daily|exempt/.test(n) },
+    { key: "lwop", label: "LWOP / absent deduction (amount)", m: (n) => ["lwop", "totalabsentdeduction", "absent", "absentdeduction", "absences"].includes(n) || n.includes("leavewithoutpay") },
+    { key: "lopDays", label: "LOP / days absent", m: (n) => ["lop", "lopdays", "daysabsent", "absentdays", "dayslwop"].includes(n) },
+    { key: "late", label: "Late / undertime deduction (amount)", m: (n) => ["late", "totallatededuction", "latededuction", "undertime", "tardiness", "lateundertime", "undertimededuction"].includes(n) },
+    { key: "gross", label: "Gross", m: (n) => ["gross", "grosspay", "grossincome", "grosssalary", "totalgross", "totalsalary"].includes(n) },
+    { key: "taxable", label: "Taxable income", m: (n) => n.startsWith("taxableincome") || n === "taxablegross" || n === "taxable" },
+    { key: "wtax", label: "Withholding tax", m: (n) => ["withholdingtax", "wtax", "withholdingcompensationtax", "tax"].includes(n) },
+    { key: "sssEE", label: "SSS EE", m: (n) => ["sss", "sssee", "sssemployee", "sssemployeeshare", "sssemployeecontribution", "ssscontribution"].includes(n) },
+    { key: "mpfEE", label: "SSS MPF EE", m: (n) => ["mandatoryprovidentfundemployee", "sssmpf", "mpf", "mpfee", "sssprovident", "sssmpfee", "wisp", "wispee"].includes(n) },
+    { key: "phicEE", label: "PhilHealth EE", m: (n) => ["philhealth", "phic", "philhealthemployee", "phicee", "philhealthee", "phee", "phicemployee"].includes(n) },
+    { key: "hdmfEE", label: "HDMF EE", m: (n) => ["hdmf", "hdmfee", "hdmfemployee", "pagibig", "pagibigee", "pagibigemployee"].includes(n) },
+    { key: "sssER", label: "SSS ER", m: (n) => ["ssser", "sssemployer", "sssemployershare", "sssercontribution"].includes(n) },
+    { key: "mpfER", label: "SSS MPF ER", m: (n) => ["mandatoryprovidentfundemployer", "sssmpfer", "mpfer", "wisper"].includes(n) },
+    { key: "ec", label: "SSS EC", m: (n) => ["sssec", "ec", "ecer", "ssseccontribution"].includes(n) },
+    { key: "phicER", label: "PhilHealth ER", m: (n) => ["philhealthemployer", "phicer", "pher", "philhealther", "phicemployer"].includes(n) },
+    { key: "hdmfER", label: "HDMF ER", m: (n) => ["hdmfemployer", "hdmfer", "pagibiger", "pagibigemployer"].includes(n) },
+    { key: "sssEEAdj", label: "SSS EE adjustment", m: (n) => n.startsWith("sss") && n.includes("adj") && !n.includes("employer") && !n.includes("mpf") && !n.includes("provident") },
+    { key: "mpfEEAdj", label: "MPF EE adjustment", m: (n) => (n.includes("providentfundemployee") && n.includes("adj")) || n === "mpfeeadjustment" },
+    { key: "phicEEAdj", label: "PhilHealth EE adjustment", m: (n) => (n.includes("philhealth") || n.includes("phic")) && n.includes("adj") && !n.includes("employer") },
+    { key: "hdmfEEAdj", label: "HDMF EE adjustment", m: (n) => n.includes("hdmf") && n.includes("employee") && n.includes("adj") },
+    { key: "totalDed", label: "Total deductions", m: (n) => n.startsWith("totaldedn") || n.startsWith("totaldeduction") || n === "deductionstotal" },
+    { key: "net", label: "Net pay", m: (n) => n === "netpay" || n === "net" }
+  ];
+  const ADJ_ROLES = ["sssEEAdj", "mpfEEAdj", "phicEEAdj", "hdmfEEAdj"];
+  function guessRoles(columns) {
+    const roles = {}, used = new Set();
+    ROLES.forEach((r) => {
+      const col = columns.find((c) => !used.has(c.idx) && r.m(norm(c.name)));
+      roles[r.key] = col ? col.idx : null;
+      if (col) used.add(col.idx);
+    });
+    return roles;
+  }
+  function buildCfg(aoa, headerRow) {
+    const columns = getColumns(aoa, headerRow);
+    return { headerRow, columns, roles: guessRoles(columns) };
+  }
+  function extractEmployees(aoa, cfg) {
+    const map = {};
+    const { roles } = cfg;
+    for (let r = cfg.headerRow + 1; r < aoa.length; r++) {
+      const row = aoa[r];
+      if (!row) continue;
+      const idVal = row[roles.id], nameVal = roles.name != null ? row[roles.name] : "";
+      if (isNoiseRow(idVal, nameVal)) continue;
+      const key = String(idVal).trim().toLowerCase();
+      const v = {};
+      ROLES.forEach((ro) => { if (ro.key !== "id" && ro.key !== "name" && roles[ro.key] != null) v[ro.key] = toNumber(row[roles[ro.key]]); });
+      map[key] = { rawId: String(idVal).trim(), name: nameVal ? String(nameVal).trim() : "", v };
+    }
+    return map;
+  }
+  function cutHint(name) {
+    const n = String(name || "").toLowerCase();
+    if (/\bc\s*1\b|cycle\s*1|1st|first|cut-?off\s*1/.test(n)) return "C1";
+    if (/\bc\s*2\b|cycle\s*2|2nd|second|cut-?off\s*2/.test(n)) return "C2";
+    return null;
+  }
+  function autoPickCutoffs(sheets, pol) {
+    const cand = sheets.filter((s) => s.isData && !s.hidden);
+    const pick = { C1: "", C2: "" };
+    cand.forEach((s) => { const hint = cutHint(s.name) || cutHint(s.fileName); if (hint && !pick[hint]) pick[hint] = s.key; });
+    const rest = cand.filter((s) => s.key !== pick.C1 && s.key !== pick.C2);
+    if (!pick.C1 && !pick.C2 && rest.length === 1) pick[pol && pol.sssTiming === "C1" ? "C1" : "C2"] = rest[0].key;
+    else if (!pick.C1 && !pick.C2 && rest.length >= 2) { pick.C1 = rest[0].key; pick.C2 = rest[1].key; }
+    return pick;
+  }
+
+  // ── the analysis ──
+  function analyze(pol, raw, cuts) {
+    const out = [];
+    const ids = Array.from(new Set([...Object.keys(cuts.C1 ? cuts.C1.map : {}), ...Object.keys(cuts.C2 ? cuts.C2.map : {})]));
+    const has = (cut, k) => !!cuts[cut] && cuts[cut].roles[k] != null;
+    const both = !!(cuts.C1 && cuts.C2);
+    ids.forEach((id) => {
+      const E = { C1: cuts.C1 && cuts.C1.map[id], C2: cuts.C2 && cuts.C2.map[id] };
+      const anyE = E.C2 || E.C1;
+      const rawId = anyE.rawId, name = (E.C2 && E.C2.name) || (E.C1 && E.C1.name) || "";
+      const val = (e, k) => (e && e.v[k] != null ? e.v[k] : 0);
+      const push = (rule, cut, register, expected, status, note) => out.push({ id: rawId, name, cut, rule, register, expected, status, note });
+
+      // monthly contribution basis. Absences are NOT deducted by default — matches how Sprout computes it.
+      const part = (e, kind) => kind === "gross" ? val(e, "gross") : val(e, "basic") + val(e, "basicAdj") + val(e, "hourly") - (pol.deductAbsFromBasis ? Math.abs(val(e, "lwop")) + Math.abs(val(e, "late")) : 0);
+      const regular = (e, kind) => kind === "gross" ? val(e, "gross") : val(e, "basic") + val(e, "hourly"); // stand-in for a cut-off that isn't uploaded (one-off adjustments excluded)
+      function basisFor(kind, timing) {
+        if (timing === "C1") {
+          const e = E.C1 || E.C2;
+          return { basis: part(e, kind) + regular(e, kind), assumed: !E.C1, note: E.C1 ? "C1 + assumed C2 (deducted on 1st cut-off)" : "assumed 2 × C2 (no 1st cut-off for this employee)" };
+        }
+        if (E.C1 && E.C2) return { basis: part(E.C1, kind) + part(E.C2, kind), assumed: false, note: "C1 + C2" };
+        const e = E.C1 || E.C2;
+        return { basis: part(e, kind) + regular(e, kind), assumed: true, note: `assumed 2 × ${E.C1 ? "C1" : "C2"} (other cut-off not uploaded)` };
+      }
+
+      // ── government contributions ──
+      const CONTRIBS = [
+        { rule: "sssEE", timing: pol.sssTiming, kind: pol.sssBasis, calc: (b) => sssCompute(b).sssEE },
+        { rule: "mpfEE", timing: pol.sssTiming, kind: pol.sssBasis, calc: (b) => sssCompute(b).mpfEE },
+        { rule: "sssER", timing: pol.sssTiming, kind: pol.sssBasis, calc: (b) => sssCompute(b).sssER },
+        { rule: "mpfER", timing: pol.sssTiming, kind: pol.sssBasis, calc: (b) => sssCompute(b).mpfER },
+        { rule: "ec", timing: pol.sssTiming, kind: pol.sssBasis, calc: (b) => sssCompute(b).ec },
+        { rule: "phicEE", timing: pol.phicTiming, kind: pol.phicBasis, calc: (b) => phicCompute(b).phicEE },
+        { rule: "phicER", timing: pol.phicTiming, kind: pol.phicBasis, calc: (b) => phicCompute(b).phicER },
+        { rule: "hdmfEE", timing: pol.hdmfTiming, kind: "basic", calc: (b) => hdmfCompute(b, pol).hdmfEE },
+        { rule: "hdmfER", timing: pol.hdmfTiming, kind: "basic", calc: (b) => hdmfCompute(b, pol).hdmfER }
+      ];
+      CONTRIBS.forEach((c) => {
+        const bi = basisFor(c.kind, c.timing);
+        if (!(bi.basis > 0)) return; // nothing paid this month — nothing to recompute
+        const full = c.calc(bi.basis);
+        ["C1", "C2"].forEach((cut) => {
+          const e = E[cut];
+          if (!e) return;
+          const exp = c.timing === "split" ? r2(full / 2) : c.timing === cut ? full : 0;
+          const basisTxt = `Monthly basis ₱${fmt(bi.basis)} (${c.kind === "gross" ? "gross" : "basic"}; ${bi.note})`;
+          if (!has(cut, c.rule)) {
+            if (exp === 0) push(c.rule, cut, 0, 0, "pass", "Not deducted this cut-off, per policy");
+            else push(c.rule, cut, 0, exp, "flag", `Column not found in this cut-off's sheet. ${basisTxt}`);
+            return;
+          }
+          const reg = val(e, c.rule);
+          const ok = Math.abs(reg - exp) <= TOL;
+          let note = basisTxt;
+          if (!ok && exp === 0) note = `Deducted on the wrong cut-off — policy: ${TIMING_LBL[c.timing]}. ${basisTxt}`;
+          push(c.rule, cut, reg, exp, ok ? "pass" : (bi.assumed ? "review" : "flag"), ok ? note : note + (bi.assumed ? " — basis is assumed, upload both cut-offs to confirm" : ""));
+        });
+      });
+      ["C1", "C2"].forEach((cut) => {
+        const e = E[cut];
+        if (!e) return;
+        ADJ_ROLES.forEach((k) => {
+          const v = val(e, k);
+          if (Math.abs(v) > TOL) push("adj", cut, v, 0, "info", `${ROLES.find((r) => r.key === k).label} — catch-up or correction, confirm it's expected`);
+        });
+      });
+
+      // ── daily / hourly rate checks (factor rate from the questionnaire) ──
+      const monthlyRate = E.C1 && E.C2 ? val(E.C1, "basic") + val(E.C1, "basicAdj") + val(E.C2, "basic") + val(E.C2, "basicAdj") : 2 * val(anyE, "basic") + val(anyE, "basicAdj");
+      const rateNote = E.C1 && E.C2 ? "C1 + C2 basic incl. adjustments" : "assumed 2 × cut-off basic";
+      if (monthlyRate > 0) {
+        const daily = monthlyRate * 12 / pol.workDays;
+        const hourlyRate = daily / pol.hoursPerDay;
+        const perMin = hourlyRate / 60;
+        const rateTxt = `daily rate ₱${fmt(daily)} = monthly ₱${fmt(monthlyRate)} (${rateNote}) × 12 ÷ ${pol.workDays}`;
+        ["C1", "C2"].forEach((cut) => {
+          const e = E[cut];
+          if (!e) return;
+          const lw = Math.abs(val(e, "lwop"));
+          if (lw > TOL) {
+            const mins = lw / perMin, exp = r2(Math.round(mins) * perMin), days = lw / daily;
+            let status = Math.abs(lw - exp) <= 0.05 ? "pass" : "flag";
+            let note = `${days.toFixed(3)} day(s) at ${rateTxt}`;
+            if (has(cut, "lopDays")) {
+              const lop = val(e, "lopDays");
+              if (Math.abs(lop - days) > 0.01) { if (status === "pass") status = "review"; note += `; LOP column shows ${lop} day(s)`; }
+            }
+            if (status === "flag") note = `Doesn't equal a whole number of minutes — ${note}`;
+            push("lwop", cut, lw, exp, status, note);
+          }
+          const lt = Math.abs(val(e, "late"));
+          if (lt > TOL) {
+            const mins = lt / perMin, exp = r2(Math.round(mins) * perMin);
+            const ok = Math.abs(lt - exp) <= 0.05;
+            push("late", cut, lt, exp, ok ? "pass" : "flag", `${mins.toFixed(1)} minute(s) at ₱${fmt(perMin)}/min (${rateTxt} ÷ ${pol.hoursPerDay} hrs ÷ 60)`);
+          }
+          const ot = val(e, "ot");
+          if (ot > TOL) {
+            const hrs = ot / (hourlyRate * 1.25), q = Math.round(hrs * 4) / 4;
+            const ok = Math.abs(hrs - q) <= 0.01;
+            push("ot", cut, ot, r2(q * hourlyRate * 1.25), ok ? "pass" : "review", `≈ ${hrs.toFixed(2)} hr(s) at 125% of ₱${fmt(hourlyRate)}/hr${ok ? "" : " — not a whole 15-min block; may include rest-day/holiday OT or a different rate"}. Eligibility per questionnaire: ${raw.otElig || "—"}`);
+          }
+          const nd = val(e, "nd");
+          if (nd > TOL) {
+            const hrs = nd / (hourlyRate * 0.10), q = Math.round(hrs * 4) / 4;
+            const ok = Math.abs(hrs - q) <= 0.01;
+            push("nd", cut, nd, r2(q * hourlyRate * 0.10), ok ? "pass" : "review", `≈ ${hrs.toFixed(2)} hr(s) at 10% of ₱${fmt(hourlyRate)}/hr`);
+          }
+        });
+      }
+
+      // ── policy flags + arithmetic, per cut-off ──
+      ["C1", "C2"].forEach((cut) => {
+        const e = E[cut];
+        if (!e) return;
+        if (!pol.deminimis) {
+          const d = val(e, "demin");
+          if (!has(cut, "demin")) push("demin", cut, 0, 0, "pass", "No de minimis column in this cut-off, per questionnaire");
+          else push("demin", cut, d, 0, d > TOL ? "flag" : "pass", d > TOL ? "Questionnaire says no de minimis, but an amount was paid" : "No de minimis paid, per questionnaire");
+        }
+        const hr = val(e, "hourly");
+        if (hr > TOL) {
+          const ok = pol.hourlyAllowed && val(e, "basic") === 0;
+          push("hourly", cut, hr, hr, ok ? "pass" : "review", ok ? `Hourly-paid employee — questionnaire: ${raw.special || "hourly pay mentioned"}` : (val(e, "basic") !== 0 ? "Has both basic pay and hourly pay" : "Hourly pay found, but the questionnaire doesn't mention hourly-paid employees"));
+        }
+        if (has(cut, "gross")) {
+          const exp = r2(val(e, "basic") + val(e, "basicAdj") + val(e, "hourly") + val(e, "ot") + val(e, "nd") + val(e, "bonus") + val(e, "demin") - Math.abs(val(e, "lwop")) - Math.abs(val(e, "late")));
+          const g = val(e, "gross");
+          const ok = Math.abs(g - exp) <= TOL;
+          push("gross", cut, g, exp, ok ? "pass" : "review", ok ? "Gross = sum of mapped earnings − absences" : "Gross doesn't equal the mapped earnings − absences — may include an earning column that isn't mapped");
+        }
+        if (has(cut, "gross") && has(cut, "taxable")) {
+          const contribs = val(e, "sssEE") + val(e, "mpfEE") + val(e, "phicEE") + val(e, "hdmfEE") + ADJ_ROLES.reduce((a, k) => a + val(e, k), 0);
+          const A = r2(val(e, "gross") - contribs - val(e, "demin"));
+          const bonus = val(e, "bonus");
+          const B = r2(A - bonus);
+          const t = val(e, "taxable");
+          if (bonus > TOL && Math.abs(t - B) <= TOL) push("taxable", cut, t, B, "pass", `Bonus ₱${fmt(bonus)} treated as non-taxable`);
+          else if (bonus > TOL && Math.abs(t - A) <= TOL) push("taxable", cut, t, A, "review", `Bonus ₱${fmt(bonus)} fully taxed — check against the ₱90,000 non-taxable ceiling (questionnaire, reclassify part of 90k bonus: "${raw.bonusReclass || "—"}")`);
+          else push("taxable", cut, t, A, Math.abs(t - A) <= TOL ? "pass" : "review", "Taxable = gross − SSS/MPF/PhilHealth/HDMF EE (incl. adjustments) − de minimis");
+        }
+        if (has(cut, "gross") && has(cut, "totalDed") && has(cut, "net")) {
+          const exp = r2(val(e, "gross") - val(e, "totalDed"));
+          const n = val(e, "net");
+          push("net", cut, n, exp, Math.abs(n - exp) <= TOL ? "pass" : "flag", "Net = gross − total deductions");
+        }
+      });
+    });
+
+    // ── summary ──
+    const tl = (t) => TIMING_LBL[t] || t;
+    const join = (...xs) => xs.filter((x) => x && String(x).trim()).join(" · ");
+    const basisLbl = (k) => (k === "gross" ? "Gross" : "Basic");
+    const RULES = [
+      { id: "sssEE", label: "SSS — EE contribution", ans: join(raw.sss, raw.sssFreq), used: `${basisLbl(pol.sssBasis)} · ${tl(pol.sssTiming)}` },
+      { id: "mpfEE", label: "SSS — MPF EE", ans: join(raw.sss, raw.sssFreq), used: `${basisLbl(pol.sssBasis)} · ${tl(pol.sssTiming)}` },
+      { id: "sssER", label: "SSS — ER contribution", ans: join(raw.sss, raw.sssFreq), used: `${basisLbl(pol.sssBasis)} · ${tl(pol.sssTiming)}` },
+      { id: "mpfER", label: "SSS — MPF ER", ans: join(raw.sss, raw.sssFreq), used: `${basisLbl(pol.sssBasis)} · ${tl(pol.sssTiming)}` },
+      { id: "ec", label: "SSS — EC", ans: join(raw.sss, raw.sssFreq), used: `${basisLbl(pol.sssBasis)} · ${tl(pol.sssTiming)}` },
+      { id: "phicEE", label: "PhilHealth — EE", ans: join(raw.phic, raw.phicFreq), used: `${basisLbl(pol.phicBasis)} · ${tl(pol.phicTiming)}` },
+      { id: "phicER", label: "PhilHealth — ER", ans: join(raw.phic, raw.phicFreq), used: `${basisLbl(pol.phicBasis)} · ${tl(pol.phicTiming)}` },
+      { id: "hdmfEE", label: "HDMF — EE", ans: join(raw.hdmf, raw.hdmfFreq), used: `${pol.hdmfMode === "fixed" ? "Fixed ₱" + fmt(pol.hdmfFixed) : "Pag-IBIG table"} · ${tl(pol.hdmfTiming)}` },
+      { id: "hdmfER", label: "HDMF — ER", ans: join(raw.hdmf, raw.hdmfFreq), used: `${pol.hdmfMode === "fixed" ? "Fixed ₱" + fmt(pol.hdmfFixed) : "Pag-IBIG table"} · ${tl(pol.hdmfTiming)}` },
+      { id: "adj", label: "Contribution adjustments", ans: "", used: "Any non-zero EE adjustment" },
+      { id: "lwop", label: "Absences (LWOP)", ans: join(raw.absent, raw.workHours), used: `Basic · ${pol.workDays} days/yr · ${pol.hoursPerDay} hrs/day` },
+      { id: "late", label: "Late / undertime", ans: join(raw.late, raw.workHours), used: `Basic · ${pol.workDays} days/yr · ${pol.hoursPerDay} hrs/day` },
+      { id: "ot", label: "Overtime", ans: join(raw.otRates, raw.otElig, raw.otBasis), used: "125% of hourly basic rate" },
+      { id: "nd", label: "Night differential", ans: raw.otRates, used: "10% of hourly basic rate" },
+      { id: "demin", label: "De minimis", ans: raw.demin, used: pol.deminimis ? "Has de minimis (not checked)" : "None expected" },
+      { id: "hourly", label: "Hourly-paid employees", ans: join(raw.special, raw.dailyPaid), used: pol.hourlyAllowed ? "Hourly pay allowed" : "Not mentioned" },
+      { id: "gross", label: "Gross pay arithmetic", ans: "", used: "Sum of mapped earnings − absences" },
+      { id: "taxable", label: "Taxable income", ans: join(raw.tax, raw.bonusReclass ? "Reclassify 90k bonus: " + raw.bonusReclass : ""), used: "Gross − EE contributions − de minimis" },
+      { id: "net", label: "Net pay arithmetic", ans: "", used: "Gross − total deductions" },
+      { id: "wtaxManual", label: "Withholding tax computation", manual: true, ans: join(raw.tax, raw.preAnnual && "Pre-annualization: " + raw.preAnnual, raw.annual && "Annualization: " + raw.annual), used: "Needs the YTD tax table — check manually" },
+      { id: "thirteenthManual", label: "13th month pay", manual: true, ans: join(raw.thirteenthPeriod, raw.thirteenth, raw.thirteenthIncl), used: "Not in a regular register — check manually" },
+      { id: "finalPayManual", label: "Final pay", manual: true, ans: join(raw.finalPayFreq, raw.finalPayStat && "Deduct statutory: " + raw.finalPayStat), used: "Check manually" },
+      { id: "freqManual", label: "Payroll frequency & cut-offs", manual: true, ans: join(raw.frequency, raw.payout, raw.cutoff), used: "Check against the register period" }
+    ];
+    const summary = RULES.map((r) => {
+      const rows = out.filter((x) => x.rule === r.id);
+      const c = { pass: 0, flag: 0, review: 0, info: 0 };
+      rows.forEach((x) => c[x.status]++);
+      const checked = new Set(rows.map((x) => x.id)).size;
+      let status;
+      if (r.manual) status = "Manual review";
+      else if (!rows.length) status = "Not in register";
+      else if (c.flag) status = "Flagged";
+      else if (c.review) status = "Review";
+      else if (c.info) status = "Info";
+      else status = "Passed";
+      return { ...r, checked, passed: c.pass, flagged: c.flag, review: c.review, info: c.info, status };
+    });
+    const ruleLabel = {};
+    RULES.forEach((r) => { ruleLabel[r.id] = r.label; });
+    out.forEach((x) => { x.label = ruleLabel[x.rule] || x.rule; });
+    const order = {};
+    RULES.forEach((r, i) => { order[r.id] = i; });
+    out.sort((a, b) => String(a.id).localeCompare(String(b.id), void 0, { numeric: true }) || (a.cut < b.cut ? -1 : a.cut > b.cut ? 1 : 0) || order[a.rule] - order[b.rule]);
+    return {
+      summary, rows: out, employees: ids.length,
+      basisNote: both ? "C1 + C2 of the same month (both cut-offs uploaded)" : "Assumed 2 × the uploaded cut-off — upload both cut-offs for exact checks"
+    };
+  }
+
+  // ── component ──
+  function SimulationVarianceTool() {
+    const [step, setStep] = useState("upload");
+    const [error, setError] = useState("");
+    const [dragOver, setDragOver] = useState(null);
+    const [qn, setQn] = useState(null);
+    const [pol, setPol] = useState(null);
+    const [regFiles, setRegFiles] = useState([]);
+    const [sheets, setSheets] = useState([]);
+    const [cfg, setCfg] = useState({});
+    const [cutSel, setCutSel] = useState({ C1: "", C2: "" });
+    const [results, setResults] = useState(null);
+    const [activeTab, setActiveTab] = useState("summary");
+    const [detailFilter, setDetailFilter] = useState("nonpass");
+    const [companyName, setCompanyName] = useState("");
+    const qRef = useRef(null), rRef = useRef(null);
+
+    async function handleQuestionnaire(file) {
+      setError("");
+      try {
+        const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+        let best = null;
+        wb.SheetNames.forEach((sn) => {
+          const p = parseQuestionnaireAoa(XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: "", raw: false }));
+          if (!best || p.answers.length > best.answers.length) best = p;
+        });
+        if (!best || best.answers.length < 5) throw new Error("no answers");
+        const raw = extractRaw(best.answers);
+        const p = derivePolicies(best.answers, raw);
+        setQn({ fileName: file.name, answers: best.answers, raw, responses: best.responses });
+        setPol(p);
+        if (p.companyName) setCompanyName(p.companyName);
+        setResults(null);
+      } catch (e) {
+        setError(`Couldn't read ${file.name} as a Payroll Questionnaire. Upload the questionnaire export (.csv or .xlsx) — questions in the first row, answers below.`);
+      }
+    }
+    async function handleRegister(fileList) {
+      setError("");
+      const files = Array.from(fileList || []).filter((f) => /\.(xlsx|xls|xlsm|csv)$/i.test(f.name));
+      if (!files.length) { setError("Upload the client pay register as .xlsx, .xls or .csv."); return; }
+      try {
+        const all = [];
+        for (const file of files) {
+          const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+          const meta = (wb.Workbook && wb.Workbook.Sheets) || [];
+          wb.SheetNames.forEach((sn, i) => {
+            const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: null, raw: true });
+            all.push({ key: file.name + "::" + sn, fileName: file.name, name: sn, hidden: !!(meta[i] && meta[i].Hidden), aoa, isData: looksLikeDataSheet(aoa) });
+          });
+        }
+        const newCfg = {};
+        all.forEach((s) => { if (s.isData) newCfg[s.key] = buildCfg(s.aoa, guessHeaderRow(s.aoa)); });
+        setSheets(all);
+        setCfg(newCfg);
+        setRegFiles(files.map((f) => f.name));
+        setCutSel(autoPickCutoffs(all, pol));
+        if (!companyName) {
+          const first = all.find((s) => s.isData && !s.hidden);
+          const a1 = first && first.aoa[0] && first.aoa[0][0];
+          if (typeof a1 === "string" && a1.trim()) setCompanyName(a1.trim());
+        }
+        setResults(null);
+      } catch (e) {
+        setError("Couldn't read the pay register. Make sure it's a valid .xlsx, .xls or .csv file.");
+      }
+    }
+    const sheetByKey = (k) => sheets.find((s) => s.key === k);
+    function selectCut(cut, key) {
+      setCutSel((c) => ({ ...c, [cut]: key }));
+      if (key && !cfg[key]) {
+        const s = sheetByKey(key);
+        if (s) setCfg((c) => ({ ...c, [key]: buildCfg(s.aoa, guessHeaderRow(s.aoa)) }));
+      }
+    }
+    function updateHeaderRow(key, n1) {
+      const s = sheetByKey(key);
+      if (!s) return;
+      setCfg((c) => ({ ...c, [key]: buildCfg(s.aoa, Math.max(0, (n1 || 1) - 1)) }));
+    }
+    function updateRole(key, role, idx) {
+      setCfg((c) => ({ ...c, [key]: { ...c[key], roles: { ...c[key].roles, [role]: idx === "" ? null : parseInt(idx, 10) } } }));
+    }
+    const setP = (k, v) => setPol((p) => ({ ...p, [k]: v }));
+
+    function runAnalysis() {
+      setError("");
+      if (!qn || !pol) { setError("Upload the Payroll Questionnaire first."); return; }
+      if (!cutSel.C1 && !cutSel.C2) { setError("Pick at least one cut-off sheet from the pay register."); return; }
+      if (cutSel.C1 && cutSel.C1 === cutSel.C2) { setError("The 1st and 2nd cut-off can't be the same sheet."); return; }
+      const cuts = { C1: null, C2: null };
+      for (const cut of ["C1", "C2"]) {
+        const key = cutSel[cut];
+        if (!key) continue;
+        const s = sheetByKey(key), c = cfg[key];
+        if (!s || !c) continue;
+        if (c.roles.id == null) { setError(`Pick the Employee ID column for the ${cut === "C1" ? "1st" : "2nd"} cut-off sheet.`); return; }
+        if (c.roles.basic == null && c.roles.hourly == null) { setError(`Pick the Basic pay column for the ${cut === "C1" ? "1st" : "2nd"} cut-off sheet.`); return; }
+        cuts[cut] = { map: extractEmployees(s.aoa, c), roles: c.roles, label: s.name };
+      }
+      const res = analyze(pol, qn.raw, cuts);
+      if (!res.employees) { setError("No employee rows found — check the header row and Employee ID column."); return; }
+      res.cutsLabel = ["C1", "C2"].filter((k) => cuts[k]).map((k) => `${k}: ${cuts[k].label}`).join(" · ");
+      setResults(res);
+      setActiveTab("summary");
+      setStep("results");
+    }
+
+    async function downloadReport() {
+      if (!results) return;
+      try {
+        // ExcelJS (not SheetJS) — the free SheetJS build can't write cell styling; see the Parallel Run tool's note.
+        const wb = new ExcelJS.Workbook();
+        const argb = (hex) => "FF" + hex;
+        const WHITE = "FFFFFF", BODY_TXT = "092903", BORDER = "E5E3DC", TITLE_BG = "092903", HEADER_BG = "239A0D";
+        const thin = { style: "thin", color: { argb: argb(BORDER) } };
+        const cellBorder = { top: thin, bottom: thin, left: thin, right: thin };
+        const fillOf = (hex) => ({ type: "pattern", pattern: "solid", fgColor: { argb: argb(hex) } });
+        function styleCell(cell, opts) {
+          cell.font = { name: "Rubik", size: opts.sz || 11, bold: !!opts.bold, italic: !!opts.italic, color: { argb: argb(opts.fg || BODY_TXT) } };
+          if (opts.bg) cell.fill = fillOf(opts.bg);
+          cell.alignment = { horizontal: opts.h || "left", vertical: "middle", wrapText: !!opts.wrap, indent: opts.indent || 0 };
+          if (opts.border !== false) cell.border = cellBorder;
+          if (opts.numFmt) cell.numFmt = opts.numFmt;
+          return cell;
+        }
+        // getCell(...).value = x evaluates to x, not the cell — so value and style are set as two separate steps.
+        function setCell(ws, r, c, v, opts) { const cell = ws.getCell(r, c); cell.value = v; return styleCell(cell, opts); }
+        function header(ws, r, labels, rightFrom) {
+          labels.forEach((label, i) => setCell(ws, r, i + 1, label, { fg: WHITE, bg: HEADER_BG, bold: true, h: i >= rightFrom ? "center" : "left", indent: i >= rightFrom ? 0 : 1, wrap: true }));
+          ws.getRow(r).height = 30;
+        }
+
+        // ── SHEET 1: POLICY SUMMARY ──
+        const ws1 = wb.addWorksheet("POLICY SUMMARY", { views: [{ state: "frozen", ySplit: 8 }] });
+        ws1.columns = [{ width: 34 }, { width: 58 }, { width: 34 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 17 }];
+        ws1.mergeCells("A1:H1");
+        setCell(ws1, 1, 1, `${companyName || "Client"} · Simulation Variance Summary`, { fg: WHITE, bg: TITLE_BG, bold: true, sz: 14, indent: 1, border: false });
+        ws1.getRow(1).height = 30;
+        [["Payroll questionnaire", qn.fileName], ["Pay register", regFiles.join(", ")], ["Cut-offs compared", results.cutsLabel], ["Monthly contribution basis", results.basisNote], ["Generated", new Date().toLocaleString()]].forEach((m, i) => {
+          const r = i + 2;
+          setCell(ws1, r, 1, m[0], { fg: "5F5E5A", bold: true, sz: 10, indent: 1, border: false });
+          ws1.mergeCells(r, 2, r, 8);
+          setCell(ws1, r, 2, m[1], { sz: 10, border: false });
+        });
+        header(ws1, 8, ["Policy check", "Questionnaire answer", "Checked as", "Employees", "Passed", "Flagged", "Review", "Status"], 3);
+        let r = 9;
+        results.summary.forEach((s) => {
+          const dim = s.status === "Not in register" || s.status === "Manual review" ? { fg: "888780" } : {};
+          const st = STATUS_CLR[s.status];
+          setCell(ws1, r, 1, s.label, { ...dim, indent: 1, wrap: true });
+          setCell(ws1, r, 2, s.ans || "—", { ...dim, sz: 10, indent: 1, wrap: true });
+          setCell(ws1, r, 3, s.used, { ...dim, sz: 10, indent: 1, wrap: true });
+          setCell(ws1, r, 4, s.manual ? "" : s.checked, { ...dim, h: "center", numFmt: "#,##0" });
+          setCell(ws1, r, 5, s.manual ? "" : s.passed, { ...dim, h: "center", numFmt: "#,##0" });
+          setCell(ws1, r, 6, s.manual ? "" : s.flagged, { ...dim, h: "center", numFmt: "#,##0", bold: s.flagged > 0, fg: s.flagged > 0 ? STATUS_CLR.Flagged.fg : dim.fg });
+          setCell(ws1, r, 7, s.manual ? "" : s.review, { ...dim, h: "center", numFmt: "#,##0", fg: s.review > 0 ? STATUS_CLR.Review.fg : dim.fg });
+          setCell(ws1, r, 8, s.status, { fg: st.fg, bg: st.bg, bold: s.status === "Flagged", sz: 10, h: "center" });
+          r++;
+        });
+        r++;
+        setCell(ws1, r, 1, "Status legend", { fg: "5F5E5A", bold: true, sz: 9, border: false });
+        ["Passed", "Flagged", "Review", "Info", "Manual review"].forEach((k, i) => setCell(ws1, r, i + 4, k, { fg: STATUS_CLR[k].fg, bg: STATUS_CLR[k].bg, bold: k === "Flagged", sz: 9, h: "center", border: false }));
+        r++;
+        setCell(ws1, r, 1, "Expected = recomputed from the questionnaire's policies   ·   Variance = Register − Expected", { fg: "888780", italic: true, sz: 9, border: false });
+
+        // ── SHEET 2: DETAILS (anything not passed) + SHEET 3: ALL CHECKS ──
+        function detailSheet(name, rows) {
+          const ws = wb.addWorksheet(name, { views: [{ state: "frozen", ySplit: 1 }] });
+          ws.columns = [{ width: 13 }, { width: 32 }, { width: 9 }, { width: 28 }, { width: 14 }, { width: 14 }, { width: 13 }, { width: 13 }, { width: 80 }];
+          header(ws, 1, ["Employee ID", "Fullname", "Cut-off", "Policy check", "Register", "Expected", "Variance", "Status", "Note"], 4);
+          rows.forEach((x, i) => {
+            const rr = i + 2, lbl = STATUS_LBL[x.status], st = STATUS_CLR[lbl];
+            setCell(ws, rr, 1, x.id, { indent: 1 });
+            setCell(ws, rr, 2, x.name, { indent: 1 });
+            setCell(ws, rr, 3, x.cut, { h: "center" });
+            setCell(ws, rr, 4, x.label, { indent: 1 });
+            setCell(ws, rr, 5, x.register, { h: "right", numFmt: "#,##0.00" });
+            setCell(ws, rr, 6, x.expected, { h: "right", numFmt: "#,##0.00" });
+            setCell(ws, rr, 7, r2(x.register - x.expected), { h: "right", numFmt: "#,##0.00", bold: x.status === "flag" });
+            setCell(ws, rr, 8, lbl, { fg: st.fg, bg: st.bg, bold: x.status === "flag", sz: 10, h: "center" });
+            setCell(ws, rr, 9, x.note, { sz: 10, indent: 1 });
+          });
+        }
+        detailSheet("DETAILS", results.rows.filter((x) => x.status !== "pass"));
+        detailSheet("ALL CHECKS", results.rows);
+
+        // ── SHEET 4: QUESTIONNAIRE (reference) ──
+        const ws4 = wb.addWorksheet("QUESTIONNAIRE", { views: [{ state: "frozen", ySplit: 1 }] });
+        ws4.columns = [{ width: 70 }, { width: 90 }];
+        header(ws4, 1, ["Question", "Answer"], 9);
+        qn.answers.forEach((x, i) => {
+          setCell(ws4, i + 2, 1, x.q, { sz: 10, indent: 1, wrap: true });
+          setCell(ws4, i + 2, 2, x.a, { sz: 10, indent: 1, wrap: true });
+        });
+
+        const buf = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url; a.download = buildReportFilename(companyName);
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        setError("Download failed. The results on screen are still accurate.");
+      }
+    }
+
+    // ── render helpers ──
+    const canConfigure = !!qn && sheets.length > 0;
+    const inputCls = "w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm";
+    const btnCls = "inline-flex items-center gap-1.5 text-sm border border-gray-300 rounded-full px-4 py-2 bg-white hover:bg-gray-50";
+    const primaryCls = "inline-flex items-center gap-2 text-sm bg-green-700 text-white rounded-full px-5 py-2 hover:bg-green-800";
+    function Chip({ label }) {
+      const st = STATUS_CLR[label] || STATUS_CLR["Not in register"];
+      return h("span", { style: { display: "inline-block", fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", color: "#" + st.fg, background: "#" + st.bg, whiteSpace: "nowrap" } }, label);
+    }
+    function dropCard(key, label, sub, fileLabel, onFiles, ref, multiple, accept) {
+      return h("div", {
+        key,
+        onDragOver: (e) => { e.preventDefault(); setDragOver(key); },
+        onDragLeave: (e) => { e.preventDefault(); setDragOver((d) => (d === key ? null : d)); },
+        onDrop: (e) => { e.preventDefault(); setDragOver(null); if (e.dataTransfer.files && e.dataTransfer.files.length) onFiles(e.dataTransfer.files); },
+        className: `border border-dashed rounded-2xl p-6 text-center transition-colors ${dragOver === key ? "border-green-600 bg-green-100" : "border-green-300 bg-green-50/40"}`
+      },
+        h("div", { className: "w-10 h-10 rounded-full bg-green-700 flex items-center justify-center mx-auto mb-2" }, h(Icon, { name: "file", size: 18, className: "text-white" })),
+        h("p", { className: "text-sm font-medium text-gray-800" }, label),
+        h("p", { className: "text-xs text-gray-500 mt-1" }, sub),
+        h("p", { className: "text-xs text-gray-400 mt-1 mb-3 truncate", title: fileLabel }, fileLabel || "Drag a file here, or"),
+        h("input", { ref, type: "file", accept, multiple: !!multiple, className: "hidden", onChange: (e) => { if (e.target.files && e.target.files.length) onFiles(e.target.files); e.target.value = ""; } }),
+        h("button", { onClick: () => ref.current && ref.current.click(), className: "inline-flex items-center gap-1.5 text-sm border border-gray-300 rounded-full px-3.5 py-1.5 bg-white hover:bg-gray-50" }, h(Icon, { name: "upload", size: 14 }), " ", fileLabel ? "Replace file" : "Choose file")
+      );
+    }
+    function policyRow(label, rawAns, control, key) {
+      return h("div", { key: key || label, style: { display: "grid", gridTemplateColumns: "190px 1fr 220px", gap: "10px", alignItems: "center", padding: "8px 0", borderTop: "1px solid #f3f4f6" } },
+        h("span", { className: "text-sm text-gray-700" }, label),
+        h("span", { className: "text-xs text-gray-500", style: { whiteSpace: "pre-wrap" } }, rawAns || "—"),
+        control
+      );
+    }
+    const sel = (value, onChange, opts) => h("select", { value, onChange: (e) => onChange(e.target.value), className: inputCls }, opts.map((o) => h("option", { key: o[0], value: o[0] }, o[1])));
+    const TIMING_OPTS = [["C1", TIMING_LBL.C1], ["C2", TIMING_LBL.C2], ["split", TIMING_LBL.split]];
+    const sheetOpts = useMemo(() => {
+      const multi = new Set(sheets.map((s) => s.fileName)).size > 1;
+      return [["", "— none —"]].concat(sheets.map((s) => [s.key, `${multi ? s.fileName + " › " : ""}${s.name}${s.hidden ? " (hidden)" : ""}${s.isData ? "" : " (doesn't look like a table)"}`]));
+    }, [sheets]);
+
+    function cutCard(cut) {
+      const key = cutSel[cut], c = key && cfg[key];
+      const matched = c ? ROLES.filter((r) => c.roles[r.key] != null).length : 0;
+      return h("div", { key: cut, className: "border border-gray-200 rounded-lg p-4" },
+        h("p", { className: "text-sm font-medium mb-3" }, cut === "C1" ? "1st cut-off (C1)" : "2nd cut-off (C2)"),
+        h("div", { className: "space-y-2.5 text-sm" },
+          h("label", { className: "block" }, h("span", { className: "text-xs text-gray-500" }, "Sheet"), sel(key, (v) => selectCut(cut, v), sheetOpts)),
+          c && h("label", { className: "block" }, h("span", { className: "text-xs text-gray-500" }, "Header row"), h("input", { type: "number", min: 1, value: c.headerRow + 1, onChange: (e) => updateHeaderRow(key, parseInt(e.target.value || "1", 10)), className: inputCls })),
+          c && h("details", null,
+            h("summary", { className: "text-xs text-gray-500", style: { cursor: "pointer" } }, `Register columns — ${matched} of ${ROLES.length} matched (click to review)`),
+            h("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 10px", marginTop: "8px" } },
+              ROLES.map((ro) => h("label", { key: ro.key, className: "block" },
+                h("span", { className: "text-xs text-gray-500" }, ro.label),
+                h("select", { value: c.roles[ro.key] ?? "", onChange: (e) => updateRole(key, ro.key, e.target.value), className: inputCls, style: c.roles[ro.key] == null ? { color: "#9ca3af" } : void 0 },
+                  h("option", { value: "" }, "— not in file —"),
+                  c.columns.map((col) => h("option", { key: col.idx, value: col.idx }, col.name))
+                )
+              ))
+            )
+          )
+        )
+      );
+    }
+
+    const detailRows = results ? results.rows.filter((x) => (detailFilter === "nonpass" ? x.status !== "pass" : detailFilter === "all" ? true : x.status === detailFilter)) : [];
+    const totals = results ? results.rows.reduce((a, x) => { a[x.status]++; return a; }, { pass: 0, flag: 0, review: 0, info: 0 }) : null;
+
+    return h("div", { className: "max-w-5xl mx-auto p-6 font-sans text-gray-900" },
+      h("div", { className: "mb-4" },
+        h("h1", { className: "text-xl font-semibold text-gray-900" }, "Simulation variance analysis"),
+        h("p", { className: "text-sm text-gray-500 mt-1" }, "Check a client pay register against the policies in the client's Payroll Questionnaire.")),
+      h("div", { className: "flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6" },
+        h("span", { className: "text-lg leading-none" }, "\u{1F4C8}"),
+        h("div", null,
+          h("p", { className: "text-sm font-semibold text-green-900" }, "Simulation Variance Analysis"),
+          h("p", { className: "text-xs text-green-800 mt-0.5" }, "Upload the Payroll Questionnaire and the pay register (both cut-offs of the month if you have them). SSS, PhilHealth and HDMF are recomputed from the questionnaire's basis and deduction timing; absences, late, OT and ND are checked against its factor rate."))),
+      error && h("div", { className: "mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-md" }, h(Icon, { name: "alert", size: 16, className: "mt-0.5 shrink-0" }), h("span", null, error)),
+      h("div", { className: "flex items-center gap-2 mb-6 text-sm" }, ["upload", "configure", "results"].map((s, i) => h(Fragment, { key: s },
+        h("div", { className: `flex items-center gap-1.5 ${step === s ? "text-gray-900 font-medium" : "text-gray-400"}` },
+          h("span", { className: `w-5 h-5 rounded-full text-xs flex items-center justify-center ${step === s ? "bg-green-700 text-white" : "border border-gray-300"}` }, i + 1),
+          h("span", { className: "capitalize" }, s)),
+        i < 2 && h("div", { className: "w-8 h-px bg-green-200" })))),
+
+      // ── STEP 1: UPLOAD ──
+      step === "upload" && h("div", null,
+        h("div", { className: "grid grid-cols-2 gap-4 mb-6" },
+          dropCard("qn", "Payroll questionnaire", ".csv or .xlsx export of the form", qn ? qn.fileName : "", (fl) => handleQuestionnaire(fl[0]), qRef, false, ".csv,.xlsx,.xls"),
+          dropCard("reg", "Client pay register", "One file with both cut-offs, or select several files", regFiles.join(", "), handleRegister, rRef, true, ".xlsx,.xls,.xlsm,.csv")),
+        qn && h("p", { className: "text-xs text-gray-500 mb-4" }, `Questionnaire: ${qn.answers.length} answers read${qn.raw.company ? " for " + qn.raw.company : ""}${qn.responses > 1 ? ` — ${qn.responses} responses found, using the latest` : ""}.`),
+        h("button", { disabled: !canConfigure, onClick: () => { if (!cutSel.C1 && !cutSel.C2) setCutSel(autoPickCutoffs(sheets, pol)); setStep("configure"); }, className: `inline-flex items-center gap-2 text-sm px-5 py-2.5 rounded-full ${canConfigure ? "bg-green-700 text-white hover:bg-green-800" : "bg-gray-200 text-gray-400 cursor-not-allowed"}` }, "Continue to review ", h(Icon, { name: "back", size: 14, className: "rotate-180" }))),
+
+      // ── STEP 2: CONFIGURE ──
+      step === "configure" && pol && h("div", null,
+        h("div", { className: "grid grid-cols-2 gap-4 mb-4" }, cutCard("C1"), cutCard("C2")),
+        h("p", { className: "text-xs text-gray-500 mb-6" }, cutSel.C1 && cutSel.C2 ? "Both cut-offs selected — monthly contribution basis = C1 + C2 (basic + basic adjustment + hourly pay)." : "Only one cut-off selected — the monthly basis is assumed to be 2 × that cut-off, and contribution mismatches are marked Review instead of Flagged."),
+        h("div", { className: "border border-gray-200 rounded-lg p-4 mb-6" },
+          h("p", { className: "text-sm font-medium" }, "Policies read from the questionnaire"),
+          h("p", { className: "text-xs text-gray-500 mt-1 mb-2" }, "Left: the client's answer. Right: how the tool will check it — change it if the answer was read wrong."),
+          policyRow("Work days per year", qn.raw.workHours, h("input", { type: "number", value: pol.workDays, onChange: (e) => setP("workDays", parseFloat(e.target.value) || 261), className: inputCls })),
+          policyRow("Hours per day", qn.raw.workHours, h("input", { type: "number", value: pol.hoursPerDay, onChange: (e) => setP("hoursPerDay", parseFloat(e.target.value) || 8), className: inputCls })),
+          policyRow("SSS basis", qn.raw.sss, sel(pol.sssBasis, (v) => setP("sssBasis", v), [["basic", "Basic salary"], ["gross", "Gross salary"]])),
+          policyRow("SSS deduction", qn.raw.sssFreq, sel(pol.sssTiming, (v) => setP("sssTiming", v), TIMING_OPTS)),
+          policyRow("PhilHealth basis", qn.raw.phic, sel(pol.phicBasis, (v) => setP("phicBasis", v), [["basic", "Basic salary"], ["gross", "Gross salary"]])),
+          policyRow("PhilHealth deduction", qn.raw.phicFreq, sel(pol.phicTiming, (v) => setP("phicTiming", v), TIMING_OPTS)),
+          policyRow("HDMF", qn.raw.hdmf, h("div", { className: "flex gap-2" },
+            sel(pol.hdmfMode, (v) => setP("hdmfMode", v), [["fixed", "Fixed amount"], ["table", "Pag-IBIG table"]]),
+            pol.hdmfMode === "fixed" && h("input", { type: "number", value: pol.hdmfFixed, onChange: (e) => setP("hdmfFixed", parseFloat(e.target.value) || 0), className: inputCls, style: { width: "90px" } }))),
+          policyRow("HDMF deduction", qn.raw.hdmfFreq, sel(pol.hdmfTiming, (v) => setP("hdmfTiming", v), TIMING_OPTS)),
+          policyRow("De minimis", qn.raw.demin, sel(pol.deminimis ? "yes" : "no", (v) => setP("deminimis", v === "yes"), [["no", "None expected"], ["yes", "Has de minimis"]])),
+          policyRow("Hourly-paid employees", qn.raw.special, sel(pol.hourlyAllowed ? "yes" : "no", (v) => setP("hourlyAllowed", v === "yes"), [["yes", "Allowed"], ["no", "Not expected"]])),
+          policyRow("Absences in contribution basis", "Not asked in the questionnaire", sel(pol.deductAbsFromBasis ? "yes" : "no", (v) => setP("deductAbsFromBasis", v === "yes"), [["no", "Don't deduct (Sprout default)"], ["yes", "Deduct LWOP / late"]]))),
+        h("div", { className: "flex gap-3" },
+          h("button", { onClick: () => setStep("upload"), className: btnCls }, h(Icon, { name: "back", size: 14 }), " Back"),
+          h("button", { onClick: runAnalysis, className: primaryCls }, h(Icon, { name: "play", size: 14 }), " Run variance analysis"))),
+
+      // ── STEP 3: RESULTS ──
+      step === "results" && results && h("div", null,
+        h("div", { className: "mb-5", style: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "12px" } },
+          h("div", { className: "bg-gray-50 rounded-lg p-3" }, h("p", { className: "text-xs text-gray-500" }, "Employees checked"), h("p", { className: "text-xl font-medium mt-0.5" }, results.employees)),
+          h("div", { className: "bg-green-50 rounded-lg p-3" }, h("p", { className: "text-xs text-green-700" }, "Checks passed"), h("p", { className: "text-xl font-medium mt-0.5 text-green-700" }, totals.pass)),
+          h("div", { className: "bg-red-50 rounded-lg p-3" }, h("p", { className: "text-xs text-red-700" }, "Flagged"), h("p", { className: "text-xl font-medium mt-0.5 text-red-700" }, totals.flag)),
+          h("div", { className: "rounded-lg p-3", style: { background: "#EEE9FE" } }, h("p", { className: "text-xs", style: { color: "#5F21B6" } }, "For review"), h("p", { className: "text-xl font-medium mt-0.5", style: { color: "#5F21B6" } }, totals.review + totals.info))),
+        h("p", { className: "text-xs text-gray-500 mb-4" }, `${results.cutsLabel} · Monthly basis: ${results.basisNote}`),
+        h("div", { className: "border border-gray-200 rounded-lg p-3 mb-4" },
+          h("label", { className: "block text-xs text-gray-500 mb-1" }, "Company name (auto-read from the questionnaire, editable)"),
+          h("input", { value: companyName, onChange: (e) => setCompanyName(e.target.value), placeholder: "e.g. Trade Window Incorporated", className: "w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm mb-2" }),
+          h("p", { className: "text-xs text-gray-400 truncate" }, "Filename: ", h("span", { className: "font-mono" }, buildReportFilename(companyName)))),
+        h("div", { className: "flex items-center justify-between mb-3" },
+          h("div", { className: "inline-flex border border-gray-200 rounded-full overflow-hidden text-sm" },
+            h("button", { onClick: () => setActiveTab("summary"), className: `px-3.5 py-1.5 ${activeTab === "summary" ? "bg-green-700 text-white" : "bg-white text-gray-600"}` }, "Policy summary"),
+            h("button", { onClick: () => setActiveTab("details"), className: `px-3.5 py-1.5 ${activeTab === "details" ? "bg-green-700 text-white" : "bg-white text-gray-600"}` }, "Details (", results.rows.filter((x) => x.status !== "pass").length, ")")),
+          h("button", { onClick: downloadReport, className: "inline-flex items-center gap-1.5 text-sm border border-gray-300 rounded-full px-3.5 py-1.5 bg-white hover:bg-gray-50" }, h(Icon, { name: "download", size: 14 }), " Download .xlsx")),
+        activeTab === "summary" && h("table", { className: "w-full text-sm border-collapse" },
+          h("thead", null, h("tr", { className: "bg-gray-50 text-left text-gray-600" },
+            ["Policy check", "Questionnaire answer", "Employees", "Passed", "Flagged", "Review", "Status"].map((t, i) => h("th", { key: t, className: `px-3 py-2 font-medium ${i >= 2 && i <= 5 ? "text-right" : ""}` }, t)))),
+          h("tbody", null, results.summary.map((s) => h("tr", { key: s.id, className: `border-t border-gray-100 ${s.status === "Flagged" ? "bg-red-50" : ""}` },
+            h("td", { className: "px-3 py-2" }, s.label, h("div", { className: "text-xs text-gray-400" }, s.used)),
+            h("td", { className: "px-3 py-2 text-xs text-gray-500", style: { maxWidth: "320px" } }, s.ans || "—"),
+            h("td", { className: "px-3 py-2 text-right tabular-nums" }, s.manual ? "" : s.checked),
+            h("td", { className: "px-3 py-2 text-right tabular-nums" }, s.manual ? "" : s.passed),
+            h("td", { className: `px-3 py-2 text-right tabular-nums ${s.flagged ? "text-red-700 font-medium" : ""}` }, s.manual ? "" : s.flagged),
+            h("td", { className: "px-3 py-2 text-right tabular-nums" }, s.manual ? "" : s.review),
+            h("td", { className: "px-3 py-2" }, h(Chip, { label: s.status })))))),
+        activeTab === "details" && h("div", null,
+          h("div", { className: "flex items-center gap-2 mb-3 text-sm" },
+            h("span", { className: "text-xs text-gray-500" }, "Show"),
+            h("select", { value: detailFilter, onChange: (e) => setDetailFilter(e.target.value), className: "border border-gray-300 rounded-md px-2 py-1.5 text-sm" },
+              [["nonpass", "Everything not passed"], ["flag", "Flagged only"], ["review", "Review only"], ["info", "Info only"], ["all", "All checks (incl. passed)"]].map((o) => h("option", { key: o[0], value: o[0] }, o[1]))),
+            h("span", { className: "text-xs text-gray-400" }, `${detailRows.length} row(s)`)),
+          detailRows.length === 0 ? h("div", { className: "flex items-center gap-2 text-sm text-green-700 bg-green-50 rounded-md px-3 py-3" }, h(Icon, { name: "check", size: 16 }), " Nothing to show for this filter.")
+            : h("table", { className: "w-full text-sm border-collapse" },
+              h("thead", null, h("tr", { className: "bg-gray-50 text-left text-gray-600" },
+                ["Emp ID", "Name", "Cut-off", "Check", "Register", "Expected", "Status"].map((t, i) => h("th", { key: t, className: `px-3 py-2 font-medium ${i === 4 || i === 5 ? "text-right" : ""}` }, t)))),
+              h("tbody", null, detailRows.slice(0, 500).map((x, i) => h(Fragment, { key: i },
+                h("tr", { className: "border-t border-gray-100" },
+                  h("td", { className: "px-3 py-2" }, x.id),
+                  h("td", { className: "px-3 py-2" }, x.name),
+                  h("td", { className: "px-3 py-2" }, x.cut),
+                  h("td", { className: "px-3 py-2" }, x.label),
+                  h("td", { className: "px-3 py-2 text-right tabular-nums" }, fmt(x.register)),
+                  h("td", { className: "px-3 py-2 text-right tabular-nums" }, fmt(x.expected)),
+                  h("td", { className: "px-3 py-2" }, h(Chip, { label: STATUS_LBL[x.status] }))),
+                h("tr", null, h("td", { colSpan: 7, className: "px-3 text-xs text-gray-500", style: { paddingBottom: "8px" } }, x.note)))))),
+          detailRows.length > 500 && h("p", { className: "text-xs text-gray-400 mt-2" }, "Showing the first 500 rows — the downloaded .xlsx has all of them.")),
+        h("div", { className: "mt-5" }, h("button", { onClick: () => setStep("configure"), className: btnCls }, h(Icon, { name: "back", size: 14 }), " Back to review")))
+    );
+  }
+  var svtRootEl = document.getElementById("svt-root");
+  if (svtRootEl) {
+    SVT_ROOT = ReactDOM.createRoot(svtRootEl);
+    SVT_ROOT.render(React.createElement(SimulationVarianceTool, null));
+  }
+})();
+}
+function svtUnmount(){
+  if(SVT_ROOT){ try{SVT_ROOT.unmount();}catch(e){} SVT_ROOT=null; }
+}
+
 
 function openTool(val){
   if(!val)return;
   var TOOLS={
     'masterfile':{name:'Masterfile Creator',icon:'📋',color:'#2563eb'},
     'variance':{name:'Parallel Run Variance Analysis',icon:'📊',desc:'Automatically compare policy vs register and Sprout vs client payroll data during parallel run.',color:'#7c3aed'},
-    'sim-variance':{name:'Simulation Variance Analysis',icon:'📈',desc:'Compare expected vs actual payroll simulation results to identify discrepancies before parallel run.',color:'#3b82f6'},
+    'sim-variance':{name:'Simulation Variance Analysis',icon:'📈',desc:'Check the client pay register against the policies in the client\'s Payroll Questionnaire before parallel run.',color:'#3b82f6'},
     'mom':{name:'MOM Generator',icon:'📝',desc:'Upload a meeting transcript and slide deck to generate a Sprout MPS MOM.',color:'#ea580c'},
     'crf':{name:'Copy Database CRF Generator (Repli Accounts)',icon:'📄',desc:'Auto-generate a Change Request Form for replication accounts during the simulation phase.',color:'#16a34a'},
     'sandbox':{name:'Sandbox Account Creator',icon:'🖥️',desc:'Set up a sandbox payroll environment for testing and validation during the simulation phase.',color:'#3b82f6'},
@@ -7917,6 +8808,10 @@ function openTool(val){
     document.getElementById('tool-modal-box').style.maxWidth='1100px';
     document.getElementById('tool-modal-body').innerHTML='<div id="pvt-diag" style="display:none;font-family:Arial, sans-serif;padding:16px 20px;color:#7f1d1d;background:#fef2f2;max-width:640px;margin:0 auto 16px;border-radius:8px;border:1px solid #fecaca;"></div><div id="pvt-root" class="pvt-scope"></div>';
     pvtMount();
+  } else if(val==='sim-variance'){
+    document.getElementById('tool-modal-box').style.maxWidth='1100px';
+    document.getElementById('tool-modal-body').innerHTML='<div id="pvt-diag" style="display:none;font-family:Arial, sans-serif;padding:16px 20px;color:#7f1d1d;background:#fef2f2;max-width:640px;margin:0 auto 16px;border-radius:8px;border:1px solid #fecaca;"></div><div id="svt-root" class="pvt-scope"></div>';
+    svtMount();
   } else if(val==='mom'){
     document.getElementById('tool-modal-box').style.maxWidth='780px';
     MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:''};
@@ -8203,6 +9098,7 @@ function closeTool(){
   PP_STATE={pdfFile:null,pdfB64:null,apiKey:'',extracted:null};
   vaReset();
   pvtUnmount();
+  svtUnmount();
 }
 
  

@@ -4202,3 +4202,58 @@ Left `godSwitch()`'s own `IMPL_USER` line untouched — that one's for the God-m
 1. Redeploy `index.html` to Vercel.
 2. Have Zona sign in again and open "My Dashboard" — confirm it now greets her by her own name and shows only clients where she's the assigned resource (very possibly zero, if she genuinely isn't assigned as a resource/implementer on anything — that's correct behavior now, not a bug).
 3. Spot-check with another Admin/Manager account if one's handy, same check.
+
+---
+
+## 128. Simulation Variance Analysis — built: pay register checked against the client's Payroll Questionnaire (October 5, 2026)
+
+### What it is
+Tools → Phase 2 — Simulation → **Simulation Variance Analysis** (key `'sim-variance'`) was a "coming soon" placeholder. It's now a working tool that follows the same 3-step flow and Sprout-styled ExcelJS export as the Parallel Run Variance Analysis (§119/§122). The difference: instead of comparing the client register to a Sprout payroll export, it compares the **client pay register** to the **policies in the client's Payroll Questionnaire**. The questionnaire has no employee rows, so the tool recomputes what each employee *should* have under those policies and compares that to the register.
+
+Built and verified against the Trade Window samples in `Templates for upload\Simulated Run` (`01B Pay Register_ July 2026.xlsx` + `Trade Window Incorporated_Payroll Questionnaire v2.csv`).
+
+### Flow
+1. **Upload** — Payroll Questionnaire (.csv/.xlsx) + client pay register (.xlsx/.xls/.csv; one file holding both cut-offs, or several files).
+   - Questionnaire parser handles both export layouts: single header row (Cyber One sample: `Are you using the following? [ Pay Groups ]`) and two-row header (Trade Window: sub-options on row 2). Also accepts a vertical Question | Answer layout. If several responses exist, the latest row is used.
+2. **Configure**
+   - **1st cut-off (C1)** and **2nd cut-off (C2)** sheet pickers — auto-picked by sheet/file name (`C1`, `Cycle 1`, `1st`…); hidden sheets are listed but never auto-picked. Header row per sheet, and an expandable **Register columns** panel (30 roles: Basic, Basic adj, Hourly, OT, ND, Bonus, De minimis, LWOP, LOP days, Late, Gross, Taxable, W/tax, SSS/MPF/PHIC/HDMF EE + ER, EC, EE adjustments, Total deductions, Net), auto-matched and editable.
+   - **Policies read from the questionnaire** — each shows the client's raw answer next to an editable setting: work days/yr + hours/day (factor rate), SSS basis + timing, PhilHealth basis + timing, HDMF fixed amount / Pag-IBIG table + timing, de minimis, hourly-paid employees, and "Absences in contribution basis" (default: don't deduct — matches Sprout).
+3. **Results** — tiles (Employees, Checks passed, Flagged, For review), **Policy summary** tab and **Details** tab (filter: not passed / flagged / review / info / all), **Download .xlsx**.
+
+### Checks (per employee, per cut-off)
+| Check | Logic |
+|---|---|
+| SSS EE / MPF EE / ER / MPF ER / EC | SSS 2025 table (MSC ₱5,000–₱35,000 in ₱500 steps; regular SS up to ₱20,000, MPF above; EE 5%, ER 10%; EC ₱10 below MSC ₱15,000 else ₱30) on the monthly basis |
+| PhilHealth EE / ER | 5% of basis, floor ₱10,000, ceiling ₱100,000; split 50/50 with the odd centavo on ER |
+| HDMF EE / ER | Fixed amount from the questionnaire (e.g. "Fixed 200"), or Pag-IBIG table (2%, ₱10,000 cap) |
+| Deduction timing | "2nd payout in full" → expected full amount on C2 and 0 on C1 (and vice-versa); "split" → half each |
+| Monthly basis | Basic basis = C1 (Basic + Basic adj + Hourly) + C2 (Basic + Basic adj + Hourly); Gross basis = C1 gross + C2 gross. Policy "1st payout in full (assuming basic for 2nd payout)" → C1 + assumed C2. Only one cut-off uploaded → assumed 2 × that cut-off and mismatches become **Review**, not Flagged |
+| Contribution adjustments | Any non-zero EE adjustment column → **Info** |
+| Absences (LWOP) / Late | Daily rate = monthly (C1 + C2 basic incl. adjustments) × 12 ÷ work days; amount must be a whole number of minutes; LOP-days column cross-checked |
+| OT / ND | Implied hours at 125% / 10% of the hourly rate; anything not a whole 15-minute block → **Review** (may be rest-day/holiday OT) |
+| De minimis | Questionnaire "No" → any de minimis paid is **Flagged** |
+| Hourly-paid | Hourly pay allowed if the questionnaire mentions hourly (e.g. "Interns paid hourly") and basic is 0 |
+| Gross / Taxable / Net arithmetic | Gross = mapped earnings − absences; Taxable = gross − SSS/MPF/PHIC/HDMF EE (incl. adjustments) − de minimis; bonus fully taxed → **Review** against the ₱90,000 non-taxable ceiling; Net = gross − total deductions |
+| Manual review (summary only) | Withholding tax (annualized), 13th month, final pay, payroll frequency & cut-offs — shown with the questionnaire's answers |
+
+Statutory rates sit in `SSS_CFG` / `PHIC_CFG` / `HDMF_CFG` at the top of `svtMount()` — update there when rates change.
+
+### Trade Window test result (both cut-offs)
+40 employees, 1,042 checks passed, 0 flagged, 12 for review: SSS/PhilHealth/HDMF 40/40 on every line; Review = Baluyot & Resurreccion LWOP is exactly 1.000 day but the LOP column shows 0; Baluyot ₱20,906 and Gabionza ₱10,000 bonus fully taxed; OT for Estacio / Gahob (C1+C2) / Quinzon C2 not in whole 15-min blocks (Quinzon C1 = exactly 2.00 hrs ✔); Info = Burgos's SSS/MPF/PHIC/HDMF EE catch-up adjustments. Lomibao ND = exactly 11.00 hrs ✔. Alabado (hourly intern) ✔.
+
+### Report (.xlsx, ExcelJS, same palette as §122)
+`{Company}_Simulation Variance Report_MMDDYYYY_HHMM.xlsx`, 4 sheets:
+1. **POLICY SUMMARY** — title bar, file/cut-off/basis info block, then Policy check | Questionnaire answer | Checked as | Employees | Passed | Flagged | Review | Status (color-coded) + legend.
+2. **DETAILS** — every non-passed row: Employee ID | Fullname | Cut-off | Policy check | Register | Expected | Variance (Register − Expected) | Status | Note.
+3. **ALL CHECKS** — same columns, every check including passed (audit trail).
+4. **QUESTIONNAIRE** — every question and answer, for reference.
+
+### Code changes (`index.html`)
+- New `svtMount()` / `svtUnmount()` + `SVT_ROOT` (React island right after `pvtUnmount()`), component `SimulationVarianceTool`. Reuses the `.pvt-scope` Tailwind styles and the `#pvt-diag` error box; new styling uses inline styles only (the scoped Tailwind build only has the classes the Parallel Run tool uses).
+- `openTool()` — new `val==='sim-variance'` branch (1100px modal, `<div id="svt-root" class="pvt-scope">`); TOOLS description updated.
+- `closeTool()` — also calls `svtUnmount()`.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open Tools → Simulation Variance Analysis, upload the two Trade Window samples, and confirm the result matches the numbers above; download the .xlsx and check the styling.
+3. Try it on another client's questionnaire + register (ideally one with Gross-basis SSS or 1st-payout deductions, e.g. Cyber One) — those paths are coded but only the Trade Window data has been tested end to end.
