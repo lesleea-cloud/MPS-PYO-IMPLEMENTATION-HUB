@@ -11,5 +11,8 @@
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
       ]
     }
+  ],
+  "crons": [
+    { "path": "/api/integrations/drive-decks-sync", "schedule": "*/30 * * * *" }
   ]
 }

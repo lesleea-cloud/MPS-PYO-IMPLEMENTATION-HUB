@@ -5030,11 +5030,25 @@ function submitAddClient(){
   if(addons.sg||addons.ba||addons.std||addons.otk||addons.pd||addons.pod||addons.fpod)CL_ADDONS[newNo]=addons;
   var pendingPmToolEventId=PMTOOL_PENDING_EVENT_ID;
   autoSave();
-  _supaFlush();
+  // Once the new row is in Supabase (the server endpoints read it from there): announce the
+  // new client in the team Chat Space — Add client form only, not PM Tool-created clients —
+  // and create the client's Drive folder, which posts its own "folder created" message.
+  var newClient=D.find(function(x){return x.no===newNo;});
+  Promise.resolve(_supaFlush()).then(function(){
+    if(!pendingPmToolEventId)notifyNewClient(newNo);
+    if(newClient)triggerClientFolderCreation(newClient);
+  });
   closeAddClientModal();
   clPg=1;
   renderClients();
   if(pendingPmToolEventId)pmtoolSetStatus(pendingPmToolEventId,'assigned',newNo);
+}
+function notifyNewClient(no){
+  fetch('/api/integrations/new-client-notify',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({no:no,addedBy:CURRENT_NAME||''})
+  }).then(function(r){if(!r.ok)r.text().then(function(t){console.warn('New-client Chat message failed:',t);});})
+    .catch(function(e){console.warn('New-client Chat message request failed:',e);});
 }
 
 function clPhaseBox(no,field,val,service,dateVal,isNextUp,idPrefix){
@@ -7067,7 +7081,7 @@ var MF_COLUMNS=[
   'Additional HDMF Contribution','Pay Group*','Payroll ID'
 ];
  
-var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:''};
+var MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:'',issues:null,cellSev:null};
  
 function toggleAdminSection(){
   var body=document.getElementById('nav-admin-body');
@@ -8939,7 +8953,7 @@ function openTool(val){
   document.getElementById('tool-modal-title').textContent=t.name;
   if(val==='masterfile'){
     document.getElementById('tool-modal-box').style.maxWidth='720px';
-    MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:''};
+    MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:'',issues:null,cellSev:null};
     renderMasterfileUI();
   } else if(val==='variance'){
     document.getElementById('tool-modal-box').style.maxWidth='1100px';
@@ -9230,7 +9244,7 @@ function pibAddSelected(){
 
 function closeTool(){
   document.getElementById('tool-modal').classList.remove('open');
-  MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:''};
+  MF={ref:null,out:null,refName:'',outName:'',allRows:null,outCols:null,companyName:'',issues:null,cellSev:null};
   MOM_STATE={transcript:null,slides:null,transcriptName:'',slidesName:'',result:null,apiKey:''};
   PP_STATE={pdfFile:null,pdfB64:null,apiKey:'',extracted:null};
   vaReset();
@@ -10010,6 +10024,8 @@ function renderMasterfileUI(){
       +'<div style="overflow-x:auto;border-radius:8px;border:1px solid var(--s2);max-height:200px;overflow-y:auto;" id="mf-table-wrap"></div>'
       +'<div style="margin-top:.4rem;font-size:11px;color:var(--s4);" id="mf-mapping-summary"></div>'
     +'</div>'
+    // Data issues (missing mandatory fields / incorrect details) — filled by mfRenderIssues()
+    +'<div id="mf-issues" style="display:none;margin-bottom:.75rem;"></div>'
     // Footer buttons
     +'<div style="display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1px solid var(--s1);">'
       +'<button onclick="closeTool()" style="padding:9px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Cancel</button>'
@@ -10216,7 +10232,117 @@ function mfGet(row,headers,candidates){
   }
   return '';
 }
- 
+
+// ── Validation: missing mandatory fields + incorrect employee details ──
+// Severity per cell: missing (red) > invalid (amber) > defaulted (yellow). Shown on screen after
+// Generate and highlighted as cell fills in the downloaded file (see mfAddFlagStyles).
+var MF_SEV_RANK={missing:3,invalid:2,defaulted:1};
+var MF_SEV_LBL={missing:'Missing',invalid:'Incorrect',defaulted:'Defaulted'};
+var MF_SEV_CLR={missing:{bg:'#fee2e2',fg:'#b91c1c',xl:'FFFECACA'},invalid:{bg:'#ffedd5',fg:'#c2410c',xl:'FFFED7AA'},defaulted:{bg:'#fef9c3',fg:'#a16207',xl:'FFFEF08A'}};
+function mfKeyNorm(k){return String(k).replace(/[\r\n\t]+/g,' ').replace(/\*$/,'').trim();}
+function mfParseDate(s){
+  var m=String(s||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m)return null;
+  var d=new Date(+m[3],+m[1]-1,+m[2]);
+  return (d.getMonth()===+m[1]-1&&d.getDate()===+m[2])?d:null;
+}
+// mapped = output values keyed by canonical column name; raw = source values for fields whose
+// normalizer silently defaults or blanks an unrecognised value. Returns [{key,sev,msg}].
+function mfValidateRow(mapped,raw){
+  var out=[];
+  function add(key,sev,msg){out.push({key:key,sev:sev,msg:msg});}
+  function v(k){var x=mapped[k];return x===undefined||x===null?'':String(x).trim();}
+  var today=new Date();
+  ['Last Name*','First Name*','Middle Name'].forEach(function(k){if(/\d/.test(v(k)))add(k,'invalid','Name contains numbers');});
+  if(v('Gender*')&&['Male','Female'].indexOf(v('Gender*'))<0)add('Gender*','invalid','Not Male or Female');
+  var dobKey='Date of Birth (mm/dd/yyyy)*',dob=null;
+  if(v(dobKey)){
+    dob=mfParseDate(v(dobKey));
+    if(!dob)add(dobKey,'invalid','Not a valid mm/dd/yyyy date');
+    else{var age=Math.floor((today-dob)/31557600000);if(age<15||age>100)add(dobKey,'invalid','Age would be '+age+' — check the year');}
+  }
+  if(v('Civil Status*')&&['Single','Married','Widowed','Legally Separated'].indexOf(v('Civil Status*'))<0)add('Civil Status*','invalid','Not Single, Married, Widowed or Legally Separated');
+  if(v('Email Address*')&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('Email Address*')))add('Email Address*','invalid','Not a valid email address');
+  ['Hire Date (mm/dd/yyyy)*','Status Date (mm/dd/yyyy)*'].forEach(function(k){
+    if(!v(k))return;
+    var d=mfParseDate(v(k));
+    if(!d){add(k,'invalid','Not a valid mm/dd/yyyy date');return;}
+    if(dob&&d<new Date(dob.getFullYear()+15,dob.getMonth(),dob.getDate()))add(k,'invalid','Less than 15 years after the date of birth');
+    if(d-today>366*86400000)add(k,'invalid','More than a year in the future');
+  });
+  if(v('Employment Status*')&&['Active','Probationary','Part Time (daily)','Contractual','Inactive'].indexOf(v('Employment Status*'))<0)add('Employment Status*','invalid','Not a recognised employment status (Active, Probationary, Part Time (daily), Contractual, Inactive)');
+  function digits(k,lens,lensTxt){
+    var s=v(k);if(!s)return;
+    if(!/^\d+$/.test(s))add(k,'invalid','Should be digits only');
+    else if(lens.indexOf(s.length)<0)add(k,'invalid','Should be '+lensTxt+' digits (has '+s.length+')');
+  }
+  digits('TIN*',[9,12,13,14],'9 or 12–14');
+  digits('SSS No.',[10],'10');
+  digits('PhilHealth No.',[12],'12');
+  digits('HDMF No.',[12],'12');
+  digits('Zip Code',[4],'4');
+  if(v('Contact No.')){var cn=v('Contact No.').replace(/[\s\-().+]/g,'');if(!/^\d{7,13}$/.test(cn))add('Contact No.','invalid','Not a valid phone number');}
+  if(v('Bank')&&!v('Bank Account No.'))add('Bank Account No.','invalid','Bank is filled in but the account number is blank');
+  if(v('Bank Account No.')&&!v('Bank'))add('Bank','invalid','Account number is filled in but the bank is blank');
+  if(v('Bank Account No.')&&!/^[\d\s-]+$/.test(v('Bank Account No.')))add('Bank Account No.','invalid','Account number has letters or symbols');
+  if(raw.bankType&&!/saving|current/i.test(raw.bankType))add('Bank Account Type','defaulted','Source value "'+raw.bankType+'" not recognised — set to Savings');
+  if(raw.mwe&&!v('Minimum Wage Earner (Yes/No)'))add('Minimum Wage Earner (Yes/No)','invalid','Source value "'+raw.mwe+'" isn\'t Yes/No — left blank');
+  if(raw.rohq&&!v('ROHQ (Yes/No)'))add('ROHQ (Yes/No)','invalid','Source value "'+raw.rohq+'" isn\'t Yes/No — left blank');
+  if(!(Number(mapped['Basic Salary*'])>0))add('Basic Salary*','missing',raw.basic?'Source value "'+raw.basic+'" is not a valid amount — set to 0':'Blank in source — set to 0');
+  var wdKey='Work Days Per Year*';
+  if(raw.workDays&&v(wdKey)==='')add(wdKey,'invalid','Source value "'+raw.workDays+'" is not a number');
+  else if(v(wdKey)&&(Number(v(wdKey))<1||Number(v(wdKey))>366))add(wdKey,'invalid','Should be between 1 and 366');
+  if(v('Work Hours per Day')&&(Number(v('Work Hours per Day'))<=0||Number(v('Work Hours per Day'))>24))add('Work Hours per Day','invalid','Should be between 1 and 24');
+  if(!raw.ot)add('OT Computation Table*','defaulted','Blank in source — set to OT Table 1');
+  if(!raw.payGroup)add('Pay Group*','defaulted','Blank in source — set to Rank and File');
+  return out;
+}
+// Adds one solid fill + cell format per severity to the template's styles.xml.
+// Returns {xml, ids:{missing,invalid,defaulted}} (style indexes for <c s="…">), or null if the
+// styles part isn't in the expected shape — the download then still works, just unhighlighted.
+function mfAddFlagStyles(stylesXml){
+  var fm=stylesXml.match(/<fills\b([^>]*)>([\s\S]*?)<\/fills>/);
+  var xm=stylesXml.match(/<cellXfs\b([^>]*)>([\s\S]*?)<\/cellXfs>/);
+  if(!fm||!xm)return null;
+  var fillCount=(fm[2].match(/<fill\b/g)||[]).length;
+  var xfCount=(xm[2].match(/<xf\b/g)||[]).length;
+  var sevs=['missing','invalid','defaulted'],ids={},newFills='',newXfs='';
+  sevs.forEach(function(s,i){
+    newFills+='<fill><patternFill patternType="solid"><fgColor rgb="'+MF_SEV_CLR[s].xl+'"/><bgColor indexed="64"/></patternFill></fill>';
+    newXfs+='<xf numFmtId="0" fontId="0" fillId="'+(fillCount+i)+'" borderId="0" xfId="0" applyFill="1"/>';
+    ids[s]=xfCount+i;
+  });
+  var xml=stylesXml.replace(fm[0],'<fills'+fm[1].replace(/count="\d+"/,'count="'+(fillCount+3)+'"')+'>'+fm[2]+newFills+'</fills>');
+  xml=xml.replace(xm[0],'<cellXfs'+xm[1].replace(/count="\d+"/,'count="'+(xfCount+3)+'"')+'>'+xm[2]+newXfs+'</cellXfs>');
+  return {xml:xml,ids:ids};
+}
+function mfRenderIssues(){
+  var el=document.getElementById('mf-issues');
+  if(!el)return;
+  var issues=MF.issues||[];
+  if(!issues.length){
+    el.innerHTML='<div style="padding:.6rem .9rem;border-radius:8px;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;font-size:12px;">✅ No missing mandatory fields or incorrect employee details found.</div>';
+    el.style.display='block';return;
+  }
+  var cnt={missing:0,invalid:0,defaulted:0},emps={};
+  issues.forEach(function(x){cnt[x.sev]++;emps[x.row]=1;});
+  var chip=function(s){var c=MF_SEV_CLR[s];return '<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:'+c.bg+';color:'+c.fg+';font-size:11px;font-weight:600;">'+cnt[s]+' '+MF_SEV_LBL[s].toLowerCase()+'</span>';};
+  var trs=issues.map(function(x){
+    var c=MF_SEV_CLR[x.sev];
+    return '<tr><td style="padding:4px 8px;border-bottom:1px solid var(--s1);font-family:var(--mono);color:var(--s5);">'+x.row+'</td>'
+      +'<td style="padding:4px 8px;border-bottom:1px solid var(--s1);white-space:nowrap;">'+escHtml(x.empId||'—')+'</td>'
+      +'<td style="padding:4px 8px;border-bottom:1px solid var(--s1);white-space:nowrap;">'+escHtml(x.name||'—')+'</td>'
+      +'<td style="padding:4px 8px;border-bottom:1px solid var(--s1);white-space:nowrap;">'+escHtml(x.field)+'</td>'
+      +'<td style="padding:4px 8px;border-bottom:1px solid var(--s1);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+escHtml(x.value)+'">'+escHtml(x.value||'—')+'</td>'
+      +'<td style="padding:4px 8px;border-bottom:1px solid var(--s1);"><span style="display:inline-block;padding:1px 7px;border-radius:999px;background:'+c.bg+';color:'+c.fg+';font-size:10px;font-weight:700;margin-right:6px;">'+MF_SEV_LBL[x.sev]+'</span>'+escHtml(x.msg)+'</td></tr>';
+  }).join('');
+  el.innerHTML='<div style="font-size:10px;font-weight:700;color:var(--s4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;">Data issues — '+Object.keys(emps).length+' employee(s) · highlighted in the downloaded file</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.4rem;">'+chip('missing')+chip('invalid')+chip('defaulted')+'</div>'
+    +'<div style="overflow:auto;border-radius:8px;border:1px solid var(--s2);max-height:220px;"><table style="width:100%;border-collapse:collapse;font-size:11px;"><thead><tr style="background:var(--s0);text-align:left;color:var(--s5);">'
+    +'<th style="padding:5px 8px;">Row</th><th style="padding:5px 8px;">Employee ID</th><th style="padding:5px 8px;">Name</th><th style="padding:5px 8px;">Field</th><th style="padding:5px 8px;">Value</th><th style="padding:5px 8px;">Problem</th></tr></thead><tbody>'+trs+'</tbody></table></div>';
+  el.style.display='block';
+}
+
 async function mfGenerate(){
   if(!MF.ref){mfSetStatus('⚠️ Please upload the Source File first.','error');return;}
   if(!MF.out){mfSetStatus('⚠️ Please upload the Output Template first.','error');return;}
@@ -10224,6 +10350,7 @@ async function mfGenerate(){
   btn.disabled=true;
   btn.innerHTML='<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;"></span> Processing…';
   document.getElementById('mf-preview').style.display='none';
+  document.getElementById('mf-issues').style.display='none';
   document.getElementById('mf-download-btn').style.display='none';
   mfSetStatus('<span style="display:inline-flex;align-items:center;gap:8px;"><span style="display:inline-block;width:13px;height:13px;border:2px solid #bfdbfe;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;"></span> Reading source file and mapping to output template…</span>','loading');
  
@@ -10273,7 +10400,19 @@ async function mfGenerate(){
     var outCols=MF.outCols||MF_COLUMNS;
  
     // ── Map each source row to output columns ──
-    var allRows=[];
+    var allRows=[],issues=[],cellSev=[];
+    var colCache={};
+    function outColFor(key){
+      if(colCache.hasOwnProperty(key))return colCache[key];
+      var n=mfKeyNorm(key),found=null;
+      for(var oc=0;oc<outCols.length;oc++){if(outCols[oc]===key||mfKeyNorm(outCols[oc])===n){found=outCols[oc];break;}}
+      return (colCache[key]=found);
+    }
+    function addIssue(rowIdx,outRow,col,field,sev,msg){
+      var eidCol=outColFor('Employee ID*');
+      issues.push({rowIdx:rowIdx,row:rowIdx+5,empId:eidCol&&outRow[eidCol]!==undefined?String(outRow[eidCol]):'',name:'',col:col,field:field,value:col&&outRow[col]!==undefined?String(outRow[col]):'',sev:sev,msg:msg});
+      if(col&&(!cellSev[rowIdx][col]||MF_SEV_RANK[sev]>MF_SEV_RANK[cellSev[rowIdx][col]]))cellSev[rowIdx][col]=sev;
+    }
     for(var ri2=dataStart;ri2<srcRaw.length;ri2++){
       var row=srcRaw[ri2];
       // Skip completely empty rows and the SAMPLE DATA row
@@ -10381,16 +10520,69 @@ async function mfGenerate(){
         outRow[col]='';
       });
       allRows.push(outRow);
+
+      // ── Validate this employee ──
+      var rIdx=allRows.length-1,before=issues.length;
+      cellSev.push({});
+      outCols.forEach(function(col){
+        if(!/\*\s*$/.test(col.replace(/[\r\n\t]+/g,' ')))return;
+        var cv=outRow[col];
+        if(cv===undefined||cv===null||String(cv).trim()==='')addIssue(rIdx,outRow,col,mfKeyNorm(col),'missing','Mandatory field is blank');
+      });
+      var rawVals={
+        mwe:String(g(row,srcHeaders,['Minimum Wage Earner','MWE'])||'').trim(),
+        rohq:String(g(row,srcHeaders,['ROHQ'])||'').trim(),
+        bankType:String(g(row,srcHeaders,['Bank Account Type','Account Type'])||'').trim(),
+        basic:String(basicSal||'').trim(),
+        workDays:String(g(row,srcHeaders,['Work Days Per Year','Work Days/Year'])||'').trim(),
+        ot:String(g(row,srcHeaders,['OT Computation Table','OT Table'])||'').trim(),
+        payGroup:String(g(row,srcHeaders,['Pay Group','Employee Type','Classification','Rank'])||'').trim()
+      };
+      mfValidateRow(mapped,rawVals).forEach(function(x){
+        var col=outColFor(x.key);
+        // Skip a "missing" the generic blank-mandatory pass already reported for this cell
+        if(x.sev==='missing'&&col&&issues.some(function(y,yi){return yi>=before&&y.col===col&&y.sev==='missing';}))return;
+        addIssue(rIdx,outRow,col,mfKeyNorm(x.key),x.sev,x.msg);
+      });
+      var fullName=[mapped['First Name*'],mapped['Last Name*']].filter(Boolean).join(' ');
+      for(var ii=before;ii<issues.length;ii++)issues[ii].name=fullName;
     }
- 
+
+    // ── Duplicates across employees ──
+    ['Employee ID*','Email Address*','TIN*','SSS No.'].forEach(function(key){
+      var col=outColFor(key);
+      if(!col)return;
+      var seen={};
+      allRows.forEach(function(r,idx){
+        var val=String(r[col]===undefined||r[col]===null?'':r[col]).trim().toLowerCase();
+        if(!val)return;
+        (seen[val]=seen[val]||[]).push(idx);
+      });
+      Object.keys(seen).forEach(function(val){
+        var idxs=seen[val];
+        if(idxs.length<2)return;
+        idxs.forEach(function(idx){
+          var others=idxs.filter(function(o){return o!==idx;}).map(function(o){return o+5;});
+          addIssue(idx,allRows[idx],col,mfKeyNorm(key),'invalid','Duplicate — same value on row'+(others.length>1?'s ':' ')+others.join(', '));
+          issues[issues.length-1].name=[allRows[idx][outColFor('First Name*')],allRows[idx][outColFor('Last Name*')]].filter(Boolean).join(' ');
+        });
+      });
+    });
+    issues.sort(function(a,b){return a.rowIdx-b.rowIdx||(a.col?outCols.indexOf(a.col):999)-(b.col?outCols.indexOf(b.col):999);});
+
     if(!allRows.length)throw new Error('No employee rows found. Check that your source file has data rows.');
- 
+
     MF.allRows=allRows;
     MF.outCols=outCols;
- 
+    MF.issues=issues;
+    MF.cellSev=cellSev;
+
     // Show preview
     renderMfPreview(allRows.slice(0,5),outCols);
-    mfSetStatus('✅ <strong>'+allRows.length+'</strong> employees mapped across <strong>'+outCols.length+'</strong> columns. Ready to download.','success');
+    mfRenderIssues();
+    var issueEmps={};issues.forEach(function(x){issueEmps[x.rowIdx]=1;});
+    mfSetStatus('✅ <strong>'+allRows.length+'</strong> employees mapped across <strong>'+outCols.length+'</strong> columns.'
+      +(issues.length?' ⚠️ <strong>'+issues.length+'</strong> data issue(s) on <strong>'+Object.keys(issueEmps).length+'</strong> employee(s) — see the list below; they\'re highlighted in the download.':' No data issues found.')+' Ready to download.',issues.length?'info':'success');
     var dlBtn=document.getElementById('mf-download-btn');
     dlBtn.style.display='inline-flex';
  
@@ -10405,9 +10597,11 @@ function renderMfPreview(rows,cols){
     return '<th style="padding:5px 9px;background:var(--s9);color:'+(req?'#fca5a5':'rgba(255,255,255,.65)')+';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;border-right:1px solid rgba(255,255,255,.07)">'+c.replace(/\*/g,'').trim()+(req?'<span style="color:#f87171">*</span>':'')+'</th>';
   }).join('');
   var trs=rows.map(function(row,ri){
+    var sevs=(MF.cellSev&&MF.cellSev[ri])||{};
     var tds=cols.map(function(c){
       var v=row[c];var empty=v===undefined||v===null||v==='';
-      return '<td style="padding:5px 9px;font-size:11px;border-right:1px solid var(--s1);border-bottom:1px solid var(--s1);white-space:nowrap;color:'+(empty?'var(--s3)':'var(--s8)')+'">'+(empty?'—':String(v))+'</td>';
+      var sc=sevs[c]?MF_SEV_CLR[sevs[c]]:null;
+      return '<td style="padding:5px 9px;font-size:11px;border-right:1px solid var(--s1);border-bottom:1px solid var(--s1);white-space:nowrap;color:'+(sc?sc.fg:(empty?'var(--s3)':'var(--s8)'))+(sc?';background:'+sc.bg+';font-weight:600':'')+'">'+(empty?'—':String(v))+'</td>';
     }).join('');
     return '<tr style="background:'+(ri%2?'var(--s0)':'#fff')+'">'+tds+'</tr>';
   }).join('');
@@ -10469,7 +10663,17 @@ async function mfDownload(){
       if(rm)sheetXmlPath='xl/'+(rm[1].replace(/^\//,''));
     }
     var sheetXml=await zip.file(sheetXmlPath).async('string');
-    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap);
+    // Highlight flagged cells (missing / incorrect / defaulted) with fills added to styles.xml
+    var flagStyleIds=null;
+    if(MF.issues&&MF.issues.length){
+      var stylesFile=zip.file('xl/styles.xml');
+      if(stylesFile){
+        var flagStyles=mfAddFlagStyles(await stylesFile.async('string'));
+        if(flagStyles){zip.file('xl/styles.xml',flagStyles.xml);flagStyleIds=flagStyles.ids;}
+      }
+    }
+    var cellStyle=flagStyleIds?function(ri,col){var s=MF.cellSev&&MF.cellSev[ri]&&MF.cellSev[ri][col];return s?flagStyleIds[s]:null;}:null;
+    var newSheetXml=mfInjectRows(sheetXml,rows,cols,colMap,cellStyle);
     zip.file(sheetXmlPath,newSheetXml);
     // Refresh document metadata — the output template's docProps/core.xml still carries its
     // original authoring date (seen as old as 2011 on Sprout's blank template), which Excel
@@ -10501,11 +10705,13 @@ async function mfDownload(){
     var a=document.createElement('a');a.href=url;a.download=filename;
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    mfSetStatus('✅ <strong>'+filename+'</strong> downloaded — full template formatting preserved.','success');
+    var flagNote=!(MF.issues&&MF.issues.length)?'':(flagStyleIds?' <strong>'+MF.issues.length+'</strong> data issue(s) highlighted — red = missing, amber = incorrect, yellow = defaulted.':' ⚠️ Couldn\'t add highlights to this template — use the issue list below.');
+    mfSetStatus('✅ <strong>'+filename+'</strong> downloaded — full template formatting preserved.'+flagNote,'success');
   }catch(err){mfSetStatus('❌ '+err.message,'error');}
 }
 
-function mfInjectRows(sheetXml,rows,cols,colMap){
+// cellStyle(rowIndex, col) → style index for a flagged cell, or null (optional)
+function mfInjectRows(sheetXml,rows,cols,colMap,cellStyle){
   // Strip rows r >= 5 — handles namespace prefixes like <x:row>
   var clean=sheetXml.replace(/<(?:[a-zA-Z]*:)?row\b[^>]*\br="(\d+)"[^>]*>[\s\S]*?<\/(?:[a-zA-Z]*:)?row>/g,function(m,n){
     return parseInt(n)>=5?'':m;
@@ -10523,8 +10729,14 @@ function mfInjectRows(sheetXml,rows,cols,colMap){
       }
       if(ci===undefined)return;
       var v=rowData[col];
-      if(v===undefined||v===null||v==='')return;
-      cells+='<c r="'+mfColLetter(ci)+rn+'" t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
+      var st=cellStyle?cellStyle(ri,col):null;
+      var sAttr=st!==null&&st!==undefined?' s="'+st+'"':'';
+      if(v===undefined||v===null||v===''){
+        // A blank flagged cell (missing mandatory field) is still written, so its fill shows
+        if(sAttr)cells+='<c r="'+mfColLetter(ci)+rn+'"'+sAttr+'/>';
+        return;
+      }
+      cells+='<c r="'+mfColLetter(ci)+rn+'"'+sAttr+' t="inlineStr"><is><t xml:space="preserve">'+mfEscXml(String(v))+'</t></is></c>';
     });
     if(cells){newRows+='<row r="'+rn+'">'+cells+'</row>';lastRow=rn;}
   });
@@ -11506,6 +11718,7 @@ function onAuthSuccess(user){
     var meta=user.user_metadata||{};
     var displayName=meta.full_name||meta.name||email.split('@')[0];
     CURRENT_ROLE='implementer';CURRENT_NAME=displayName;IMPL_USER=resolveImplNickname(displayName);
+    _saveChatUserId(user,displayName,IMPL_USER);
     loadFromSupabase().then(function(){startApp();}).catch(function(){startApp();});
     return;
   }
@@ -11513,7 +11726,25 @@ function onAuthSuccess(user){
   if(email==='lesleea@sprout.ph'){CURRENT_ROLE='god';_IS_GOD=true;}
   CURRENT_NAME=found.username;
   IMPL_USER=found.username;
+  _saveChatUserId(user,found.username,resolveImplNickname(found.username));
   loadFromSupabase().then(function(){startApp();}).catch(function(){startApp();});
+}
+// Records the signed-in person's numeric Google account ID so the server can @mention them
+// in the team Google Chat Space (webhooks can only mention by ID, not email — see
+// api/_lib/chat.js). Fire-and-forget; a failure only means they're shown as a plain name.
+function _saveChatUserId(user,username,nickname){
+  try{
+    if(!_supa||!user)return;
+    var meta=user.user_metadata||{};
+    var gid=String(meta.provider_id||meta.sub||'');
+    if(!/^\d+$/.test(gid)&&user.identities){
+      var gi=user.identities.find(function(i){return i.provider==='google';});
+      if(gi)gid=String((gi.identity_data&&gi.identity_data.sub)||gi.id||'');
+    }
+    if(!/^\d+$/.test(gid))return;
+    _supa.from('chat_user_ids').upsert({email:(user.email||'').toLowerCase(),username:username||'',nickname:nickname||'',google_id:gid,updated_at:new Date().toISOString()},{onConflict:'email'})
+      .then(function(r){if(r.error)console.warn('chat_user_ids save error:',r.error.message);});
+  }catch(e){console.warn('chat_user_ids save failed:',e);}
 }
 
 var _authHandled=false;

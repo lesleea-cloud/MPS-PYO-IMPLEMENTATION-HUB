@@ -20,7 +20,11 @@ module.exports = async function handler(req, res) {
   const last4 = apiKey.slice(-4);
   const now = new Date().toISOString();
   try {
-    const r = await restFetch('/integrations', {
+    // `columns=` restricts the upsert to these fields only — without it, PostgREST's
+    // merge-duplicates resolution nulls out every column absent from the body,
+    // wiping the pull-config columns (base_url/endpoint_path/auth_type/auth_header_name)
+    // set by save-pull-config.js on every reconnect.
+    const r = await restFetch('/integrations?columns=id,tool_name,api_key,key_last4,status,configured_by,configured_at,updated_at', {
       method: 'POST',
       headers: { Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify([{
