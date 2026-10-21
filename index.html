@@ -8413,6 +8413,15 @@ function svtMount(){
       });
     });
 
+    // 0 variance (Register = Expected to the centavo) always counts as Passed. Any Review/Info/Flagged
+    // reason is kept in the note so it isn't lost (e.g. LOP-days mismatch, bonus fully taxed).
+    out.forEach((x) => {
+      if (x.status !== "pass" && r2(x.register - x.expected) === 0) {
+        x.note = `${STATUS_LBL[x.status]} → Passed (0 variance). ${x.note || ""}`.trim();
+        x.status = "pass";
+      }
+    });
+
     // ── summary ──
     const tl = (t) => TIMING_LBL[t] || t;
     const join = (...xs) => xs.filter((x) => x && String(x).trim()).join(" · ");
@@ -8636,7 +8645,10 @@ function svtMount(){
         });
         ws1.getRow(8).height = 30;
         let r = 9;
-        results.summary.forEach((s) => {
+        // Report order: Passed → Info → Review → Flagged (then rows with nothing to compare).
+        // Array sort is stable, so the existing order is kept within each status.
+        const SUMMARY_RANK = { Passed: 0, Info: 1, Review: 2, Flagged: 3, "Not in register": 4, "Manual review": 5 };
+        results.summary.slice().sort((a, b) => SUMMARY_RANK[a.status] - SUMMARY_RANK[b.status]).forEach((s) => {
           const dim = s.status === "Not in register" || s.status === "Manual review" ? { fg: "888780" } : {};
           const st = STATUS_CLR[s.status];
           const ruleRows = results.rows.filter((x) => x.rule === s.id);
@@ -8702,8 +8714,10 @@ function svtMount(){
             setCell(ws, rr, 10, x.note, { sz: 10, indent: 1 });
           });
         }
-        detailSheet("DETAILS", results.rows.filter((x) => x.status !== "pass"));
-        detailSheet("ALL CHECKS", results.rows);
+        const ROW_RANK = { pass: 0, info: 1, review: 2, flag: 3 };
+        const byStatus = (rows) => rows.slice().sort((a, b) => ROW_RANK[a.status] - ROW_RANK[b.status]);
+        detailSheet("DETAILS", byStatus(results.rows.filter((x) => x.status !== "pass")));
+        detailSheet("ALL CHECKS", byStatus(results.rows));
 
         // ── SHEET 4: QUESTIONNAIRE (reference) ──
         const ws4 = wb.addWorksheet("QUESTIONNAIRE", { views: [{ state: "frozen", ySplit: 1 }] });

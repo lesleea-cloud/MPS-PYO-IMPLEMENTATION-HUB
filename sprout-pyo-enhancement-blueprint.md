@@ -4257,3 +4257,129 @@ Statutory rates sit in `SSS_CFG` / `PHIC_CFG` / `HDMF_CFG` at the top of `svtMou
 1. Redeploy `index.html` to Vercel.
 2. Open Tools → Simulation Variance Analysis, upload the two Trade Window samples, and confirm the result matches the numbers above; download the .xlsx and check the styling.
 3. Try it on another client's questionnaire + register (ideally one with Gross-basis SSS or 1st-payout deductions, e.g. Cyber One) — those paths are coded but only the Trade Window data has been tested end to end.
+
+
+---
+
+## 129. Parallel Run Variance Analysis — mapping enhancements from standalone v19 (October 21, 2026)
+
+### What it is
+Ported the payroll-variance-only changes from the standalone `payroll_variance_tool_offline_19.html` (Downloads) into the Parallel Run Variance Analysis tool in `index.html`. That tool was originally merged from `payroll_variance_tool_offline_16.html` (see the merge note earlier in this blueprint, plus §119/§122). Only the v16 → v19 differences were applied. Nothing outside the variance tool changed, and the §122 ExcelJS report is untouched.
+
+### Changes
+| Area | v16 / before | v19 / now |
+|---|---|---|
+| **Auto-suggest matches** | Fuzzy-matched client ↔ Sprout headers (exact or substring), driven by the client's columns | Driven by the **Sprout file**: lists every Sprout pay column in Sprout order, starting at `Basic Salary (Semi-Monthly)` (or, if that column isn't found, every column not caught by `DENY_PATTERN`), skipping ID/name and `(hh:mm)` columns. A client column is filled in **only on an exact header-name match**. The rest are left blank to pick by hand. Rows you removed (`dismissed`) stay removed. |
+| **Download mapping** (empty table) | Built from the client's columns | Starts from the same Sprout-driven list, so you can fill in the Client Column in Excel |
+| **Client column picker** | Always had a value | New "— pick client column —" blank option. Rows with no client column are highlighted amber and **skipped** when you run |
+| **Mapping import** | A blank Client Column was an error | A blank Client Column is allowed (the row is imported and skipped at run time). Only a client column name that isn't found is still an error |
+| **Row order** | Insertion order | Sorted to match the Sprout file's column order (`sortBySproutOrder`) after auto-suggest, import, or a Sprout-column change. Drag/arrow reordering still overrides it. New **Reset to Sprout order** button re-sorts |
+| **Total rows** | Read as an employee | Row scan stops at a "Total" row (ID starting with "Total", or blank ID with name "Total"/"Total:") via `isEndRow` |
+| **Run / preview** | All rows compared | Only mapped rows (`isMapped`: both columns set) are compared. The preview line and results tile show how many rows were skipped. Error text: "Pick a client column for at least one pay item before running." |
+| **Results** | "Pay items compared" = `payItems.length` | `results.itemsCompared` + "N skipped (no client column)" |
+| **Headcount remarks** | "Not in Sprout file" / "Not in Client file" | "Not in Sprout file but in Client file" / "Not in Client file but in Sprout file". Headcount rows are still listed before pay-item variances |
+
+### Code changes (`index.html`, Parallel Run tool only)
+- New top-level helpers next to `normalizeHeader()`: `isEndRow`, `isMapped`, `sortBySproutOrder`.
+- Replaced `autoMapPayItems` / `matchSproutForClientColumn` with `sproutPayColumns`, `exactClientMatch`, `buildSproutDrivenRows`, and a new `autoMapPayItems`. `buildFullClientColumnRows` now returns `buildSproutDrivenRows(new Set())`.
+- New `updateSproutColumn` (re-sorts on change) and `resetToSproutOrder`.
+- Updated: mapping import validation, the parse loop (`isEndRow` break), `runAnalysis` (`activeItems`, split headcount/item details, `itemsCompared`/`skippedCount`), `mappingPreview` (`skipped`), and the configure/results UI text and controls.
+- Applied as a zero-fuzz patch (all 11 hunks matched v16 context exactly). The resulting change set in `index.html` is byte-identical to the v16 → v19 diff.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Open Tools → Parallel Run Variance Analysis, upload a client register + Sprout export, click **Auto-suggest matches**, and confirm the rows follow Sprout's column order, only exact-name matches are pre-filled, and unpicked rows show amber.
+3. Run it with a few rows left blank and confirm the "skipped" counts on the preview line and results tile. Check the Details list stops before any "Total" row. Download the .xlsx and confirm it still looks the same.
+
+
+---
+
+## 130. Clients — Delete button with a confirmation pop-up, and deletes now actually stick (October 21, 2026)
+
+### What changed
+- **Clients → Overview tab:** each row's small grey `✕` (next to Progress) is now a red-outlined **Delete** button with a trash icon.
+- Clicking it opens a **confirmation pop-up** in the app's own modal style (`#client-delete-modal`), replacing the browser's plain `confirm()`. It shows the client's name plus service · month · resource, a red warning that the delete is permanent, and **Cancel** / **Yes, delete**. Clicking outside the box or × also cancels.
+
+### Bug fixed along the way — deleted clients came back
+The old `clDeleteRow()` removed the client from `D` and called `_supaFlush()`. But `_supaFlush()` only **upserts** changed rows and never deletes. So the client stayed in Supabase's `clients` table and reappeared on the next load (or for anyone else). The new flow deletes it from Supabase explicitly.
+
+Also: new clients get `no = max(no) + 1`. If the highest-numbered client was deleted, the next new client reused its number and would inherit its leftover add-ons, milestones, after-handover and PM Tool rows. The delete now clears those too.
+
+### Code changes (`index.html`)
+- CSS: new `.cl-del-btn` (next to `.cl-xbtn`).
+- HTML: new `#client-delete-modal` (between the Add-client modal and the PM Tool assign modal).
+- `clDeleteRow(no)` now only fills and opens the modal (`CL_DELETE_PENDING`). New `closeClientDeleteModal()`.
+- New `confirmClientDelete()`: logs "Client Removed" to the audit trail (same as before), removes the client from `D`, and deletes `CL_ADDONS` / `CL_MILESTONES` / `CL_AFTERHO` / `CL_PMTOOL` / `CLIENT_PENDING[no]` and the matching `_snap` entries. Then it calls `autoSave()` and `renderClients()`.
+- New `_clSupaDeleteClient(no, name)`: first deletes from `client_addons`, `client_milestones`, `client_afterho`, `client_pmtool_data`, `client_pending` by `client_no` (side tables first, so a foreign key to `clients(no)` without `ON DELETE CASCADE` can't block it), then from `clients` by `no`. If the `clients` delete fails, it shows an error toast saying the database delete failed.
+- `renderClients()` Overview row: the delete cell uses the new button (`event.stopPropagation()` so it never also triggers a row action).
+
+### Left as-is (on purpose)
+- **Who can delete:** unchanged. Anyone who sees a client in the Overview tab (implementers only see their own clients) has the button, same as the old `✕`.
+- **Issue Log, Vault entries and Audit Trail** for the client are kept as history. Note: Issue Log entries are linked by `client_no`, so if a new client later reuses that number, the old issues would show against it.
+- The static placeholder rows in the HTML (line ~1960, replaced on first render) still call `clDeleteRow`, which now opens the modal too.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. ~~Run `Client_Delete_Policies.sql`~~ **Not needed — checked Oct 21, 2026** with the file's step-1 query. `clients`, `client_addons`, `client_afterho` and `client_milestones` have RLS **off** (each has an unused `auth_all` ALL policy), so deletes aren't blocked. `client_pending` (`cpending_delete`) and `client_pmtool_data` (`pmtool_data_delete`) already have DELETE policies. The SQL file is kept only for reference. ⚠️ Separate, pre-existing issue: with RLS off, those 4 tables are open to anyone holding the public anon key (visible in `index.html`). Enabling RLS would put the existing `auth_all` policies into effect, but first confirm that users who log in with the app's username/password have a Supabase auth session, or their saves would start failing.
+3. Test on a throwaway client: Add client → Delete → Cancel (nothing happens) → Delete → Yes, delete. Reload the page and confirm the client stays gone, and that the Audit Trail shows "Client Removed".
+
+
+---
+
+## 131. Simulation Variance report (.xlsx) now uses the Parallel Run report's layout (October 21, 2026)
+
+### What changed
+The Simulation Variance Analysis download (§128) now follows the same logical format as the Parallel Run Variance report (§122). **Nothing that was in the report before was removed.** Every column, the info block, the status legend, the formula note, and all 4 sheets are still there. Columns were reordered and renamed, and new columns were added.
+
+Mapping used: **Expected** (recomputed from the questionnaire) plays the role of Parallel Run's **Sprout**, and **Register** plays the role of **Client**. So Variance = Register − Expected (unchanged), and the new Var % = Variance ÷ Register (same as Parallel Run's Variance ÷ Client).
+
+| Sheet | Before (§128) | Now |
+|---|---|---|
+| 1 | **POLICY SUMMARY**: Policy check \| Questionnaire answer \| Checked as \| Employees \| Passed \| Flagged \| Review \| Status | **VARIANCE SUMMARY**: Payroll Items \| **Expected** \| **Register** \| **Variance (Amount)** \| **Variance (%)** \| Status \| Employees \| Passed \| Flagged \| Review \| Questionnaire answer \| Checked as |
+| 2 / 3 | **DETAILS** / **ALL CHECKS**: Employee ID \| Fullname \| Cut-off \| Policy check \| Register \| Expected \| Variance \| Status \| Note | Employee ID \| Fullname \| Cut-off \| **Income / Deduction** (= the policy check) \| Expected \| Register \| Variance \| **Remarks** \| Status \| Note |
+| 4 | QUESTIONNAIRE | Unchanged |
+
+- **New summary amounts:** Expected and Register are the totals of that check's rows across all employees and cut-offs. Variance is their difference. Blank for "Manual review" and "Not in register" rows.
+- **Var %:** same tiers and colours as Parallel Run (≥10% / 1–10% / within 1% / no variance). It shows **n/a** when the register total is 0 but something was expected (e.g. the column wasn't found).
+- **Remarks** (Parallel Run style): ▲ Increase (register above expected), ▼ Decrease, ● Not in register (the "Column not found…" flags), or "No variance".
+- **Legends:** the Var % legend was added. The Status legend and the formula note were kept, and the note now also explains Var %.
+- The info block (questionnaire / register files, cut-offs, contribution basis, generated time), the title bar, the frozen header and the filename (`{Company}_Simulation Variance Report_MMDDYYYY_HHMM.xlsx`) are unchanged.
+
+### Code changes (`index.html`, `svtMount()` → `downloadReport()` only)
+- Added the Parallel Run tier palette (`TIER_*`) and `tierFor()` inside the Simulation `downloadReport()`.
+- Sheet 1 rebuilt as described (12 columns, header row 8, freeze at row 8 as before).
+- `detailSheet()` columns reordered/extended as described. The `results` data, the on-screen results and the Parallel Run report are untouched.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-run the Trade Window samples (§128). Download the .xlsx and confirm the VARIANCE SUMMARY shows Expected/Register/Variance/Var % per check, and that every old column is still present. Confirm DETAILS/ALL CHECKS show the ▲/▼/● Remarks. Compare it side by side with a Parallel Run report for consistency.
+
+
+---
+
+## 132. Simulation Variance — 0 variance always counts as Passed; report rows ordered Passed → Review → Flagged (October 21, 2026)
+
+### Rule change: 0 variance = Passed (everywhere)
+Any check where Register − Expected rounds to ₱0.00 is now **Passed**, even if it would have been Review, Info or Flagged. This applies in the check engine (`analyze()`, just before the summary counts), so the on-screen tiles, the Policy summary / Details tabs and the .xlsx all agree.
+
+The original reason is **not lost**. The row's Note is prefixed with e.g. `Review → Passed (0 variance).` followed by the original note. Cases affected in the §128 Trade Window test, which were previously Review with 0 variance:
+- LWOP exactly 1.000 day but the LOP-days column shows 0 (Baluyot, Resurreccion)
+- Bonus fully taxed vs the ₱90,000 non-taxable ceiling (Baluyot, Gabionza)
+- Also any hourly-paid row flagged as "has both basic and hourly pay" (expected = register by design)
+
+Rows with a real variance are unchanged: OT/ND not in whole 15-min blocks, contribution catch-up adjustments (Info), and "Column not found" flags. So the §128 test should now show fewer Review rows. The exact counts need re-checking.
+
+### Report order (.xlsx only)
+- **VARIANCE SUMMARY:** Passed → Info → Review → Flagged, then Not in register → Manual review.
+- **DETAILS / ALL CHECKS:** Passed → Info → Review → Flagged (DETAILS has no Passed rows, so it starts at Info).
+- Within each status, the previous order is kept (stable sort): summary in the original check order, details by employee → cut-off → check.
+- The on-screen results keep their existing order.
+
+### Code changes (`index.html`, `svtMount()` only)
+- Check engine: a new pass over `out` before `// ── summary ──` that converts 0-variance non-pass rows to `pass` and prefixes the note.
+- `downloadReport()`: `SUMMARY_RANK` sort for sheet 1, `ROW_RANK` / `byStatus()` sort for DETAILS and ALL CHECKS.
+
+### Manual steps still required
+1. Redeploy `index.html` to Vercel.
+2. Re-run the Trade Window samples. Confirm Baluyot/Resurreccion LWOP and Baluyot/Gabionza taxable rows are now Passed with the "Review → Passed (0 variance)." note, and that the report rows run Passed → Info → Review → Flagged.
+3. Update the "Trade Window test result" numbers in §128 once re-run.
