@@ -7218,6 +7218,24 @@ function pvtMount(){
       nameCol: null
     };
   }
+  function isEndRow(idVal, nameVal) {
+    const idStr = String(idVal ?? "").trim();
+    const nameStr = String(nameVal ?? "").trim();
+    if (/^total\b/i.test(idStr)) return true;
+    return idStr === "" && /^total\s*:?$/i.test(nameStr);
+  }
+  function isMapped(pi) {
+    const ok = (v) => v !== null && v !== void 0 && !Number.isNaN(v);
+    return ok(pi.clientIdx) && ok(pi.sproutIdx);
+  }
+  function sortBySproutOrder(items) {
+    const pos = (r) => (r.sproutIdx === null || r.sproutIdx === void 0 || Number.isNaN(r.sproutIdx) ? Infinity : r.sproutIdx);
+    return items.map((r, i) => ({ r, i })).sort((a, b) => {
+      const pa = pos(a.r), pb = pos(b.r);
+      if (pa === pb) return a.i - b.i;
+      return pa < pb ? -1 : 1;
+    }).map((x) => x.r);
+  }
   let uid = 0;
   const nextId = () => `row_${++uid}`;
   function PayrollVarianceTool() {
@@ -7307,50 +7325,34 @@ function pvtMount(){
       setDismissed(/* @__PURE__ */ new Set());
     }
     const DENY_PATTERN = /accountnumber|bankaccount|banknumber|taxnumber|\btin\b|sssnumber|sssno|philhealthno|philhealthnumber|hdmfaccno|hdmfaccountno|costcenter|\bposition\b|department|gender|dateofbirth|datehired|joindate|resigndate|employmentstatus|\baddress\b|designation|\bbranch\b|\bgrade\b|\bcadre\b|residentialstatus|taxcategory|paymentmode|paymentgroup|^custom|employeeid|empno|fullname|\bname\b/;
-    function autoMapPayItems() {
-      const excludeSprout = /* @__PURE__ */ new Set([sprout.idCol, sprout.nameCol]);
-      const excludeClient = /* @__PURE__ */ new Set([client.idCol, client.nameCol]);
-      const alreadyMapped = new Set(payItems.map((r) => r.sproutIdx).filter((v) => v !== null && v !== void 0));
-      const newRows = [];
-      sprout.columns.forEach((sc) => {
-        if (excludeSprout.has(sc.idx)) return;
-        if (alreadyMapped.has(sc.idx)) return;
-        if (dismissed.has(sc.idx)) return;
-        const nsc = normalizeHeader(sc.name);
-        if (DENY_PATTERN.test(nsc)) return;
-        let match = client.columns.find((cc) => !excludeClient.has(cc.idx) && normalizeHeader(cc.name) === nsc);
-        if (!match) {
-          match = client.columns.find((cc) => {
-            if (excludeClient.has(cc.idx)) return false;
-            const ncc = normalizeHeader(cc.name);
-            if (DENY_PATTERN.test(ncc)) return false;
-            return ncc.length > 3 && nsc.length > 3 && (ncc.includes(nsc) || nsc.includes(ncc));
-          });
-        }
-        if (match) newRows.push({ id: nextId(), sproutIdx: sc.idx, clientIdx: match.idx });
+    function sproutPayColumns() {
+      const start = sprout.columns.find((c) => normalizeHeader(c.name) === "basicsalarysemimonthly");
+      return sprout.columns.filter((c) => {
+        if (c.idx === sprout.idCol || c.idx === sprout.nameCol) return false;
+        if (start && c.idx < start.idx) return false;
+        if (!start && DENY_PATTERN.test(normalizeHeader(c.name))) return false;
+        if (/\(hh:mm\)/i.test(c.name)) return false;
+        return true;
       });
-      setPayItems((p) => [...p, ...newRows]);
     }
-    function matchSproutForClientColumn(clientCol) {
-      const excludeSprout = /* @__PURE__ */ new Set([sprout.idCol, sprout.nameCol]);
-      const ncc = normalizeHeader(clientCol.name);
-      if (DENY_PATTERN.test(ncc)) return null;
-      let match = sprout.columns.find((sc) => !excludeSprout.has(sc.idx) && normalizeHeader(sc.name) === ncc);
-      if (!match) {
-        match = sprout.columns.find((sc) => {
-          if (excludeSprout.has(sc.idx)) return false;
-          const nsc = normalizeHeader(sc.name);
-          if (DENY_PATTERN.test(nsc)) return false;
-          return nsc.length > 3 && ncc.length > 3 && (nsc.includes(ncc) || ncc.includes(nsc));
-        });
-      }
-      return match || null;
+    function exactClientMatch(sc) {
+      const nsc = normalizeHeader(sc.name);
+      return client.columns.find((cc) => cc.idx !== client.idCol && cc.idx !== client.nameCol && normalizeHeader(cc.name) === nsc) || null;
+    }
+    function buildSproutDrivenRows(skipSproutIdx) {
+      return sproutPayColumns().filter((sc) => !skipSproutIdx.has(sc.idx)).map((sc) => {
+        const m = exactClientMatch(sc);
+        return { id: nextId(), sproutIdx: sc.idx, clientIdx: m ? m.idx : null };
+      });
+    }
+    function autoMapPayItems() {
+      const skip = new Set(payItems.map((r) => r.sproutIdx).filter((v) => v !== null && v !== void 0));
+      dismissed.forEach((v) => skip.add(v));
+      const newRows = buildSproutDrivenRows(skip);
+      setPayItems((p) => sortBySproutOrder([...p, ...newRows]));
     }
     function buildFullClientColumnRows() {
-      return client.columns.filter((cc) => cc.idx !== client.idCol && cc.idx !== client.nameCol).map((cc) => {
-        const match = matchSproutForClientColumn(cc);
-        return { id: nextId(), clientIdx: cc.idx, sproutIdx: match ? match.idx : null };
-      });
+      return buildSproutDrivenRows(/* @__PURE__ */ new Set());
     }
     function addPayItem() {
       setPayItems((p) => [...p, {
@@ -7368,6 +7370,12 @@ function pvtMount(){
     }
     function updatePayItem(id, field, value) {
       setPayItems((p) => p.map((r) => r.id === id ? { ...r, [field]: value } : r));
+    }
+    function updateSproutColumn(id, newIdx) {
+      setPayItems((p) => sortBySproutOrder(p.map((r) => r.id === id ? { ...r, sproutIdx: newIdx } : r)));
+    }
+    function resetToSproutOrder() {
+      setPayItems((p) => sortBySproutOrder(p));
     }
     function reorderPayItems(fromIdx, toIdx) {
       if (fromIdx === toIdx) return;
@@ -7462,19 +7470,18 @@ function pvtMount(){
           const clientMatch = findCol(client.columns, clientName);
           const sproutMatch = findCol(sprout.columns, sproutName);
           const issues = [];
-          if (!clientName) issues.push("Client Column is blank");
-          else if (!clientMatch) issues.push(`Client column not found: "${clientName}"`);
+          if (clientName && !clientMatch) issues.push(`Client column not found: "${clientName}"`);
           if (!sproutName) issues.push("Sprout Column is blank");
           else if (!sproutMatch) issues.push(`Sprout column not found: "${sproutName}"`);
           if (issues.length === 0) {
-            validRows.push({ id: nextId(), sproutIdx: sproutMatch.idx, clientIdx: clientMatch.idx });
+            validRows.push({ id: nextId(), sproutIdx: sproutMatch.idx, clientIdx: clientMatch ? clientMatch.idx : null });
           } else {
             errorRows.push({ clientName, sproutName, status: issues.join("; ") });
           }
         });
         if (errorRows.length > 0) downloadAnnotatedMapping(validRows, errorRows);
         if (validRows.length > 0) {
-          setPayItems(validRows);
+          setPayItems(sortBySproutOrder(validRows));
           setDismissed(/* @__PURE__ */ new Set());
         }
         if (errorRows.length > 0 && validRows.length > 0) {
@@ -7495,6 +7502,7 @@ function pvtMount(){
         if (!row) continue;
         const idVal = row[fileState.idCol];
         const nameVal = row[fileState.nameCol];
+        if (isEndRow(idVal, nameVal)) break;
         if (isNoiseRow(idVal, nameVal)) continue;
         const key = String(idVal).trim().toLowerCase();
         if (!key) continue;
@@ -7508,10 +7516,12 @@ function pvtMount(){
         setError("Upload both files first.");
         return;
       }
-      if (payItems.length === 0) {
-        setError("Map at least one pay item before running.");
+      const activeItems = payItems.filter(isMapped);
+      if (activeItems.length === 0) {
+        setError("Pick a client column for at least one pay item before running.");
         return;
       }
+      const skippedCount = payItems.length - activeItems.length;
       const clientEmps = getEmployees(client);
       const sproutEmps = getEmployees(sprout);
       const allIds = Array.from(/* @__PURE__ */ new Set([...Object.keys(clientEmps), ...Object.keys(sproutEmps)]));
@@ -7524,7 +7534,7 @@ function pvtMount(){
         client: Object.keys(clientEmps).length,
         reason: onlyClient.length || onlySprout.length ? `${onlyClient.length} missing from Sprout, ${onlySprout.length} missing from Client file` : ""
       });
-      payItems.forEach((pi) => {
+      activeItems.forEach((pi) => {
         let sTotal = 0, cTotal = 0;
         allIds.forEach((key) => {
           const c = clientEmps[key];
@@ -7538,33 +7548,35 @@ function pvtMount(){
         });
         summary.push({ item: getRowLabel(pi), sprout: sTotal, client: cTotal, reason: "" });
       });
-      const details = [];
+      const headcountDetails = [];
+      const itemDetails = [];
       allIds.forEach((key) => {
         const c = clientEmps[key];
         const s = sproutEmps[key];
         const name = s && s.name || c && c.name || "";
         const rawId = s && s.rawId || c && c.rawId || key;
         if (!c || !s) {
-          details.push({
+          headcountDetails.push({
             id: rawId,
             name,
             item: "Headcount",
             sprout: s ? 1 : 0,
             client: c ? 1 : 0,
-            remark: c ? "Not in Sprout file" : "Not in Client file"
+            remark: c ? "Not in Sprout file but in Client file" : "Not in Client file but in Sprout file"
           });
           return;
         }
-        payItems.forEach((pi) => {
+        activeItems.forEach((pi) => {
           const sv = toNumber(s.row[pi.sproutIdx]);
           const cv = toNumber(c.row[pi.clientIdx]);
           const variance = cv - sv;
           if (Math.abs(variance) > threshold) {
-            details.push({ id: rawId, name, item: getRowLabel(pi), sprout: sv, client: cv, remark: variance > 0 ? "Increase" : "Decrease" });
+            itemDetails.push({ id: rawId, name, item: getRowLabel(pi), sprout: sv, client: cv, remark: variance > 0 ? "Increase" : "Decrease" });
           }
         });
       });
-      setResults({ summary, details });
+      const details = [...headcountDetails, ...itemDetails];
+      setResults({ summary, details, itemsCompared: activeItems.length, skippedCount });
       setActiveTab("summary");
       setStep("results");
     }
@@ -7705,16 +7717,17 @@ function pvtMount(){
       [results, threshold]
     );
     const mappingPreview = useMemo(() => {
-      if (!canConfigure || payItems.length === 0) return null;
+      const active = payItems.filter(isMapped);
+      if (!canConfigure || active.length === 0) return null;
       const clientEmps = getEmployees(client);
       const sproutEmps = getEmployees(sprout);
       let flagged = 0;
-      payItems.forEach((pi) => {
+      active.forEach((pi) => {
         const sTotal = Object.values(sproutEmps).reduce((a, e) => a + toNumber(e.row[pi.sproutIdx]), 0);
         const cTotal = Object.values(clientEmps).reduce((a, e) => a + toNumber(e.row[pi.clientIdx]), 0);
         if (Math.abs(cTotal - sTotal) > threshold) flagged += 1;
       });
-      return { flagged, total: payItems.length };
+      return { flagged, total: active.length, skipped: payItems.length - active.length };
     }, [client, sprout, payItems, threshold, canConfigure]);
     return /* @__PURE__ */ React.createElement("div", { className: "max-w-5xl mx-auto p-6 font-sans text-gray-900" }, /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("h1", { className: "text-xl font-semibold text-gray-900" }, "Payroll variance analysis"), /* @__PURE__ */ React.createElement("p", { className: "text-sm text-gray-500 mt-1" }, "Compare a client pay register against your Sprout export, matched on employee ID.")), /* @__PURE__ */ React.createElement("div", { className: "flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-6" }, /* @__PURE__ */ React.createElement("span", { className: "text-lg leading-none" }, "\u{1F4CA}"), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-sm font-semibold text-green-900" }, "Payroll Variance Analysis"), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-green-800 mt-0.5" }, "Upload both payroll registers. Map pay items across different header names, then compare every matched item employee-by-employee."))), error && /* @__PURE__ */ React.createElement("div", { className: "mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-3 py-2 rounded-md" }, /* @__PURE__ */ React.createElement(Icon, { name: "alert", size: 16, className: "mt-0.5 shrink-0" }), /* @__PURE__ */ React.createElement("span", null, error)), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-6 text-sm" }, ["upload", "configure", "results"].map((s, i) => /* @__PURE__ */ React.createElement(Fragment, { key: s }, /* @__PURE__ */ React.createElement("div", { className: `flex items-center gap-1.5 ${step === s ? "text-gray-900 font-medium" : "text-gray-400"}` }, /* @__PURE__ */ React.createElement("span", { className: `w-5 h-5 rounded-full text-xs flex items-center justify-center ${step === s ? "bg-green-700 text-white" : "border border-gray-300"}` }, i + 1), /* @__PURE__ */ React.createElement("span", { className: "capitalize" }, s)), i < 2 && /* @__PURE__ */ React.createElement("div", { className: "w-8 h-px bg-green-200" })))), step === "upload" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-4 mb-6" }, [
       { key: "client", label: "Client payroll register", state: client, setter: setClient, ref: clientInputRef },
@@ -7829,7 +7842,7 @@ function pvtMount(){
       /* @__PURE__ */ React.createElement(Icon, { name: "upload", size: 13 }),
       " ",
       mappingDragOver ? "Drop file to import" : "Import mapping"
-    ), /* @__PURE__ */ React.createElement("button", { onClick: autoMapPayItems, className: "text-xs border border-gray-300 rounded-full px-3 py-1.5 bg-white hover:bg-gray-50" }, "Auto-suggest matches"), /* @__PURE__ */ React.createElement("button", { onClick: addPayItem, className: "inline-flex items-center gap-1 text-xs rounded-full px-3 py-1.5 bg-green-700 text-white hover:bg-green-800" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Add row"))), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-gray-500 mb-3" }, "Match each pay description your client uses to the equivalent Sprout column. Label always follows the Sprout column automatically. Only mapped items are compared \u2014 removed rows stay removed, even if you click Auto-suggest again. Importing a mapping file replaces the table below entirely. If the table's empty, Download mapping lists every client column first, so you can delete what's irrelevant and fill in the rest in Excel."), payItems.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-md" }, "No pay items mapped yet.") : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-[92px_1.3fr_1fr_1fr_28px] gap-2 text-xs text-gray-500 px-1" }, /* @__PURE__ */ React.createElement("span", null, "Reorder"), /* @__PURE__ */ React.createElement("span", null, "Label (auto)"), /* @__PURE__ */ React.createElement("span", null, "Client column"), /* @__PURE__ */ React.createElement("span", null, "Sprout column"), /* @__PURE__ */ React.createElement("span", null)), payItems.map((pi, i) => /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("button", { onClick: resetToSproutOrder, className: "text-xs border border-gray-300 rounded-full px-3 py-1.5 bg-white hover:bg-gray-50", title: "Re-sort the table to match the column order of the Sprout file" }, "Reset to Sprout order"), /* @__PURE__ */ React.createElement("button", { onClick: autoMapPayItems, className: "text-xs border border-gray-300 rounded-full px-3 py-1.5 bg-white hover:bg-gray-50" }, "Auto-suggest matches"), /* @__PURE__ */ React.createElement("button", { onClick: addPayItem, className: "inline-flex items-center gap-1 text-xs rounded-full px-3 py-1.5 bg-green-700 text-white hover:bg-green-800" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Add row"))), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-gray-500 mb-3" }, "Match each pay description your client uses to the equivalent Sprout column. Label always follows the Sprout column automatically. Only mapped items are compared \u2014 removed rows stay removed, even if you click Auto-suggest again. Importing a mapping file replaces the table below entirely. Auto-suggest lists every Sprout pay description in Sprout order and fills in a client column only on an exact name match \u2014 pick the rest by hand and delete rows you don't need. Rows with no client column are skipped when you run. If the table's empty, Download mapping starts from that same list, so you can fill in the Client Column in Excel (see the Available Columns tab). Rows follow the Sprout file's column order; use the drag handle or arrows to override, and Reset to Sprout order to undo."), payItems.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-md" }, "No pay items mapped yet.") : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-[92px_1.3fr_1fr_1fr_28px] gap-2 text-xs text-gray-500 px-1" }, /* @__PURE__ */ React.createElement("span", null, "Reorder"), /* @__PURE__ */ React.createElement("span", null, "Label (auto)"), /* @__PURE__ */ React.createElement("span", null, "Client column"), /* @__PURE__ */ React.createElement("span", null, "Sprout column"), /* @__PURE__ */ React.createElement("span", null)), payItems.map((pi, i) => /* @__PURE__ */ React.createElement(
       "div",
       {
         key: pi.id,
@@ -7861,10 +7874,10 @@ function pvtMount(){
         },
         getRowLabel(pi)
       ),
-      /* @__PURE__ */ React.createElement("select", { value: pi.clientIdx ?? "", onChange: (e) => updatePayItem(pi.id, "clientIdx", parseInt(e.target.value, 10)), className: "border border-gray-300 rounded-md px-2 py-1.5 text-sm" }, client.columns.map((c) => /* @__PURE__ */ React.createElement("option", { key: c.idx, value: c.idx }, c.name))),
-      /* @__PURE__ */ React.createElement("select", { value: pi.sproutIdx ?? "", onChange: (e) => updatePayItem(pi.id, "sproutIdx", parseInt(e.target.value, 10)), className: "border border-gray-300 rounded-md px-2 py-1.5 text-sm" }, sprout.columns.map((c) => /* @__PURE__ */ React.createElement("option", { key: c.idx, value: c.idx }, c.name))),
+      /* @__PURE__ */ React.createElement("select", { value: pi.clientIdx ?? "", onChange: (e) => updatePayItem(pi.id, "clientIdx", e.target.value === "" ? null : parseInt(e.target.value, 10)), className: "border border-gray-300 rounded-md px-2 py-1.5 text-sm", style: pi.clientIdx === null || pi.clientIdx === void 0 ? { borderColor: "#f59e0b", backgroundColor: "#fffbeb" } : void 0 }, /* @__PURE__ */ React.createElement("option", { key: "none", value: "" }, "\u2014 pick client column \u2014"), client.columns.map((c) => /* @__PURE__ */ React.createElement("option", { key: c.idx, value: c.idx }, c.name))),
+      /* @__PURE__ */ React.createElement("select", { value: pi.sproutIdx ?? "", onChange: (e) => updateSproutColumn(pi.id, parseInt(e.target.value, 10)), className: "border border-gray-300 rounded-md px-2 py-1.5 text-sm" }, sprout.columns.map((c) => /* @__PURE__ */ React.createElement("option", { key: c.idx, value: c.idx }, c.name))),
       /* @__PURE__ */ React.createElement("button", { onClick: () => removePayItem(pi.id), className: "text-gray-400 hover:text-red-600 flex justify-center" }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 15 }))
-    )))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-6 text-sm" }, /* @__PURE__ */ React.createElement("span", { className: "text-gray-500" }, mappingPreview ? /* @__PURE__ */ React.createElement(React.Fragment, null, "\u2192 ", /* @__PURE__ */ React.createElement("span", { className: "font-medium text-green-700" }, mappingPreview.flagged, " of ", mappingPreview.total), " mapped pay items currently show a variance") : "Map at least one pay item to see a variance preview")), /* @__PURE__ */ React.createElement("div", { className: "flex gap-3" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setStep("upload"), className: "inline-flex items-center gap-1.5 text-sm border border-gray-300 rounded-full px-4 py-2 bg-white hover:bg-gray-50" }, /* @__PURE__ */ React.createElement(Icon, { name: "back", size: 14 }), " Back"), /* @__PURE__ */ React.createElement("button", { onClick: runAnalysis, className: "inline-flex items-center gap-2 text-sm bg-green-700 text-white rounded-full px-5 py-2 hover:bg-green-800" }, /* @__PURE__ */ React.createElement(Icon, { name: "play", size: 14 }), " Run variance analysis"))), step === "results" && results && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 gap-3 mb-5" }, /* @__PURE__ */ React.createElement("div", { className: "bg-gray-50 rounded-lg p-3" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-gray-500" }, "Pay items compared"), /* @__PURE__ */ React.createElement("p", { className: "text-xl font-medium mt-0.5" }, payItems.length)), /* @__PURE__ */ React.createElement("div", { className: "bg-green-50 rounded-lg p-3" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-green-700" }, "Matched"), /* @__PURE__ */ React.createElement("p", { className: "text-xl font-medium mt-0.5 text-green-700" }, results.summary.length - 1 - flaggedSummaryCount)), /* @__PURE__ */ React.createElement("div", { className: "bg-red-50 rounded-lg p-3" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-red-700" }, "Flagged"), /* @__PURE__ */ React.createElement("p", { className: "text-xl font-medium mt-0.5 text-red-700" }, flaggedSummaryCount))), /* @__PURE__ */ React.createElement("div", { className: "border border-gray-200 rounded-lg p-3 mb-4" }, /* @__PURE__ */ React.createElement("label", { className: "block text-xs text-gray-500 mb-1" }, "Company name (optional \u2014 auto-read from the Sprout file, editable)"), /* @__PURE__ */ React.createElement(
+    )))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-6 text-sm" }, /* @__PURE__ */ React.createElement("span", { className: "text-gray-500" }, mappingPreview ? /* @__PURE__ */ React.createElement(React.Fragment, null, "\u2192 ", /* @__PURE__ */ React.createElement("span", { className: "font-medium text-green-700" }, mappingPreview.flagged, " of ", mappingPreview.total), " mapped pay items currently show a variance", mappingPreview.skipped > 0 ? `, ${mappingPreview.skipped} row(s) still have no client column and will be skipped` : "") : "Pick a client column for at least one pay item to see a variance preview")), /* @__PURE__ */ React.createElement("div", { className: "flex gap-3" }, /* @__PURE__ */ React.createElement("button", { onClick: () => setStep("upload"), className: "inline-flex items-center gap-1.5 text-sm border border-gray-300 rounded-full px-4 py-2 bg-white hover:bg-gray-50" }, /* @__PURE__ */ React.createElement(Icon, { name: "back", size: 14 }), " Back"), /* @__PURE__ */ React.createElement("button", { onClick: runAnalysis, className: "inline-flex items-center gap-2 text-sm bg-green-700 text-white rounded-full px-5 py-2 hover:bg-green-800" }, /* @__PURE__ */ React.createElement(Icon, { name: "play", size: 14 }), " Run variance analysis"))), step === "results" && results && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 gap-3 mb-5" }, /* @__PURE__ */ React.createElement("div", { className: "bg-gray-50 rounded-lg p-3" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-gray-500" }, "Pay items compared"), /* @__PURE__ */ React.createElement("p", { className: "text-xl font-medium mt-0.5" }, results.itemsCompared), results.skippedCount > 0 && /* @__PURE__ */ React.createElement("p", { className: "text-xs text-gray-400 mt-0.5" }, results.skippedCount, " skipped (no client column)")), /* @__PURE__ */ React.createElement("div", { className: "bg-green-50 rounded-lg p-3" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-green-700" }, "Matched"), /* @__PURE__ */ React.createElement("p", { className: "text-xl font-medium mt-0.5 text-green-700" }, results.summary.length - 1 - flaggedSummaryCount)), /* @__PURE__ */ React.createElement("div", { className: "bg-red-50 rounded-lg p-3" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-red-700" }, "Flagged"), /* @__PURE__ */ React.createElement("p", { className: "text-xl font-medium mt-0.5 text-red-700" }, flaggedSummaryCount))), /* @__PURE__ */ React.createElement("div", { className: "border border-gray-200 rounded-lg p-3 mb-4" }, /* @__PURE__ */ React.createElement("label", { className: "block text-xs text-gray-500 mb-1" }, "Company name (optional \u2014 auto-read from the Sprout file, editable)"), /* @__PURE__ */ React.createElement(
       "input",
       {
         value: companyName,
