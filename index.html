@@ -4770,9 +4770,11 @@ function clCbox(no,field,val){
       if(d.service==='Payroll Starter'&&(field==='par'||field==='post'))return;
       if(d.service!=='Payroll Starter'&&field==='checklist')return;
       var oldV=d[field];
+      var oldRemarks=d.remarks;
       d[field]=d[field]?0:1;
       d.remarks=deriveRemarks(d);
       logAudit(no,'Phases',field,phLbl[field]||field,oldV?'Done':'Pending',d[field]?'Done':'Pending');
+      if(oldRemarks!=='Live'&&d.remarks==='Live')notifyClientLive(no);
     }
   } else {
     if(!CL_ADDONS[no])CL_ADDONS[no]={sg:0,ba:0,std:0,otk:0};
@@ -4824,7 +4826,7 @@ function triggerClientFolderCreation(d){
 function clUpdateOtkImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.otkImpl||'';d.otkImpl=val;logAudit(no,'Resource Team','otkImpl','OTK Implementer',old,val);}autoSave();}
 function clUpdatePdImpl(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pdImpl||'';d.pdImpl=val;logAudit(no,'Resource Team','pdImpl','PD Implementer',old,val);}autoSave();}
 function clUpdateDays(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.days;d.days=parseInt(val)||0;logAudit(no,'Overview','days','Days',old,d.days);}autoSave();renderClients();}
-function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.remarks;d.remarks=val;logAudit(no,'Overview','status','Status',old,val);}autoSave();_supaFlush();renderClients();}
+function clUpdateStatus(no,val){var d=D.find(function(x){return x.no===no;});var wentLive=false;if(d){var old=d.remarks;d.remarks=val;wentLive=old!=='Live'&&val==='Live';logAudit(no,'Overview','status','Status',old,val);}autoSave();if(wentLive)notifyClientLive(no);else _supaFlush();renderClients();}
 function clUpdatePm(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.pm;d.pm=val;logAudit(no,'Overview','pm','Project Manager',old,val);}autoSave();}
 function clUpdateHrI(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.hri;d.hri=val;logAudit(no,'Resource Team','hri','HR-I',old,val);}autoSave();}
 function clUpdateGov(no,val){var d=D.find(function(x){return x.no===no;});if(d){var old=d.gov;d.gov=val;logAudit(no,'Resource Team','gov','Gov Resource',old,val);}autoSave();}
@@ -5045,6 +5047,18 @@ function submitAddClient(){
   clPg=1;
   renderClients();
   if(pendingPmToolEventId)pmtoolSetStatus(pendingPmToolEventId,'assigned',newNo);
+}
+// A client just turned Live (Status dropdown, or Live Run / Post Live ticked): save it to
+// Supabase first (the server reads the row from there and checks it's Live), then announce it
+// in the Implementers Chat Space. The server posts at most once per client.
+function notifyClientLive(no){
+  Promise.resolve(_supaFlush()).then(function(){
+    return fetch('/api/integrations/live-notify',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({no:no,markedBy:CURRENT_NAME||''})
+    });
+  }).then(function(r){if(r&&!r.ok)r.text().then(function(t){console.warn('Live Chat message failed:',t);});})
+    .catch(function(e){console.warn('Live Chat message request failed:',e);});
 }
 function notifyNewClient(no){
   fetch('/api/integrations/new-client-notify',{

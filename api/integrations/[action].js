@@ -10,6 +10,7 @@ const HANDLERS = {
   'drive-decks-sync': require('../_lib/handlers/integrations/drive-decks-sync'),
   'events-status': require('../_lib/handlers/integrations/events-status'),
   'events': require('../_lib/handlers/integrations/events'),
+  'live-notify': require('../_lib/handlers/integrations/live-notify'),
   'new-client-notify': require('../_lib/handlers/integrations/new-client-notify'),
   'pull': require('../_lib/handlers/integrations/pull'),
   'remove': require('../_lib/handlers/integrations/remove'),

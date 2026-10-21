@@ -10,8 +10,10 @@
 // _saveChatUserId in index.html). A name with no captured ID is shown as plain text instead.
 const { restFetch } = require('./supabaseAdmin');
 
-async function postToChat(text) {
-  const url = process.env.GOOGLE_CHAT_WEBHOOK_URL;
+// webhookUrl is optional; without it the message goes to the main team Space
+// (GOOGLE_CHAT_WEBHOOK_URL).
+async function postToChat(text, webhookUrl) {
+  const url = webhookUrl || process.env.GOOGLE_CHAT_WEBHOOK_URL;
   if (!url) throw new Error('GOOGLE_CHAT_WEBHOOK_URL is not set on the server');
   const resp = await fetch(url, {
     method: 'POST',
