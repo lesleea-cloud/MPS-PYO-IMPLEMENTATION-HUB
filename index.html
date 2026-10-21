@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Sprout PYO Implementation Hub</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2332CE13'/%3E%3Cpath d='M12 5L4 9l8 4 8-4-8-4z' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M4 15l8 4 8-4' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M4 12l8 4 8-4' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&amp;family=Rubik:wght@300;400;500;600;700&amp;family=DM+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -683,155 +683,104 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
  
  
 /* ══ LOGIN PAGE ══ */
+/* Single centred card on dark green with sprouts growing from the bottom edge. */
 #login-screen{
   position:fixed;inset:0;z-index:1000;
-  display:flex;flex-direction:column;
-  background:#092903;
-  font-family:var(--font);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  background:#0a2a05;
+  font-family:'Outfit',var(--font);
   width:100vw;height:100vh;
   overflow:hidden;
 }
 #login-screen.hidden{display:none;}
 
-@keyframes orbFloat{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.08);}}
-@keyframes orbFloat2{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.06);}}
 @keyframes llFadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-@keyframes llSlideRight{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
-@keyframes llDropIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
-@keyframes llBarSweep{from{width:0;}to{width:100%;}}
-@keyframes llRoleIn{from{opacity:0;transform:translateX(-12px);}to{opacity:1;transform:translateX(0);}}
+@keyframes llGrow{from{opacity:0;transform:translateY(40px) scaleY(.6);}to{opacity:1;transform:translateY(0) scaleY(1);}}
+@keyframes llSway{0%,100%{transform:rotate(-1.5deg);}50%{transform:rotate(1.5deg);}}
 
-.login-orb1{position:absolute;top:50%;left:24%;transform:translate(-50%,-50%);width:420px;height:420px;border-radius:50%;background:#32CE13;opacity:.055;animation:orbFloat 6s ease-in-out infinite;pointer-events:none;z-index:0;}
-.login-orb2{position:absolute;top:80%;left:12%;transform:translate(-50%,-50%);width:220px;height:220px;border-radius:50%;background:#D2F612;opacity:.03;animation:orbFloat2 8s ease-in-out infinite reverse;pointer-events:none;z-index:0;}
-
-.login-nav{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 44px;height:64px;flex-shrink:0;
-  border-bottom:0.5px solid rgba(255,255,255,.06);
-  position:relative;z-index:2;
-  animation:llFadeUp .45s ease both;
-}
-.ll-logo{display:flex;align-items:center;gap:11px;}
-.ll-logo-mark{
-  width:34px;height:34px;border-radius:9px;
-  background:#32CE13;
-  display:flex;align-items:center;justify-content:center;
-  overflow:hidden;flex-shrink:0;
-}
-.ll-logo-mark img{width:100%;height:100%;object-fit:cover;border-radius:9px;}
-.ll-logo-text{color:#d4efd0;font-size:14px;font-weight:700;letter-spacing:-.01em;}
-.ll-logo-sub{color:rgba(255,255,255,.3);font-size:11px;margin-top:1px;}
-.ll-nav-yr{font-size:11px;color:rgba(255,255,255,.18);}
-
-.login-body{
-  flex:1;min-height:0;
-  display:grid;grid-template-columns:1fr 1fr;
-  position:relative;
-}
-
-.login-left{
-  padding:40px 44px 44px;
-  display:flex;flex-direction:column;
-  justify-content:space-between;
-  position:relative;z-index:1;
-}
-.ll-hero-title{
-  font-size:38px;font-weight:700;color:#f0faea;
-  line-height:1.15;letter-spacing:-.03em;
-  margin-bottom:14px;
-  animation:llFadeUp .55s .12s ease both;
-}
-.ll-hero-desc{
-  font-size:13px;color:rgba(255,255,255,.38);
-  line-height:1.75;max-width:360px;
-  animation:llFadeUp .55s .22s ease both;
-}
-.ll-features{display:flex;flex-direction:column;gap:10px;}
-.ll-feat{
-  display:flex;align-items:center;gap:13px;
-  background:rgba(50,206,19,.08);border:0.5px solid rgba(50,206,19,.15);
-  border-radius:11px;padding:13px 16px;
-}
-.ll-feat:nth-child(1){animation:llRoleIn .5s .32s ease both;}
-.ll-feat:nth-child(2){animation:llRoleIn .5s .42s ease both;}
-.ll-feat:nth-child(3){animation:llRoleIn .5s .52s ease both;}
-.ll-feat-icon{
-  width:28px;height:28px;border-radius:7px;
-  background:rgba(50,206,19,.15);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-}
-.ll-feat-icon svg{width:14px;height:14px;fill:none;stroke:#32CE13;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
-.ll-feat-text{font-size:12px;color:rgba(255,255,255,.3);line-height:1.4;}
-.ll-feat-text strong{color:#C9F3BE;display:block;font-size:12px;font-weight:600;margin-bottom:2px;}
-
-.login-right{
-  padding:40px 44px 44px;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:14px;
-  position:relative;z-index:1;
-}
-.ll-dept-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  border:0.5px solid rgba(210,246,18,.35);border-radius:5px;
-  padding:5px 12px;font-size:11px;color:#D2F612;font-weight:500;
-  animation:llDropIn .45s .38s ease both;
-}
-.ll-dept-pill svg{width:11px;height:11px;flex-shrink:0;}
+.ll-plants{position:absolute;inset:0;pointer-events:none;z-index:0;}
+.ll-plant{position:absolute;bottom:0;overflow:visible;transform-origin:50% 100%;
+  --ls:#2f8a1c;--la:#2f8a1c;--lb:#7d9a1c;
+  animation:llGrow 1s ease both,llSway 7s ease-in-out 1s infinite;}
+/* bottom-left cluster */
+.ll-plant.p1{left:-10px;width:190px;height:300px;animation-delay:.1s,1.1s;}
+.ll-plant.p2{left:150px;width:130px;height:170px;--ls:#3c8a2a;--la:#2b7d1e;--lb:#6b8a63;animation-delay:.25s,1.4s;}
+.ll-plant.p3{left:250px;width:80px;height:80px;--ls:#5f8a4a;--la:#4f7d3c;--lb:#6b8a3c;animation-delay:.4s,1.8s;}
+/* top-left, small and faded */
+.ll-plant.p4{left:95px;bottom:auto;top:85px;width:70px;height:75px;opacity:.55;--ls:#4f7d3c;--la:#3c6b2a;--lb:#4f7d3c;animation:none;}
+/* top-right, cut off by the edge */
+.ll-plant.p5{right:70px;bottom:auto;top:-30px;width:95px;height:135px;opacity:.7;--ls:#4f7d3c;--la:#5f7d2a;--lb:#4f7d3c;animation:none;}
+/* bottom-right cluster */
+.ll-plant.p6{right:-25px;width:220px;height:350px;--la:#2f8a1c;--lb:#8aa02a;animation-delay:.15s,1.2s;}
+.ll-plant.p7{right:180px;width:120px;height:170px;--ls:#4f8a3c;--la:#6b8a63;--lb:#2f8a1c;animation-delay:.3s,1.6s;}
+.ll-plant.p8{right:270px;width:75px;height:85px;--ls:#5f8a4a;--la:#5f7d3c;--lb:#7d8a2a;animation-delay:.45s,2s;}
+.ll-ground{position:absolute;left:-5%;right:-5%;bottom:-40px;height:70px;border-radius:50%;background:#0f3a08;}
 
 .login-form{
-  width:100%;max-width:380px;
+  position:relative;z-index:1;
+  width:100%;max-width:452px;
   background:#F7F9ED;
-  border-radius:16px;overflow:hidden;
-  flex-shrink:0;
-  animation:llSlideRight .5s .28s ease both;
+  border-radius:30px;
+  padding:48px 40px 36px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  box-shadow:0 30px 80px rgba(0,0,0,.35);
+  animation:llFadeUp .55s .1s ease both;
 }
-.lf-card-bar-wrap{height:3px;background:rgba(50,206,19,.12);position:relative;overflow:hidden;}
-.lf-card-bar-fill{position:absolute;top:0;left:0;height:100%;background:#32CE13;animation:llBarSweep .9s .82s ease both;width:0;}
-.lf-card-body{padding:26px 28px 22px;}
-.lf-card-header{display:none;}
-.lf-eyebrow{display:none;}
-.lf-title{font-size:20px;font-weight:700;color:#092903;letter-spacing:-.02em;margin-bottom:6px;}
-.lf-sub{font-size:12px;color:#5a7a50;margin-bottom:1.5rem;line-height:1.65;}
-
-.role-grid{display:none;}
-.role-card{display:none;}
-.rc-icon{display:none;}
-.rc-name{display:none;}
-.rc-desc{display:none;}
-
-.lf-group{margin-bottom:1rem;}
-.lf-label{display:block;font-size:11px;font-weight:700;color:#5a7a50;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
-.lf-input,.lf-select{
-  width:100%;padding:10px 13px;
-  border-radius:9px;border:1.5px solid #d4e8cc;
-  background:#fff;font-size:13px;font-family:var(--font);
-  color:#092903;outline:none;transition:border-color .15s,box-shadow .15s;
+.ll-mark{
+  width:50px;height:50px;border-radius:50%;
+  background:#32CE13;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:22px;
 }
-.lf-input:focus,.lf-select:focus{border-color:#32CE13;box-shadow:0 0 0 3px rgba(50,206,19,.12);}
-.lf-input::placeholder{color:#9ab890;}
+.ll-eyebrow{font-size:12px;color:#4f6b45;margin-bottom:14px;}
+.ll-hero-title{
+  font-size:50px;font-weight:700;color:#0d2a06;
+  line-height:1.05;letter-spacing:-.035em;
+  margin:0 0 18px;
+}
+.ll-hero-desc{font-size:14px;color:#4f6b45;line-height:1.6;margin-bottom:24px;}
+
+#lf-local-form{width:100%;display:flex;justify-content:center;}
+.ll-google-btn{
+  width:100%;max-width:278px;
+  padding:13px 20px;border-radius:999px;border:none;
+  background:#0d2a06;color:#fff;
+  font-size:13px;font-weight:600;font-family:inherit;
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background .15s,transform .15s;
+}
+.ll-google-btn:hover{background:#174a0c;}
+.ll-google-btn:active{transform:scale(.98);}
+.ll-google-btn:focus-visible{outline:3px solid #32CE13;outline-offset:3px;}
+.ll-g{width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+#lf-loading{width:100%;flex-direction:column;align-items:center;gap:10px;padding:8px 0;}
+.ll-spinner{width:22px;height:22px;border:2.5px solid #C9F3BE;border-top-color:#32CE13;border-radius:50%;animation:spin .7s linear infinite;}
+#lf-loading-text{font-size:12px;color:#4f6b45;}
 
 .lf-error{
-  display:none;padding:9px 13px;
+  display:none;width:100%;padding:9px 13px;
   background:var(--r0);border:1px solid var(--r1);
-  border-radius:8px;font-size:12px;color:var(--r);
+  border-radius:10px;font-size:12px;color:var(--r);
   margin-bottom:1rem;
 }
 .lf-error.show{display:block;}
+.lf-note{font-size:11px;color:#7d8f73;margin-top:16px;line-height:1.6;}
 
-.lf-btn{
-  width:100%;padding:13px;border-radius:10px;border:none;
-  background:#092903;color:#D2F612;
-  font-size:13px;font-weight:700;font-family:var(--font);
-  cursor:pointer;letter-spacing:.01em;
-  display:flex;align-items:center;justify-content:center;gap:9px;
-  transition:background .2s,transform .15s;
+.role-grid,.role-card{display:none;}
+
+@media (max-width:640px){
+  .login-form{padding:36px 22px 28px;border-radius:24px;}
+  .ll-hero-title{font-size:38px;}
+  .ll-plant.p2,.ll-plant.p3,.ll-plant.p7,.ll-plant.p8,.ll-plant.p4{display:none;}
+  .ll-plant.p1{width:120px;height:190px;}
+  .ll-plant.p6{width:140px;height:220px;}
 }
-.lf-btn:hover{background:#0f3d06;transform:scale(1.01);}
-.lf-btn:active{transform:scale(.99);}
-.lf-btn svg{width:16px;height:16px;flex-shrink:0;}
-
-.lf-note{font-size:11px;color:#9ab890;text-align:center;margin-top:14px;line-height:1.6;}
+@media (prefers-reduced-motion:reduce){
+  .ll-plant,.login-form{animation:none;}
+}
 .hdr-user{display:flex;align-items:center;gap:8px;}
 .hdr-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
 .hdr-uname{font-size:12px;color:rgba(255,255,255,.7);font-weight:500;}
@@ -846,7 +795,7 @@ html{scrollbar-width:auto;scrollbar-color:var(--s4) transparent;}
 .signout-btn svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
  
 @keyframes loginFadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-.login-form{animation:loginFadeIn .3s ease;}
+
 @keyframes spin{to{transform:rotate(360deg);}}
 .atm-item{display:block;width:100%;text-align:left;padding:8px 12px;border:none;background:transparent;font-family:var(--font);font-size:12px;font-weight:500;color:var(--s7);cursor:pointer;border-radius:7px;transition:background .1s;}
 .atm-item:hover{background:var(--g0);color:var(--g4);}
@@ -1224,79 +1173,49 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
  
 <!-- ══ LOGIN SCREEN ══ -->
 <div id="login-screen">
-  <div class="login-orb1"></div>
-  <div class="login-orb2"></div>
-
-  <div class="login-nav">
-    <div class="ll-logo">
-      <div class="ll-logo-mark">
-        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
-      </div>
-      <div>
-        <div class="ll-logo-text">Sprout PYO</div>
-        <div class="ll-logo-sub">Implementation Hub</div>
-      </div>
-    </div>
-    <div class="ll-nav-yr">2026</div>
+  <!-- Sprout plants (one shape, reused at different sizes/colours). Decorative only. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="ll-sprout" viewBox="0 0 120 220">
+      <path d="M61 220C59 170 55 125 60 72" fill="none" stroke="var(--ls)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M60 74C42 52 14 52 0 66C17 84 45 86 60 74Z" fill="var(--la)"/>
+      <path d="M60 72C76 46 104 38 120 48C108 70 80 82 60 72Z" fill="var(--lb)"/>
+    </symbol>
+  </svg>
+  <div class="ll-plants" aria-hidden="true">
+    <svg class="ll-plant p1"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p2"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p3"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p4"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p5"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p6"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p7"><use href="#ll-sprout"/></svg>
+    <svg class="ll-plant p8"><use href="#ll-sprout"/></svg>
+    <div class="ll-ground"></div>
   </div>
 
-  <div class="login-body">
-
-    <div class="login-left">
-      <div>
-        <div class="ll-hero-title">From kickoff<br>to live run.</div>
-        <div class="ll-hero-desc">Track every client implementation project — milestones, progress, and delivery — all in one place.</div>
-      </div>
-      <div class="ll-features">
-        <div class="ll-feat">
-          <div class="ll-feat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg></div>
-          <div class="ll-feat-text"><strong>Manager</strong>KPIs, charts &amp; resource workload at a glance.</div>
-        </div>
-        <div class="ll-feat">
-          <div class="ll-feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-          <div class="ll-feat-text"><strong>Admin</strong>Weekly breakdowns and upcoming milestones.</div>
-        </div>
-        <div class="ll-feat">
-          <div class="ll-feat-icon"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-          <div class="ll-feat-text"><strong>Implementer</strong>Only your assigned projects, nothing else.</div>
-        </div>
-      </div>
+  <div class="login-form">
+    <div class="ll-mark">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
     </div>
-
-    <div class="login-right">
-      <div class="ll-dept-pill">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Managed Payroll Services
-      </div>
-      <div class="login-form">
-        <div class="lf-card-bar-wrap"><div class="lf-card-bar-fill"></div></div>
-        <div class="lf-card-body">
-          <div class="lf-title">Sign in to continue</div>
-          <div class="lf-sub">Use your Sprout work account. You'll land on your role's dashboard automatically.</div>
-          <div class="lf-error" id="login-error" style="display:none;"></div>
-          <div id="lf-local-form" style="width:100%;display:flex;flex-direction:column;gap:12px;align-items:center;">
-            <button onclick="doGoogleLogin()" id="google-signin-btn" style="width:100%;padding:13px 16px;border-radius:10px;border:none;background:#0f1f0c;font-size:14px;font-family:'Rubik',sans-serif;color:#32CE13;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:background .15s,box-shadow .15s;" onmouseover="this.style.background='#1a3214';this.style.boxShadow='0 4px 16px rgba(0,0,0,.35)';" onmouseout="this.style.background='#0f1f0c';this.style.boxShadow='0 2px 8px rgba(0,0,0,.25)';">
-              <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#32CE13" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#32CE13" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#32CE13" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#32CE13" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
-              Sign in with Google
-            </button>
-            <div style="font-size:11px;color:#94a3b8;text-align:center;">Use your <strong style="color:#64748b;">@sprout.ph</strong> work account</div>
-          </div>
-          <div id="lf-loading" style="display:none;width:100%;flex-direction:column;align-items:center;gap:10px;padding:8px 0;">
-            <div style="width:22px;height:22px;border:2.5px solid #C9F3BE;border-top-color:#32CE13;border-radius:50%;animation:spin .7s linear infinite;"></div>
-            <div id="lf-loading-text" style="font-size:12px;color:#64748b;">Signing you in…</div>
-          </div>
-          <div class="lf-note">2026 · Sprout Solutions</div>
-          <div style="display:none;">
-            <div id="role-grid"></div>
-            <div id="user-select-group"><select id="login-user-select"></select></div>
-            <div id="user-creds-group"><input id="login-user-email"><input id="login-user-pass"></div>
-            <div id="impl-select-group"><select id="login-impl-name"></select></div>
-            <div id="name-input-group"><input id="login-name"></div>
-          </div>
-        </div>
-      </div>
+    <div class="ll-eyebrow">Sprout PYO · Implementation Hub</div>
+    <h1 class="ll-hero-title">From kickoff<br>to live run.</h1>
+    <div class="ll-hero-desc">Sign in to see your assigned projects and what's next.</div>
+    <div class="lf-error" id="login-error" style="display:none;"></div>
+    <div id="lf-local-form">
+      <button onclick="doGoogleLogin()" id="google-signin-btn" class="ll-google-btn"><span class="ll-g"><svg viewBox="0 0 48 48" width="16" height="16"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>Sign in with Google</button>
     </div>
-
+    <div id="lf-loading" style="display:none;">
+      <div class="ll-spinner"></div>
+      <div id="lf-loading-text">Signing you in…</div>
+    </div>
+    <div class="lf-note">Only @sprout.ph accounts · Trouble? Contact your PYO admin.</div>
+    <div style="display:none;">
+      <div id="role-grid"></div>
+      <div id="user-select-group"><select id="login-user-select"></select></div>
+      <div id="user-creds-group"><input id="login-user-email"><input id="login-user-pass"></div>
+      <div id="impl-select-group"><select id="login-impl-name"></select></div>
+      <div id="name-input-group"><input id="login-name"></div>
+    </div>
   </div>
 </div>
 <!-- ══ HEADER ══ -->
@@ -11675,7 +11594,7 @@ function supabaseSave(){
   _supaSaveTimer=setTimeout(_supaFlush,800);
 }
 
-var GOOGLE_BTN_SVG='<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#32CE13" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#32CE13" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#32CE13" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#32CE13" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg> Sign in with Google';
+var GOOGLE_BTN_SVG='<span class="ll-g"><svg viewBox="0 0 48 48" width="16" height="16"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span>Sign in with Google';
 var _googleLoginStuckTimer=null;
 function _resetGoogleBtn(){
   var btn=document.getElementById('google-signin-btn');
