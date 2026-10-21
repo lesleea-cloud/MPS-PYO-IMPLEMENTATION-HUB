@@ -586,6 +586,8 @@ main{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;ga
 .cl-cb.red{background:var(--r0);border-color:var(--r);}
 .cl-xbtn{font-size:12px;color:var(--s4);cursor:pointer;padding:2px 4px;border-radius:4px;transition:color .1s;}
 .cl-xbtn:hover{color:var(--r);}
+.cl-del-btn{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:7px;border:1px solid var(--r1);background:#fff;color:var(--r);font-size:11px;font-weight:600;font-family:var(--font);cursor:pointer;white-space:nowrap;transition:background .1s;}
+.cl-del-btn:hover{background:var(--r0);}
 .cl-add-row{padding:9px 14px;font-size:12px;color:var(--s4);cursor:pointer;display:flex;align-items:center;gap:5px;}
 .cl-add-row:hover{color:var(--g4);background:var(--g0);}
 .res-chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
@@ -1460,6 +1462,28 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
         <button onclick="closeAddClientModal()" style="padding:8px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Cancel</button>
         <button onclick="submitAddClient()" style="padding:8px 20px;border-radius:9px;border:none;background:var(--g);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Add client</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE CLIENT — CONFIRMATION MODAL ══ -->
+<div class="modal-ov" id="client-delete-modal" onclick="if(event.target===this)closeClientDeleteModal()">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-hdr">
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;">Delete client</div>
+        <div class="modal-title">Delete this client?</div>
+      </div>
+      <button class="modal-close" onclick="closeClientDeleteModal()">×</button>
+    </div>
+    <div style="padding:10px 12px;background:var(--s0);border:1px solid var(--s2);border-radius:10px;margin-bottom:12px;">
+      <div id="cdm-name" style="font-size:13px;font-weight:700;color:var(--s9);"></div>
+      <div id="cdm-meta" style="font-size:11px;color:var(--s5);margin-top:2px;"></div>
+    </div>
+    <div style="padding:8px 12px;background:var(--r0);border:1px solid var(--r1);border-radius:8px;font-size:12px;color:var(--r);margin-bottom:1.25rem;">This permanently removes the client and its add-ons, milestones, after-handover and PM Tool data for everyone. This cannot be undone.</div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button onclick="closeClientDeleteModal()" style="padding:8px 18px;border-radius:9px;border:1px solid var(--s2);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--s6);">Cancel</button>
+      <button onclick="confirmClientDelete()" style="padding:8px 20px;border-radius:9px;border:none;background:var(--r);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">Yes, delete</button>
     </div>
   </div>
 </div>
@@ -4843,16 +4867,52 @@ function clearAudit(){
   renderAudit();
 }
 
+// Delete flow: clDeleteRow opens the confirmation modal; confirmClientDelete does the work.
+var CL_DELETE_PENDING=null;
 function clDeleteRow(no){
+  var d=D.find(function(x){return x.no===no;});
+  if(!d)return;
+  CL_DELETE_PENDING=no;
+  document.getElementById('cdm-name').textContent=d.client||'(unnamed client)';
+  document.getElementById('cdm-meta').textContent=[d.service,d.month,d.resource?'Resource: '+d.resource:''].filter(Boolean).join(' · ');
+  var mo=document.getElementById('client-delete-modal');
+  if(mo)mo.classList.add('open');
+}
+function closeClientDeleteModal(){
+  CL_DELETE_PENDING=null;
+  var mo=document.getElementById('client-delete-modal');
+  if(mo)mo.classList.remove('open');
+}
+function confirmClientDelete(){
+  var no=CL_DELETE_PENDING;
+  closeClientDeleteModal();
   var idx=D.findIndex(function(x){return x.no===no;});
   if(idx<0)return;
   var clientName=D[idx].client;
-  if(!confirm('Remove "'+clientName+'" from the list?'))return;
   logAudit(no,'Overview','client','Client Removed',clientName,'—');
   D.splice(idx,1);
+  // Client numbers are reused (new client = max no + 1), so clear the per-client side data
+  // too — otherwise a future client with the same no would inherit it.
+  delete CL_ADDONS[no];delete CL_MILESTONES[no];delete CL_AFTERHO[no];delete CL_PMTOOL[no];
+  delete CLIENT_PENDING[no];pibSavePending();
+  ['clients','addons','milestones','afterho','pmtool'].forEach(function(k){delete _snap[k][no];});
   autoSave();
-  _supaFlush();
   renderClients();
+  _clSupaDeleteClient(no,clientName);
+}
+// _supaFlush only upserts, so a removed client must be deleted from Supabase explicitly
+// or it comes back on the next load.
+async function _clSupaDeleteClient(no,clientName){
+  if(!_supa)return;
+  try{
+    // Side tables first, so a foreign key to clients(no) without ON DELETE CASCADE can't block the delete.
+    await Promise.all(['client_addons','client_milestones','client_afterho','client_pmtool_data','client_pending'].map(function(t){return _supaDelete(t,'client_no',no);}));
+    var r=await _supa.from('clients').delete().eq('no',no);
+    if(r.error){
+      console.warn('clients delete error:',r.error.message);
+      showImportToast('error','"'+clientName+'" could not be deleted from the database: '+r.error.message);
+    }
+  }catch(e){console.warn('client delete failed:',e);}
 }
 function clAddRow(){openAddClientModal();}
 
@@ -5771,7 +5831,7 @@ function renderClients(){
         '<td class="ctd" style="white-space:nowrap;"><div id="sc-'+d.no+'" class="svc-chips-wrap" onclick="svcEditStart('+d.no+')" title="Click to change" onmouseover="this.style.background=\'var(--s1)\'" onmouseout="this.style.background=\'transparent\'">'+svcChips(d.service)+'</div><select id="ss-'+d.no+'" class="cl-svc-sel" style="display:none;padding:3px 6px;border-radius:6px;border:1px solid var(--g);font-size:11px;font-family:var(--font);outline:none;background:#fff;" onchange="clUpdateSvc('+d.no+',this.value)" onblur="svcEditEnd('+d.no+')">'+svcOpts+'</select></td>'+
         (function(){var daysOpts=[0,15,30,60,90,120,150];var canEditDays=(CURRENT_ROLE==='admin'||CURRENT_ROLE==='manager'||CURRENT_ROLE==='god');if(!canEditDays){return '<td class="ctd" style="text-align:center;color:var(--s4);font-family:var(--mono)">'+(d.days||'—')+'</td>';}var opts=daysOpts.map(function(v){return '<option value="'+v+'"'+(d.days===v?' selected':'')+'>'+( v===0?'—':v)+'</option>';}).join('');return '<td class="ctd" style="text-align:center;"><select onchange="clUpdateDays('+d.no+',this.value)" style="padding:3px 6px;border-radius:6px;border:1px solid var(--s2);font-size:11px;font-family:var(--mono);color:var(--s4);background:#fff;outline:none;cursor:pointer;">'+opts+'</select></td>';})()+
         '<td class="ctd">'+pbar(p)+'</td>'+
-        '<td class="ctd"><span class="cl-xbtn" onclick="clDeleteRow('+d.no+')" title="Remove">✕</span></td>'+
+        '<td class="ctd"><button class="cl-del-btn" onclick="event.stopPropagation();clDeleteRow('+d.no+')" title="Delete client"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>Delete</button></td>'+
         clResourceCellsHtml(d,false)+
         clPhaseCellsHtml(d,ovActivePhase,ovPhaseKeys,'ov-')+
         clAddonCellsHtml(d)+
@@ -8541,55 +8601,105 @@ function svtMount(){
           ws.getRow(r).height = 30;
         }
 
-        // ── SHEET 1: POLICY SUMMARY ──
-        const ws1 = wb.addWorksheet("POLICY SUMMARY", { views: [{ state: "frozen", ySplit: 8 }] });
-        ws1.columns = [{ width: 34 }, { width: 58 }, { width: 34 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 17 }];
-        ws1.mergeCells("A1:H1");
+        // Same logical layout as the Parallel Run report (§122): Expected plays the role of
+        // "Sprout" and Register the role of "Client", so Variance = Register − Expected and
+        // Var % = Variance ÷ Register, with the same Var % tiers and ▲/▼/● remarks.
+        const TIER_HIGH = { fg: "A1470B", bg: "FFE5A5" };    // >= 10% gap  /  Increase
+        const TIER_MED = { fg: "5D6F07", bg: "F6FCD1" };     // 1% - 10% gap
+        const TIER_LOW = { fg: "106510", bg: "E9FAE5" };     // within 1%
+        const TIER_NONE = { fg: "B4B2A9", bg: "FFFFFF" };    // no variance
+        const TIER_DEC = { fg: "1356BA", bg: "D8EBFF" };     // Decrease
+        const TIER_MISSING = { fg: "5F21B6", bg: "EEE9FE" }; // column not found in the register
+        function tierFor(pct) {
+          const a = Math.abs(pct);
+          if (a >= 0.1) return TIER_HIGH;
+          if (a > 0.01) return TIER_MED;
+          if (a !== 0) return TIER_LOW;
+          return TIER_NONE;
+        }
+
+        // ── SHEET 1: VARIANCE SUMMARY (policy checks) ──
+        const ws1 = wb.addWorksheet("VARIANCE SUMMARY", { views: [{ state: "frozen", ySplit: 8 }] });
+        ws1.columns = [{ width: 34 }, { width: 16 }, { width: 16 }, { width: 20 }, { width: 14 }, { width: 17 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 58 }, { width: 34 }];
+        ws1.mergeCells("A1:L1");
         setCell(ws1, 1, 1, `${companyName || "Client"} · Simulation Variance Summary`, { fg: WHITE, bg: TITLE_BG, bold: true, sz: 14, indent: 1, border: false });
         ws1.getRow(1).height = 30;
         [["Payroll questionnaire", qn.fileName], ["Pay register", regFiles.join(", ")], ["Cut-offs compared", results.cutsLabel], ["Monthly contribution basis", results.basisNote], ["Generated", new Date().toLocaleString()]].forEach((m, i) => {
           const r = i + 2;
           setCell(ws1, r, 1, m[0], { fg: "5F5E5A", bold: true, sz: 10, indent: 1, border: false });
-          ws1.mergeCells(r, 2, r, 8);
+          ws1.mergeCells(r, 2, r, 12);
           setCell(ws1, r, 2, m[1], { sz: 10, border: false });
         });
-        header(ws1, 8, ["Policy check", "Questionnaire answer", "Checked as", "Employees", "Passed", "Flagged", "Review", "Status"], 3);
+        ["Payroll Items", "Expected", "Register", "Variance (Amount)", "Variance (%)", "Status", "Employees", "Passed", "Flagged", "Review", "Questionnaire answer", "Checked as"].forEach((label, i) => {
+          const left = i === 0 || i >= 10;
+          setCell(ws1, 8, i + 1, label, { fg: WHITE, bg: HEADER_BG, bold: true, h: left ? "left" : (i <= 4 ? "right" : "center"), indent: left ? 1 : 0, wrap: true });
+        });
+        ws1.getRow(8).height = 30;
         let r = 9;
         results.summary.forEach((s) => {
           const dim = s.status === "Not in register" || s.status === "Manual review" ? { fg: "888780" } : {};
           const st = STATUS_CLR[s.status];
+          const ruleRows = results.rows.filter((x) => x.rule === s.id);
+          const hasAmounts = !s.manual && ruleRows.length > 0;
+          const expTotal = r2(ruleRows.reduce((a, x) => a + x.expected, 0));
+          const regTotal = r2(ruleRows.reduce((a, x) => a + x.register, 0));
+          const variance = r2(regTotal - expTotal);
+          const noVar = variance === 0;
+          const amt = noVar ? { fg: TIER_NONE.fg } : dim;
           setCell(ws1, r, 1, s.label, { ...dim, indent: 1, wrap: true });
-          setCell(ws1, r, 2, s.ans || "—", { ...dim, sz: 10, indent: 1, wrap: true });
-          setCell(ws1, r, 3, s.used, { ...dim, sz: 10, indent: 1, wrap: true });
-          setCell(ws1, r, 4, s.manual ? "" : s.checked, { ...dim, h: "center", numFmt: "#,##0" });
-          setCell(ws1, r, 5, s.manual ? "" : s.passed, { ...dim, h: "center", numFmt: "#,##0" });
-          setCell(ws1, r, 6, s.manual ? "" : s.flagged, { ...dim, h: "center", numFmt: "#,##0", bold: s.flagged > 0, fg: s.flagged > 0 ? STATUS_CLR.Flagged.fg : dim.fg });
-          setCell(ws1, r, 7, s.manual ? "" : s.review, { ...dim, h: "center", numFmt: "#,##0", fg: s.review > 0 ? STATUS_CLR.Review.fg : dim.fg });
-          setCell(ws1, r, 8, s.status, { fg: st.fg, bg: st.bg, bold: s.status === "Flagged", sz: 10, h: "center" });
+          setCell(ws1, r, 2, hasAmounts ? expTotal : "", { ...amt, h: "right", indent: 1, numFmt: "#,##0.00" });
+          setCell(ws1, r, 3, hasAmounts ? regTotal : "", { ...amt, h: "right", indent: 1, numFmt: "#,##0.00" });
+          setCell(ws1, r, 4, hasAmounts ? variance : "", { ...amt, h: "right", indent: 1, numFmt: "#,##0.00" });
+          if (!hasAmounts) setCell(ws1, r, 5, "", { ...dim, h: "center" });
+          else if (regTotal === 0 && !noVar) setCell(ws1, r, 5, "n/a", { fg: TIER_MISSING.fg, bg: TIER_MISSING.bg, sz: 10, h: "center" });
+          else {
+            const pct = regTotal !== 0 ? variance / regTotal : 0, tier = tierFor(pct);
+            setCell(ws1, r, 5, pct, { fg: tier.fg, bg: tier.bg, bold: tier === TIER_HIGH, sz: 10, h: "center", numFmt: "0.00%" });
+          }
+          setCell(ws1, r, 6, s.status, { fg: st.fg, bg: st.bg, bold: s.status === "Flagged", sz: 10, h: "center" });
+          setCell(ws1, r, 7, s.manual ? "" : s.checked, { ...dim, h: "center", numFmt: "#,##0" });
+          setCell(ws1, r, 8, s.manual ? "" : s.passed, { ...dim, h: "center", numFmt: "#,##0" });
+          setCell(ws1, r, 9, s.manual ? "" : s.flagged, { ...dim, h: "center", numFmt: "#,##0", bold: s.flagged > 0, fg: s.flagged > 0 ? STATUS_CLR.Flagged.fg : dim.fg });
+          setCell(ws1, r, 10, s.manual ? "" : s.review, { ...dim, h: "center", numFmt: "#,##0", fg: s.review > 0 ? STATUS_CLR.Review.fg : dim.fg });
+          setCell(ws1, r, 11, s.ans || "—", { ...dim, sz: 10, indent: 1, wrap: true });
+          setCell(ws1, r, 12, s.used, { ...dim, sz: 10, indent: 1, wrap: true });
           r++;
         });
         r++;
-        setCell(ws1, r, 1, "Status legend", { fg: "5F5E5A", bold: true, sz: 9, border: false });
-        ["Passed", "Flagged", "Review", "Info", "Manual review"].forEach((k, i) => setCell(ws1, r, i + 4, k, { fg: STATUS_CLR[k].fg, bg: STATUS_CLR[k].bg, bold: k === "Flagged", sz: 9, h: "center", border: false }));
+        setCell(ws1, r, 1, "Var % legend", { fg: "5F5E5A", bold: true, sz: 9, border: false });
+        setCell(ws1, r, 2, "≥ 10% gap", { fg: TIER_HIGH.fg, bg: TIER_HIGH.bg, bold: true, sz: 9, h: "center", border: false });
+        setCell(ws1, r, 3, "1% – 10% gap", { fg: TIER_MED.fg, bg: TIER_MED.bg, sz: 9, h: "center", border: false });
+        setCell(ws1, r, 4, "Within 1%", { fg: TIER_LOW.fg, bg: TIER_LOW.bg, sz: 9, h: "center", border: false });
+        setCell(ws1, r, 5, "No variance", { fg: TIER_NONE.fg, bg: TIER_NONE.bg, sz: 9, h: "center", border: false });
         r++;
-        setCell(ws1, r, 1, "Expected = recomputed from the questionnaire's policies   ·   Variance = Register − Expected", { fg: "888780", italic: true, sz: 9, border: false });
+        setCell(ws1, r, 1, "Status legend", { fg: "5F5E5A", bold: true, sz: 9, border: false });
+        ["Passed", "Flagged", "Review", "Info", "Manual review"].forEach((k, i) => setCell(ws1, r, i + 2, k, { fg: STATUS_CLR[k].fg, bg: STATUS_CLR[k].bg, bold: k === "Flagged", sz: 9, h: "center", border: false }));
+        r++;
+        setCell(ws1, r, 1, "Expected = recomputed from the questionnaire's policies   ·   Variance = Register − Expected   ·   Var % = Variance ÷ Register (n/a when nothing is in the register)", { fg: "888780", italic: true, sz: 9, border: false });
 
         // ── SHEET 2: DETAILS (anything not passed) + SHEET 3: ALL CHECKS ──
         function detailSheet(name, rows) {
           const ws = wb.addWorksheet(name, { views: [{ state: "frozen", ySplit: 1 }] });
-          ws.columns = [{ width: 13 }, { width: 32 }, { width: 9 }, { width: 28 }, { width: 14 }, { width: 14 }, { width: 13 }, { width: 13 }, { width: 80 }];
-          header(ws, 1, ["Employee ID", "Fullname", "Cut-off", "Policy check", "Register", "Expected", "Variance", "Status", "Note"], 4);
+          ws.columns = [{ width: 13 }, { width: 32 }, { width: 9 }, { width: 28 }, { width: 14 }, { width: 14 }, { width: 13 }, { width: 20 }, { width: 13 }, { width: 80 }];
+          header(ws, 1, ["Employee ID", "Fullname", "Cut-off", "Income / Deduction", "Expected", "Register", "Variance", "Remarks", "Status", "Note"], 4);
           rows.forEach((x, i) => {
             const rr = i + 2, lbl = STATUS_LBL[x.status], st = STATUS_CLR[lbl];
+            const variance = r2(x.register - x.expected);
+            let remark, remarkTier;
+            if (/^Column not found/.test(x.note || "")) { remark = "●  Not in register"; remarkTier = TIER_MISSING; }
+            else if (variance > 0) { remark = "▲  Increase"; remarkTier = TIER_HIGH; }
+            else if (variance < 0) { remark = "▼  Decrease"; remarkTier = TIER_DEC; }
+            else { remark = "No variance"; remarkTier = TIER_NONE; }
             setCell(ws, rr, 1, x.id, { indent: 1 });
             setCell(ws, rr, 2, x.name, { indent: 1 });
             setCell(ws, rr, 3, x.cut, { h: "center" });
             setCell(ws, rr, 4, x.label, { indent: 1 });
-            setCell(ws, rr, 5, x.register, { h: "right", numFmt: "#,##0.00" });
-            setCell(ws, rr, 6, x.expected, { h: "right", numFmt: "#,##0.00" });
-            setCell(ws, rr, 7, r2(x.register - x.expected), { h: "right", numFmt: "#,##0.00", bold: x.status === "flag" });
-            setCell(ws, rr, 8, lbl, { fg: st.fg, bg: st.bg, bold: x.status === "flag", sz: 10, h: "center" });
-            setCell(ws, rr, 9, x.note, { sz: 10, indent: 1 });
+            setCell(ws, rr, 5, x.expected, { h: "right", numFmt: "#,##0.00" });
+            setCell(ws, rr, 6, x.register, { h: "right", numFmt: "#,##0.00" });
+            setCell(ws, rr, 7, variance, { h: "right", numFmt: "#,##0.00", bold: x.status === "flag" });
+            setCell(ws, rr, 8, remark, { fg: remarkTier.fg, bg: remarkTier.bg, bold: remarkTier !== TIER_NONE, sz: 10, h: "center" });
+            setCell(ws, rr, 9, lbl, { fg: st.fg, bg: st.bg, bold: x.status === "flag", sz: 10, h: "center" });
+            setCell(ws, rr, 10, x.note, { sz: 10, indent: 1 });
           });
         }
         detailSheet("DETAILS", results.rows.filter((x) => x.status !== "pass"));
