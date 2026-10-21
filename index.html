@@ -2783,8 +2783,11 @@ var TEAM_CONFIG = (function(){
   return {implPYO:['Ana','Bea','Carl','Dana','Eli'],implGov:[],implHR:[],implOTK:[],implPD:[],implPOD:[],implFPOD:[],implementers:['Ana','Bea','Carl','Dana','Eli'],pms:['Marcus','Sofia','Javier','Isabel','Diego']};
 })();
 var ST_PREVIEW = null;
-var USERS_DEFAULT=/*USERS_DATA*/[{"username":"Leslee","email":"lesleea@sprout.ph","password":"Leslee09151992","role":"implementer"},{"username":"Zona","email":"zmerto@sprout.ph","password":"Password1234","role":"admin"},{"username":"Denise","email":"mgonowon@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Armie","email":"armiev@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Pau","email":"pvaflor@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Mhae","email":"alorenzo@sprout.ph","password":"Password1234","role":"implementer"},{"username":"Arianne","email":"arianneo@sprout.ph","password":"Password1234","role":"manager"}]/*END_USERS_DATA*/;
-var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){return JSON.parse(s);}if(USERS_DEFAULT.length){localStorage.setItem('pyo_users',JSON.stringify(USERS_DEFAULT));}return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}catch(e){return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}})();
+var USERS_DEFAULT=/*USERS_DATA*/[{"username":"Leslee","email":"lesleea@sprout.ph","role":"implementer"},{"username":"Zona","email":"zmerto@sprout.ph","role":"admin"},{"username":"Denise","email":"mgonowon@sprout.ph","role":"implementer"},{"username":"Armie","email":"armiev@sprout.ph","role":"implementer"},{"username":"Pau","email":"pvaflor@sprout.ph","role":"implementer"},{"username":"Mhae","email":"alorenzo@sprout.ph","role":"implementer"},{"username":"Arianne","email":"arianneo@sprout.ph","role":"manager"}]/*END_USERS_DATA*/;
+// Sign-in is Google-only (Supabase Auth); no passwords are kept here. Any password a browser
+// still has saved from older versions is stripped from localStorage on load.
+function _stripPw(list){return (list||[]).map(function(u){var c=Object.assign({},u);delete c.password;return c;});}
+var USERS=(function(){try{var s=localStorage.getItem('pyo_users');if(s){var parsed=_stripPw(JSON.parse(s));localStorage.setItem('pyo_users',JSON.stringify(parsed));return parsed;}if(USERS_DEFAULT.length){localStorage.setItem('pyo_users',JSON.stringify(USERS_DEFAULT));}return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}catch(e){return USERS_DEFAULT.map(function(u){return Object.assign({},u);});}})();
 
 // ══════════════ IMPLEMENTATION VAULT ══════════════
 var VAULT_ITEMS=(function(){try{var s=localStorage.getItem('pyo_vault');return s?JSON.parse(s):[];}catch(e){return [];}})();
