@@ -13,6 +13,6 @@
     }
   ],
   "crons": [
-    { "path": "/api/integrations/drive-decks-sync", "schedule": "*/30 * * * *" }
+    { "path": "/api/integrations/drive-decks-sync", "schedule": "0 0 * * *" }
   ]
 }
